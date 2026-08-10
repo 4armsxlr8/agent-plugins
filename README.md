@@ -27,6 +27,51 @@ Main components:
 
 > **Note**: study-loop's skill instructions (`SKILL.md`) are currently written in Japanese, so the agent runs the loop most naturally in Japanese.
 
+#### Running the Web UI standalone (without Claude Code)
+
+The `study-loop` Web UI server does not depend on Claude Code at all — `start.sh`, `bootstrap.sh`, `stop.sh`, and `server.py` never reference `CLAUDE_PLUGIN_ROOT` or any other Claude Code environment variable, and `start.sh` builds its own Python virtualenv. You can run it straight from a terminal with Claude Code not even open.
+
+If you installed the plugin with `/plugin install`, the script lives at:
+
+```
+~/.claude/plugins/marketplaces/agent-plugins/plugins/study-loop/skills/study-loop/scripts/start.sh
+```
+
+If you just cloned this repository instead, use the path inside the checkout:
+
+```
+plugins/study-loop/skills/study-loop/scripts/start.sh
+```
+
+On first run, `start.sh` calls `bootstrap.sh`, which creates a `.venv` next to the scripts and installs `flask`, `markdown`, and `pymdown-extensions` into it — no manual setup step needed.
+
+`--backend` controls how the UI treats Codex (default `auto`):
+
+- `auto` (default) — Codex is only started when you explicitly pick a start action in the UI (e.g. starting the diagnostic, grading an answer); loading the page or saving Markdown never launches it.
+- `codex` — in the current implementation this behaves the same as `auto`; Codex is still only launched on demand from the UI, not on server startup.
+- `manual` — Codex is never used. All grading goes through the Markdown-only manual flow (edit the answer file, then have Claude Code or another agent grade it).
+
+If you plan to use Codex, the only prerequisite is having run `codex login` once beforehand — you do not need a Codex process already running. When a job needs Codex, `codex_app_server.py` starts `codex app-server --stdio` itself as a subprocess and checks authentication on connect; if you haven't logged in, the UI tells you to run `codex login` and falls back to the manual flow.
+
+Other flags:
+
+- `--port <n>` — Fixed port. Without it, `start.sh` searches ports 8765 through 8774 for a free one; with it, the script does not shift to another port on conflict.
+- `--root <path>` — Path to the Study Loop session directory (default: `$PWD/.study`).
+- `--host <addr>` — Bind address (default `127.0.0.1`). Only loopback addresses (`127.0.0.1`, `localhost`, `::1`) are accepted.
+- `--no-open` — Don't automatically open a browser after starting (default: it opens one via `open`/`xdg-open`).
+
+Stop the server with:
+
+```bash
+bash ~/.claude/plugins/marketplaces/agent-plugins/plugins/study-loop/skills/study-loop/scripts/stop.sh
+```
+
+The path is long, so if you use this often it's worth aliasing it — e.g. in `~/.zshrc` or `~/.bashrc`:
+
+```bash
+alias study-ui='bash ~/.claude/plugins/marketplaces/agent-plugins/plugins/study-loop/skills/study-loop/scripts/start.sh'
+```
+
 ### flutter-riverpod-guardrails — Flutter + Riverpod architecture guardrail
 
 Enforces Clean Architecture layering (Domain / Data / Application / Presentation) in Flutter + Riverpod projects and runs `dart analyze` before commits.

@@ -25,6 +25,51 @@ Claude Code のプラグイン・スキルを公開する個人コレクショ�
 - **Generator-Critic ループ** — 課題は Generator が下書きし、独立した Critic パスが検証してからユーザーに提示されます。解答がコメントに漏れているといった問題を1パス生成より確実に防ぎます。
 - **`/study-ui`** — ローカルの Flask 製 Web UI（`skills/study-loop/scripts/server.py`）を loopback（127.0.0.1）限定で起動し、Markdown を直接編集する代わりにブラウザで lesson の閲覧・回答記入ができます。起動時にデフォルトブラウザが自動で開きます（`--no-open` で抑止可）。任意でローカルの Codex App Server セッションを介した採点にも対応。`/study-ui-stop` で停止します。
 
+#### Claude Code を使わずに Web UI を単独起動する
+
+study-loop の Web UI サーバーは Claude Code に一切依存していません。`start.sh` / `bootstrap.sh` / `stop.sh` / `server.py` はいずれも `CLAUDE_PLUGIN_ROOT` などの Claude Code 由来の環境変数を参照せず、`start.sh` が自前で Python の venv を構築します。Claude Code を起動していない状態でも、ターミナルから直接実行するだけで使えます。
+
+`/plugin install` 済みの場合、スクリプトの実際のパスは次のとおりです。
+
+```
+~/.claude/plugins/marketplaces/agent-plugins/plugins/study-loop/skills/study-loop/scripts/start.sh
+```
+
+このリポジトリを clone しただけの場合は、checkout 内のパスを使います。
+
+```
+plugins/study-loop/skills/study-loop/scripts/start.sh
+```
+
+初回実行時は `start.sh` が `bootstrap.sh` を呼び出し、スクリプトと同じ場所に `.venv` を作成して `flask` / `markdown` / `pymdown-extensions` を自動でインストールします。手動セットアップは不要です。
+
+`--backend` は UI が Codex をどう扱うかを決めるフラグです（既定は `auto`）。
+
+- `auto`（既定） — UI で明示的に開始操作（診断開始・採点など）を選んだときだけ Codex を起動します。ページを開いただけ、Markdown を保存しただけでは起動しません。
+- `codex` — 現状の実装では `auto` と同じ挙動です。サーバー起動時ではなく UI で操作を選んだときだけ Codex を起動する点は変わりません。
+- `manual` — Codex を一切使いません。すべての採点は Markdown だけを正とする手動フロー（回答ファイルを編集し、Claude Code など別のエージェントに採点してもらう）で行います。
+
+Codex を使う場合の前提は、事前に一度 `codex login` を済ませてあることだけです。Codex のプロセスをあらかじめ起動しておく必要はありません。ジョブが Codex を必要とするタイミングで `codex_app_server.py` が自分で `codex app-server --stdio` をサブプロセスとして起動し、接続時に認証状態を確認します。ログインしていない場合は「Codex にログインしていません。`codex login` を実行してください。」と UI に表示され、手動フローにフォールバックします。
+
+その他のフラグ:
+
+- `--port <n>` — 固定ポート。指定しない場合、`start.sh` は 8765 から 8774 まで空きポートを自動で探します。指定した場合は衝突しても別ポートへは自動シフトしません。
+- `--root <path>` — Study Loop セッションディレクトリのパス（既定: `$PWD/.study`）。
+- `--host <addr>` — bind するアドレス（既定 `127.0.0.1`）。loopback アドレス（`127.0.0.1` / `localhost` / `::1`）のみ指定できます。
+- `--no-open` — 起動後にブラウザを自動で開きません（既定は `open` / `xdg-open` で自動的に開きます）。
+
+停止するには次を実行します。
+
+```bash
+bash ~/.claude/plugins/marketplaces/agent-plugins/plugins/study-loop/skills/study-loop/scripts/stop.sh
+```
+
+パスが長いので、頻繁に使うなら `~/.zshrc` や `~/.bashrc` にエイリアスを登録すると便利です。
+
+```bash
+alias study-ui='bash ~/.claude/plugins/marketplaces/agent-plugins/plugins/study-loop/skills/study-loop/scripts/start.sh'
+```
+
 ### flutter-riverpod-guardrails — Flutter + Riverpod アーキテクチャ guardrail
 
 Flutter + Riverpod プロジェクトで Clean Architecture のレイヤー分離（Domain / Data / Application / Presentation）を強制し、コミット前に `dart analyze` を実行するプラグインです。

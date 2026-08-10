@@ -12,6 +12,7 @@
 #   --port <n>      固定ポート（指定時は衝突しても自動シフトしない）
 #   --host <addr>   bind するアドレス（デフォルト: 127.0.0.1）
 #   --backend <mode> Codex 連携の既定（auto/codex/manual、デフォルト: auto）
+#   --no-open       起動後にブラウザを自動で開かない（デフォルト: 開く）
 
 set -euo pipefail
 
@@ -27,6 +28,7 @@ ROOT="$PWD/.study"
 PORT=""
 HOST="127.0.0.1"
 BACKEND="auto"
+OPEN_BROWSER=1
 DEFAULT_PORT_BASE=8765
 PORT_RANGE=10
 
@@ -37,6 +39,7 @@ while [[ $# -gt 0 ]]; do
     --port) PORT="$2"; shift 2;;
     --host) HOST="$2"; shift 2;;
     --backend) BACKEND="$2"; shift 2;;
+    --no-open) OPEN_BROWSER=0; shift 1;;
     *) echo "unknown arg: $1" >&2; exit 2;;
   esac
 done
@@ -51,6 +54,51 @@ case "$BACKEND" in
   *) echo "ERROR: --backend は auto, codex, manual のいずれかです" >&2; exit 2;;
 esac
 
+# ブラウザを OS 標準コマンドで開く。失敗してもスクリプト全体を落とさない
+# （呼び出し側で if の条件式として使うことで set -e の対象外にする）。
+# Claude Code の sandbox 等で open がブロックされる環境でも、標準エラーを
+# 抑制した上で戻り値を返すだけに留める。
+open_browser() {
+  local url="$1"
+  case "$(uname -s)" in
+    Darwin)
+      open "$url" >/dev/null 2>&1
+      ;;
+    Linux)
+      if command -v xdg-open >/dev/null 2>&1; then
+        xdg-open "$url" >/dev/null 2>&1
+      else
+        return 1
+      fi
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+# .study-server.meta の "host=... port=... ..." から URL を組み立てる。
+# パースできなければ空文字を返す。
+meta_to_url() {
+  local meta="$1" h p
+  h="$(sed -nE 's/.*host=([^ ]+).*/\1/p' <<<"$meta")"
+  p="$(sed -nE 's/.*port=([^ ]+).*/\1/p' <<<"$meta")"
+  if [[ -n "$h" && -n "$p" ]]; then
+    echo "http://$h:$p"
+  fi
+}
+
+# URL を案内する。OPEN_BROWSER=1 ならブラウザで開いてから案内文言を出し、
+# 開けなかった／--no-open のときは従来どおり URL 表示だけにする。
+announce_and_open() {
+  local url="$1"
+  if [[ "$OPEN_BROWSER" -eq 1 ]] && open_browser "$url"; then
+    echo "  ✓ ブラウザで開きました: $url"
+  else
+    echo "  Open: $url"
+  fi
+}
+
 # 既起動チェック。kill -0 の挙動は3通り:
 #   exit 0                            → プロセス存在 (alive)
 #   exit 1 + "no such process"        → プロセス不存在 (dead)
@@ -64,11 +112,19 @@ if [[ -f "$PID_FILE" ]]; then
     if [[ $KILL_RC -eq 0 ]]; then
       OLD_META="$(cat "$META_FILE" 2>/dev/null || echo 'unknown')"
       echo "✓ Study Loop UI is already running (PID $OLD_PID) — $OLD_META"
+      OLD_URL="$(meta_to_url "$OLD_META")"
+      if [[ -n "$OLD_URL" ]]; then
+        announce_and_open "$OLD_URL"
+      fi
       exit 0
     elif [[ "$KILL_ERR" == *"not permitted"* ]]; then
       OLD_META="$(cat "$META_FILE" 2>/dev/null || echo 'unknown')"
       echo "⚠ Cannot verify PID $OLD_PID due to sandbox restriction. Assuming alive — $OLD_META" >&2
       echo "  If a fresh start is needed, run 'bash $SCRIPT_DIR/stop.sh' from an unsandboxed shell first." >&2
+      OLD_URL="$(meta_to_url "$OLD_META")"
+      if [[ -n "$OLD_URL" ]]; then
+        announce_and_open "$OLD_URL"
+      fi
       exit 0
     else
       # 本当に死んでいる → 掃除
@@ -163,5 +219,5 @@ echo "$NEW_PID" > "$PID_FILE"
 echo "host=$HOST port=$PORT root=$ROOT backend=$BACKEND" > "$META_FILE"
 
 echo "✓ Study Loop UI started (PID $NEW_PID)"
-echo "  Open: http://$HOST:$PORT"
+announce_and_open "http://$HOST:$PORT"
 echo "  Stop: bash $SCRIPT_DIR/stop.sh  (or via /study-ui-stop)"

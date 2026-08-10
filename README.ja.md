@@ -23,7 +23,7 @@ Claude Code のプラグイン・スキルを公開する個人コレクショ�
 - **`skills/study-loop/SKILL.md`** — オーケストレーション本体。Setup → Diagnostic（診断）→ Curriculum Generation（カリキュラム生成）→ Lesson Loop（学習ループ）の4フェーズを回し、セッション状態を `.study/<topic-slug>/` 配下に Markdown として保存します（進捗ダッシュボード、カリキュラム、用語集、フィードバックルール、気づきログなど）。
 - **エビデンスベース設計** — すべての設計判断はメタ分析・システマティックレビューに基づき、効果サイズと出典が `skills/study-loop/references/learning-science.md` に記録されています。例: フィードバックの質（Hattie & Timperley、*d* ≈ 0.70–1.00）、Retrieval Practice / テスト効果（Roediger & Karpicke、*d* ≈ 0.50–0.80）、Self-Explanation 効果（Bisra et al.、*g* ≈ 0.55）、Worked Example の段階的な手放し（Sweller / Kalyuga、*d* ≈ 0.5–1.0）、分散学習・spacing（Cepeda et al.、*d* ≈ 0.4–0.9）、Interleaved Practice（Brunmair & Richter、*g* ≈ 0.42）、Elaborative Interrogation（Dunlosky et al.、*d* ≈ 0.42）。
 - **Generator-Critic ループ** — 課題は Generator が下書きし、独立した Critic パスが検証してからユーザーに提示されます。解答がコメントに漏れているといった問題を1パス生成より確実に防ぎます。
-- **`/study-ui`** — ローカルの Flask 製 Web UI（`skills/study-loop/scripts/server.py`）を loopback（127.0.0.1）限定で起動し、Markdown を直接編集する代わりにブラウザで lesson の閲覧・回答記入ができます。任意でローカルの Codex App Server セッションを介した採点にも対応。`/study-ui-stop` で停止します。
+- **`/study-ui`** — ローカルの Flask 製 Web UI（`skills/study-loop/scripts/server.py`）を loopback（127.0.0.1）限定で起動し、Markdown を直接編集する代わりにブラウザで lesson の閲覧・回答記入ができます。起動時にデフォルトブラウザが自動で開きます（`--no-open` で抑止可）。任意でローカルの Codex App Server セッションを介した採点にも対応。`/study-ui-stop` で停止します。
 
 ### flutter-riverpod-guardrails — Flutter + Riverpod アーキテクチャ guardrail
 

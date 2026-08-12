@@ -22,13 +22,31 @@ Handle business logic, state management, and Provider definitions.
 ### Repository Providers (Singleton)
 
 ```dart
+// Platform flags are resolved at bootstrap and injected via an override —
+// the application layer never imports package:flutter/.
+@Riverpod(keepAlive: true)
+bool isWeb(Ref ref) => throw UnimplementedError('Overridden in main.dart');
+
 @Riverpod(keepAlive: true)
 SomeRepository someRepository(Ref ref) {
   return SomeRepository(
     firestore: ref.watch(firebaseFirestoreProvider),
     auth: ref.watch(firebaseAuthProvider),
-    isWeb: kIsWeb,  // Platform check HERE, not in data layer
+    isWeb: ref.watch(isWebProvider),
   );
+}
+```
+
+The override happens in the app entry point, which lives outside the layer
+directories and is therefore free to read platform constants:
+
+```dart
+// main.dart — outside the layer directories, so kIsWeb is allowed here.
+void main() {
+  runApp(ProviderScope(
+    overrides: [isWebProvider.overrideWithValue(kIsWeb)],
+    child: const MyApp(),
+  ));
 }
 ```
 
@@ -60,7 +78,7 @@ class SomeNotifier extends _$SomeNotifier {
   @override
   Future<void> build() async => null;
 
-  Future<void> someAction({required params}) async {
+  Future<void> someAction({required String title}) async {
     // 1. Prevent disposal during async operation
     final link = ref.keepAlive();
 
@@ -70,7 +88,7 @@ class SomeNotifier extends _$SomeNotifier {
     // 3. Execute with automatic error handling
     state = await AsyncValue.guard(() async {
       final repo = ref.read(someRepositoryProvider);
-      await repo.performAction(params);
+      await repo.performAction(title);
     });
 
     // 4. Release keepAlive
@@ -83,17 +101,23 @@ class SomeNotifier extends _$SomeNotifier {
 
 ### RECOMMENDED: AsyncValue<T>
 
-```dart
-// Let Riverpod handle loading/error automatically
-@riverpod
-class ProjectForm extends _$ProjectForm {
-  @override
-  Future<Project> build() async => Project.empty();
+The server round-trip gets its own notifier. It carries no form data — the field
+values are passed in as arguments — so its `AsyncValue` describes exactly one
+thing: how the submission is going.
 
-  Future<void> submit() async {
+```dart
+@riverpod
+class ProjectSubmit extends _$ProjectSubmit {
+  @override
+  Future<void> build() async {}
+
+  Future<void> submit({required String title, required String description}) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      return await ref.read(projectRepositoryProvider).create(state.value!);
+      await ref.read(projectRepositoryProvider).createProject(
+        title: title,
+        description: description,
+      );
     });
   }
 }
@@ -104,13 +128,19 @@ class ProjectForm extends _$ProjectForm {
 ```dart
 // ANTI-PATTERN: Don't manually manage loading/error
 @freezed
-class ProjectFormState with _$ProjectFormState {
+abstract class ProjectFormState with _$ProjectFormState {
   const factory ProjectFormState({
     @Default(false) bool isLoading,  // AsyncValue handles this
     String? errorMessage,             // AsyncValue handles this
   }) = _ProjectFormState;
 }
 ```
+
+What is wrong here is the duplication: `isLoading` and `errorMessage` restate what
+the notifier's `AsyncValue` already knows, so the two can disagree. A state class
+that holds only field values is fine — it just belongs in the presentation layer.
+
+> Boundary: any state that involves a server round-trip (fetch, submit, update) is represented as `AsyncValue` in the application layer. Only pure UI-local state (form field values, focus, expansion) may live in a custom state class in the presentation layer.
 
 ## Controller Creation Criteria
 

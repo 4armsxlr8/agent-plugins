@@ -13,10 +13,13 @@ venv/
 .idea/
 
 # Study Loop (the plugin's web server bundles a venv when used locally)
-plugins/study-loop/skills/study-loop/scripts/.venv/
-plugins/study-loop/skills/study-loop/scripts/.study-server.pid
-plugins/study-loop/skills/study-loop/scripts/.study-server.meta
-plugins/study-loop/skills/study-loop/scripts/.study-server.log
+dev/study-loop/skills/study-loop/scripts/.venv/
+dev/study-loop/skills/study-loop/scripts/.study-server.pid
+dev/study-loop/skills/study-loop/scripts/.study-server.meta
+dev/study-loop/skills/study-loop/scripts/.study-server.log
 
 # Study Loop user sessions (never commit personal learning data)
 .study/
+
+# Local tool outputs (skill eval results, scratch reports)
+output/

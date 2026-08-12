@@ -61,6 +61,10 @@ class ContentWidget extends StatelessWidget {
 
 ```dart
 class ProjectScreen extends ConsumerWidget {
+  const ProjectScreen({super.key, required this.projectId});
+
+  final String projectId;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final projectAsync = ref.watch(projectProvider(projectId));
@@ -77,11 +81,13 @@ class ProjectScreen extends ConsumerWidget {
 
 ```dart
 class CategorySection extends ConsumerWidget {
+  const CategorySection({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // REQUIRED: Use select() for performance
     final category = ref.watch(
-      formProvider.select((state) => state.value?.category)
+      formProvider.select((state) => state.category)
     );
     return CategorySelector(
       value: category,
@@ -141,7 +147,7 @@ final projectsAsync = ref.watch(projectsProvider);
 return asyncValue.when(
   data: (data) => DataWidget(data: data),
   loading: () => const LoadingWidget(),
-  error: (error, stack) => ErrorWidget(error: error),
+  error: (error, stack) => ErrorDisplayWidget(error: error),
 );
 ```
 
@@ -153,18 +159,23 @@ return asyncValue.when(
   loading: () => asyncValue.hasValue
       ? DataWidget(data: asyncValue.value!) // Show stale data
       : const LoadingWidget(),              // Show skeleton
-  error: (error, stack) => ErrorWidget(error: error),
+  error: (error, stack) => ErrorDisplayWidget(error: error),
 );
 ```
 
-### Skip Loading on Refresh
+### Skip Loading on Reload
+
+`when()` already skips the loading state on a *refresh* (`ref.refresh` or
+`ref.invalidate`) — `skipLoadingOnRefresh` defaults to `true`, so passing it
+changes nothing. A *reload* is different: when a watched dependency changes and the
+provider recomputes, the loading state is shown unless you opt out explicitly.
 
 ```dart
 return asyncValue.when(
-  skipLoadingOnRefresh: true,
+  skipLoadingOnReload: true, // Keep showing previous data while recomputing
   data: (data) => DataWidget(data: data),
   loading: () => const LoadingWidget(),
-  error: (error, stack) => ErrorWidget(error: error),
+  error: (error, stack) => ErrorDisplayWidget(error: error),
 );
 ```
 

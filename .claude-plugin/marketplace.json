@@ -1,9 +1,8 @@
 {
   "name": "agent-plugins",
-  "description": "Claude Code / Codex 向けのプラグイン集。study-loop（段階的学習ループ）と flutter-riverpod-guardrails（Flutter + Riverpod アーキテクチャ guardrail）。",
+  "description": "Claude Code / Codex 向けのプラグイン集。flutter-riverpod-guardrails（Flutter + Riverpod アーキテクチャ guardrail）を提供。study-loop（段階的学習ループ）は dev/ で開発中。",
   "owner": { "name": "kyouyagenki" },
   "plugins": [
-    { "name": "study-loop", "source": "./plugins/study-loop", "version": "0.1.0", "description": "任意トピックの段階的学習。レベル診断 → 出題 → 採点 → フィードバックのループ" },
     { "name": "flutter-riverpod-guardrails", "source": "./plugins/flutter-riverpod-guardrails", "version": "0.1.0", "description": "Flutter + Riverpod 向けアーキテクチャ検査と pre-commit lint" }
   ]
 }

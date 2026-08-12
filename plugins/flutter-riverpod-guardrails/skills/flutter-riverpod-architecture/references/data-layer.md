@@ -20,14 +20,23 @@ Handle external data sources (Firebase, HTTP, etc.) as a Pure Dart layer.
 ## Constructor Pattern
 
 ```dart
-// REQUIRED: const constructor + required dependencies
-const SomeRepository({
-  required FirebaseFirestore firestore,
-  required FirebaseAuth auth,
-  required bool isWeb,  // Platform check injected from application layer
-}) : _firestore = firestore,
-     _auth = auth,
-     _isWeb = isWeb;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+class SomeRepository {
+  // REQUIRED: const constructor + required dependencies
+  const SomeRepository({
+    required FirebaseFirestore firestore,
+    required FirebaseAuth auth,
+    required bool isWeb,  // Platform check injected from application layer
+  })  : _firestore = firestore,
+        _auth = auth,
+        _isWeb = isWeb;
+
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
+  final bool _isWeb;
+}
 ```
 
 ## Dependency Injection
@@ -47,19 +56,54 @@ class AuthRepository {
 ### GOOD - Injected dependency
 
 ```dart
+import 'package:firebase_auth/firebase_auth.dart';
+
 class AuthRepository {
   const AuthRepository({
     required FirebaseAuth firebaseAuth,
     required bool isWeb,  // Injected from application layer
-  });
+  })  : _auth = firebaseAuth,
+        _isWeb = isWeb;
 
-  Future<UserCredential?> signInWithGoogle() {
+  final FirebaseAuth _auth;
+  final bool _isWeb;
+
+  Future<UserCredential> signInWithGoogle() {
     if (_isWeb) {  // Uses injected value
       return _auth.signInWithPopup(GoogleAuthProvider());
     }
+    return _auth.signInWithProvider(GoogleAuthProvider());
   }
 }
 ```
+
+## Firestore Timestamp Conversion
+
+`Timestamp` is a `cloud_firestore` symbol, and the domain layer is forbidden from
+importing that SDK. So domain entities hold a plain `DateTime`, and the repository
+converts at the boundary: every `Timestamp` in a snapshot becomes an ISO8601 string
+before the map reaches `fromJson`, because that is the format `json_serializable`
+parses into `DateTime` by default.
+
+```dart
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+/// Flattens a snapshot into JSON the domain entity can parse:
+/// document id folded in, every `Timestamp` replaced by an ISO8601 string.
+Map<String, dynamic> decodeDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  final raw = {...doc.data()!, 'id': doc.id};
+  return raw.map(
+    (key, value) => MapEntry(
+      key,
+      value is Timestamp ? value.toDate().toUtc().toIso8601String() : value,
+    ),
+  );
+}
+```
+
+Write operations go the other way: convert any `DateTime` the repository itself
+sets back into a `Timestamp`, so Firestore stores its native timestamp type and
+`orderBy` on that field keeps working.
 
 ## Repository Pattern
 
@@ -79,9 +123,8 @@ class ProjectRepository {
     return _collection
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Project.fromJson({...doc.data(), 'id': doc.id}))
-            .toList());
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => Project.fromJson(decodeDoc(doc))).toList());
   }
 
   /// Get a single project by ID
@@ -90,7 +133,7 @@ class ProjectRepository {
     if (!doc.exists) {
       throw Exception('Project not found: $id');
     }
-    return Project.fromJson({...doc.data()!, 'id': doc.id});
+    return Project.fromJson(decodeDoc(doc));
   }
 
   /// Create a new project
@@ -160,12 +203,12 @@ final container = ProviderContainer(
 
 ## Verification
 
+Run the checker bundled with this plugin from the Flutter project root. Replace
+`<plugin root>` with the `flutter-riverpod-guardrails` plugin directory — SKILL.md
+shows the resolved absolute path while this skill is active.
+
 ```bash
-# Check for forbidden imports (must return empty)
-grep -r "package:flutter" lib/features/*/data/
-grep -r "riverpod" lib/features/*/data/
-grep -r "kIsWeb" lib/features/*/data/
-grep -rE "^\s*abstract\s+([a-z]+\s+)?class" lib/features/*/data/
+<plugin root>/scripts/check-architecture.sh --scan lib
 ```
 
 ## Custom Lint Rules (Recommended)

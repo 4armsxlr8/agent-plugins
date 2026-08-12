@@ -57,15 +57,20 @@ class ProjectListScreen extends ConsumerWidget {
 
 ## Type-Safe Routing (go_router)
 
+Requires go_router_builder 4.x (the generated mixin was renamed from
+`_$RouteName` to `$RouteName` in 4.0.0).
+
 ```dart
 // lib/app/route/routes.dart
+part 'routes.g.dart';
+
 @TypedGoRoute<ProjectListRoute>(
   path: '/projects',
   routes: [
     TypedGoRoute<ProjectDetailRoute>(path: ':projectId'),
   ],
 )
-class ProjectListRoute extends GoRouteData {
+class ProjectListRoute extends GoRouteData with $ProjectListRoute {
   const ProjectListRoute();
 
   @override
@@ -74,7 +79,7 @@ class ProjectListRoute extends GoRouteData {
   }
 }
 
-class ProjectDetailRoute extends GoRouteData {
+class ProjectDetailRoute extends GoRouteData with $ProjectDetailRoute {
   const ProjectDetailRoute({required this.projectId});
 
   final String projectId;
@@ -91,29 +96,53 @@ ProjectDetailRoute(projectId: 'abc123').push(context);
 
 ## UI State Notifier (Presentation Layer Provider)
 
+> Boundary: any state that involves a server round-trip (fetch, submit, update) is represented as `AsyncValue` in the application layer. Only pure UI-local state (form field values, focus, expansion) may live in a custom state class in the presentation layer.
+
 ```dart
 // presentation/providers/project_form_notifier.dart
+// Holds UI-local state only: field values being edited.
+@freezed
+abstract class ProjectFormState with _$ProjectFormState {
+  const factory ProjectFormState({
+    @Default('') String title,
+    @Default('') String description,
+  }) = _ProjectFormState;
+}
+
 @riverpod
 class ProjectFormNotifier extends _$ProjectFormNotifier {
   @override
   ProjectFormState build() => const ProjectFormState();
 
-  void updateTitle(String title) {
-    state = state.copyWith(title: title);
-  }
+  void updateTitle(String title) => state = state.copyWith(title: title);
+  void updateDescription(String value) => state = state.copyWith(description: value);
+}
+```
 
-  Future<void> submit() async {
-    state = state.copyWith(isSubmitting: true);
-    try {
-      final controller = ref.read(projectControllerProvider);
-      await controller.createProject(
-        title: state.title,
-        description: state.description,
-      );
-      state = state.copyWith(isSubmitting: false, isSuccess: true);
-    } catch (e) {
-      state = state.copyWith(isSubmitting: false, error: e.toString());
-    }
+```dart
+// Submission goes through the application layer; its AsyncValue carries
+// loading/error so the form state never duplicates them.
+class SubmitButton extends ConsumerWidget {
+  const SubmitButton({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final submitState = ref.watch(projectSubmitProvider);
+
+    return FilledButton(
+      onPressed: submitState.isLoading
+          ? null
+          : () {
+              final form = ref.read(projectFormNotifierProvider);
+              ref.read(projectSubmitProvider.notifier).submit(
+                    title: form.title,
+                    description: form.description,
+                  );
+            },
+      child: submitState.isLoading
+          ? const CircularProgressIndicator()
+          : const Text('Submit'),
+    );
   }
 }
 ```
@@ -141,9 +170,12 @@ Before submitting presentation code, verify:
 
 ## Verification
 
+Run the checker bundled with this plugin from the Flutter project root. Replace
+`<plugin root>` with the `flutter-riverpod-guardrails` plugin directory — SKILL.md
+shows the resolved absolute path while this skill is active.
+
 ```bash
-# Check for forbidden data layer imports (must return empty)
-grep -r "features/.*/data/.*_repository" lib/features/*/presentation/
+<plugin root>/scripts/check-architecture.sh --scan lib
 ```
 
 ## Related References

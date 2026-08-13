@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ title }}{% endblock %}
+{% block body_class %}lesson-mode{% endblock %}
+
+{% block header_content %}
+  <a class="context-back lesson-back" href="{{ url_for('learning', topic=topic_slug, _anchor='course-' + topic_slug) }}">
+    {{ icon('arrow-left') }} <span class="lesson-back-long">学習一覧に戻る</span><span class="lesson-back-short">戻る</span>
+  </a>
+  <strong class="lesson-context-title">{{ title }}</strong>
+  <button id="sidebar-toggle" class="lesson-list-button" type="button"
+          aria-label="レッスン一覧を開く" aria-controls="lesson-sidebar" aria-expanded="false">
+    レッスン一覧
+  </button>
+{% endblock %}
+
+{% block main %}
+{% if kind == 'diagnostic' %}
+  {% set submit_url = url_for('diagnostic_submit', topic=topic_slug, name=name) %}
+{% else %}
+  {% set submit_url = url_for('lessons_submit', topic=topic_slug, name=name) %}
+{% endif %}
+
+<div class="lesson-shell">
+  {% include "_lesson_sidebar.html" %}
+  <button class="lesson-sidebar-scrim" type="button" data-sidebar-close aria-label="レッスン一覧を閉じる"></button>
+
+  <section class="page lesson-page">
+    <header class="lesson-header">
+      <p class="eyebrow">{{ topic }} · {{ 'Diagnostic' if kind == 'diagnostic' else 'Lesson' }}</p>
+      <h1>{{ title }}</h1>
+      {% if learning_goal_html %}
+        <div class="learning-goal">
+          <span>学習目標</span>
+          <div class="prose">{{ learning_goal_html|safe }}</div>
+        </div>
+      {% endif %}
+      {% if meta_line %}<p class="lesson-meta">{{ meta_line }}</p>{% endif %}
+      <div class="lesson-flow" aria-label="このレッスンの流れ">
+        <span>解説を読む</span><span>課題を解く</span><span>採点を確認</span>
+      </div>
+      {% if graded %}
+        <div class="lesson-grade-summary {{ feedback.state }}">
+          <span class="grade-mark">{{ feedback.mark }}</span>
+          <span><strong>{{ feedback.label }}</strong><small>総合スコア {{ score }}</small></span>
+        </div>
+      {% endif %}
+    </header>
+
+    <form method="post" action="{{ submit_url }}" class="answer-form lvd-form lesson-task-form"
+          data-task-total="{{ task_total }}" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      {% for part in body_parts if part.kind == 'intro' or part.sub_info.kind == 'read-only' %}
+        <section class="learning-section reading-section">
+          <p class="section-label"><strong>読む</strong> 解説</p>
+          <article class="reading-panel prose">
+            {% if part.kind == 'intro' %}
+              {{ render_md(part.content_md)|safe }}
+            {% else %}
+              {{ render_md(part.body_only_md)|safe }}
+            {% endif %}
+          </article>
+        </section>
+      {% endfor %}
+
+      {% if task_total %}
+        <section class="tasks-section" aria-labelledby="tasks-heading">
+          <div class="tasks-heading">
+            <div>
+              <p class="section-label"><strong>解く</strong> 課題</p>
+              <h2 id="tasks-heading">{{ task_total }}つの課題</h2>
+            </div>
+            <span><strong id="completed-task-count">{{ task_total if graded else 0 }}</strong> / {{ task_total }} 回答</span>
+          </div>
+
+          <div class="task-progress" aria-hidden="true">
+            {% for part in body_parts if part.kind == 'part' and part.sub_info.kind != 'read-only' %}
+              <i data-task-progress="{{ loop.index }}" class="{% if graded %}done{% endif %}"></i>
+            {% endfor %}
+          </div>
+
+          <div class="task-stack">
+          {% for part in body_parts if part.kind == 'part' and part.sub_info.kind != 'read-only' %}
+            {% set task_number = loop.index %}
+            <section class="task-panel {% if loop.first or graded %}is-open{% endif %}"
+                     data-task-id="{{ task_number }}" {% if graded %}data-graded="true"{% endif %}>
+              <button class="task-head" type="button" data-task-toggle="{{ task_number }}"
+                      aria-expanded="{{ 'true' if loop.first or graded else 'false' }}"
+                      aria-controls="task-content-{{ task_number }}">
+                <span class="task-title">
+                  <span class="task-number">{{ task_number }}</span>
+                  <span><strong>{{ part.label }}</strong><small>回答して次へ進んでください</small></span>
+                </span>
+                <span class="task-status">
+                  {% if graded %}採点済み{% elif loop.first %}現在{% else %}未回答{% endif %}
+                </span>
+              </button>
+
+              <div class="task-content" id="task-content-{{ task_number }}" {% if not loop.first and not graded %}hidden{% endif %}>
+                <article class="task-prompt prose">
+                  {% if part.sub_info.kind == 'bold-split' %}
+                    {{ render_md(part.sub_info.intro_md)|safe }}
+                  {% elif part.sub_info.kind == 'code-split' %}
+                    {% if part.sub_info.intro_md %}{{ render_md(part.sub_info.intro_md)|safe }}{% endif %}
+                  {% else %}
+                    {{ render_md(part.body_only_md)|safe }}
+                  {% endif %}
+                </article>
+
+                {% if part.hint_html %}
+                  <details class="inline-hint">
+                    <summary>ヒントを見る</summary>
+                    <div class="hint-body prose">{{ part.hint_html|safe }}</div>
+                  </details>
+                {% endif %}
+
+                {% if part.sub_info.kind == 'bold-split' %}
+                  {% for sub in part.sub_info.subs %}
+                    <article class="task-subprompt prose">{{ render_md(sub.content_md)|safe }}</article>
+                    <div class="lvd-answer-slot">
+                      <label class="lvd-slot-head" for="answer-{{ task_number }}-{{ loop.index }}">{{ sub.label }} の回答</label>
+                      <textarea class="lvd-textarea"
+                                id="answer-{{ task_number }}-{{ loop.index }}"
+                                data-part-toplevel="{{ part.label_id }}"
+                                data-part-heading="{{ part.label }}"
+                                data-part-sub="{{ sub.label_id }}"
+                                data-part-sub-heading="{{ sub.label }}"
+                                data-style="qmark"
+                                data-min-height="112"
+                                rows="4"
+                                spellcheck="false"
+                                placeholder="回答を入力してください">{{ answer_parts.get(part.label_id, {}).get(sub.label_id, '') }}</textarea>
+                      <p class="field-error" role="alert" hidden>回答を入力してください。</p>
+                    </div>
+                  {% endfor %}
+
+                {% elif part.sub_info.kind == 'code-split' %}
+                  {% for sub in part.sub_info.subs %}
+                    <article class="task-subprompt prose">{{ render_md(sub.code_md)|safe }}</article>
+                    <div class="lvd-answer-slot code-answer-slot">
+                      <header class="code-editor-head"><span>{{ sub.label }} のコード</span><small>⌘ ] / Ctrl ] でインデント</small></header>
+                      <label class="sr-only" for="answer-{{ task_number }}-{{ loop.index }}">{{ sub.label }} のコード</label>
+                      <textarea class="lvd-textarea code-input"
+                                id="answer-{{ task_number }}-{{ loop.index }}"
+                                data-part-toplevel="{{ part.label_id }}"
+                                data-part-heading="{{ part.label }}"
+                                data-part-sub="{{ sub.label_id }}"
+                                data-part-sub-heading="{{ sub.label }}"
+                                data-style="code"
+                                data-min-height="160"
+                                rows="6"
+                                spellcheck="false"
+                                placeholder="コードを入力してください">{{ answer_parts.get(part.label_id, {}).get(sub.label_id, '') }}</textarea>
+                      <p class="field-error" role="alert" hidden>回答を入力してください。</p>
+                    </div>
+                  {% endfor %}
+                  {% if answer_parts.get(part.label_id, {}).get('_flat', '') %}
+                    <div class="lvd-answer-slot">
+                      <label class="lvd-slot-head" for="answer-{{ task_number }}-legacy">以前まとめて書いた回答</label>
+                      <textarea class="lvd-textarea code-input"
+                                id="answer-{{ task_number }}-legacy"
+                                data-part-toplevel="{{ part.label_id }}"
+                                data-part-heading="{{ part.label }}"
+                                data-part-sub="_flat"
+                                data-part-sub-heading="{{ part.label }}"
+                                data-style="flat"
+                                data-optional
+                                data-min-height="140"
+                                rows="6"
+                                spellcheck="false">{{ answer_parts.get(part.label_id, {}).get('_flat', '') }}</textarea>
+                    </div>
+                  {% endif %}
+                  {% if part.sub_info.trailing_md %}
+                    <article class="task-subprompt prose">{{ render_md(part.sub_info.trailing_md)|safe }}</article>
+                  {% endif %}
+
+                {% else %}
+                  <div class="lvd-answer-slot {% if part.answer_style == 'code' %}code-answer-slot{% endif %}">
+                    {% if part.answer_style == 'code' %}
+                      <header class="code-editor-head"><span>コードで回答</span><small>⌘ ] / Ctrl ] でインデント</small></header>
+                      <label class="sr-only" for="answer-{{ task_number }}">コードで回答</label>
+                    {% else %}
+                      <label class="lvd-slot-head" for="answer-{{ task_number }}">回答</label>
+                    {% endif %}
+                    <textarea class="lvd-textarea {% if part.answer_style == 'code' %}code-input{% endif %}"
+                              id="answer-{{ task_number }}"
+                              data-part-toplevel="{{ part.label_id }}"
+                              data-part-heading="{{ part.label }}"
+                              data-part-sub="_flat"
+                              data-part-sub-heading="{{ part.label }}"
+                              data-style="flat"
+                              data-min-height="{{ 160 if part.answer_style == 'code' else 112 }}"
+                              rows="6"
+                              spellcheck="false"
+                              placeholder="{{ 'コードを入力してください' if part.answer_style == 'code' else '回答を入力してください' }}">{{ answer_parts.get(part.label_id, {}).get('_flat', '') }}</textarea>
+                    <p class="field-error" role="alert" hidden>回答を入力してください。</p>
+                  </div>
+                {% endif %}
+
+                {% if not graded %}
+                  <div class="task-actions">
+                    <button class="btn task-save" type="button" data-save-task="{{ task_number }}">一時保存して次へ</button>
+                    <small>この端末に一時保存され、採点時に提出されます。</small>
+                  </div>
+                {% endif %}
+
+                {% if graded and (part.expl_md or part.model_md) %}
+                  <section class="feedback-result" aria-label="課題の解説">
+                    <div class="feedback-status">
+                      <span class="grade-mark" aria-hidden="true">i</span>
+                      <span><strong>解説</strong><small>この課題についてのフィードバック</small></span>
+                    </div>
+                    {% if part.expl_md %}
+                      <article class="feedback-copy prose">{{ render_md(part.expl_md)|safe }}</article>
+                    {% endif %}
+                    {% if part.model_md %}
+                      <details class="model-answer">
+                        <summary>模範解答を見る</summary>
+                        <div class="prose">{{ render_md(part.model_md)|safe }}</div>
+                      </details>
+                    {% endif %}
+                  </section>
+                {% endif %}
+              </div>
+            </section>
+          {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+
+      {% if not graded %}
+        <section class="lesson-submit" aria-labelledby="lesson-submit-title">
+          <div>
+            <strong id="lesson-submit-title">{{ task_total }}つの回答をまとめて採点</strong>
+            <p id="lesson-submit-note">残り{{ task_total }}問に回答すると採点できます。</p>
+          </div>
+          <button type="submit" class="btn btn-primary lvd-submit" disabled>
+            採点へ進む <span class="btn-icon">{{ icon('arrow-right') }}</span>
+          </button>
+        </section>
+
+        <details class="lvd-memo-disclosure" {% if answer_trailing %}open{% endif %}>
+          <summary>メモ・質問を追加する</summary>
+          <textarea class="lvd-memo" id="lesson-memo" name="lvd_memo_placeholder" rows="4" spellcheck="false"
+                    data-min-height="80" placeholder="採点者への補足など">{{ answer_trailing }}</textarea>
+        </details>
+
+        {% include "_lesson_fb.html" %}
+      {% endif %}
+
+      <input type="hidden" name="answer" id="lvd-hidden-answer" value="{{ answer }}">
+    </form>
+
+    {% if graded and grading_html %}
+      <section class="overall-feedback {{ feedback.state }}">
+        <div class="feedback-status">
+          <span class="grade-mark">{{ feedback.mark }}</span>
+          <span><strong>{{ feedback.label }}</strong><small>採点結果と総評</small></span>
+        </div>
+        <article class="prose">{{ grading_html|safe }}</article>
+      </section>
+    {% endif %}
+
+    {% if graded %}
+      <nav class="lesson-complete-nav" aria-label="次の学習">
+        <div>
+          <span>採点完了</span>
+          <strong>{{ feedback.mark }} {{ feedback.label }} · {{ score }}</strong>
+          <p>{% if next_file %}次の課題へ進めます。{% else %}このテーマのレッスン一覧を確認できます。{% endif %}</p>
+        </div>
+        {% if next_file %}
+          <a class="btn btn-primary" href="{% if kind == 'diagnostic' %}{{ url_for('diagnostic_view', topic=topic_slug, name=next_file.name) }}{% else %}{{ url_for('lesson_view', topic=topic_slug, name=next_file.name) }}{% endif %}">
+            次の課題へ <span class="btn-icon">{{ icon('arrow-right') }}</span>
+          </a>
+        {% else %}
+          <a class="btn btn-primary" href="{{ url_for('learning', topic=topic_slug, _anchor='course-' + topic_slug) }}">
+            学習一覧へ <span class="btn-icon">{{ icon('arrow-right') }}</span>
+          </a>
+        {% endif %}
+      </nav>
+    {% endif %}
+  </section>
+</div>
+
+<script>
+(() => {
+  const form = document.querySelector('.lvd-form');
+  if (!form) return;
+  const hidden = form.querySelector('#lvd-hidden-answer');
+  const escapeSlotContent = (content) => content
+    .replaceAll('\\', '\\\\')
+    .replaceAll('<!-- /study-answer -->', '\\M');
+  form.addEventListener('submit', () => {
+    const groups = new Map();
+    form.querySelectorAll('.lvd-textarea').forEach((ta) => {
+      const top = ta.dataset.partToplevel;
+      const heading = ta.dataset.partHeading;
+      const sub = ta.dataset.partSub || '_flat';
+      const subHeading = ta.dataset.partSubHeading || heading;
+      const text = ta.value;
+      if (!groups.has(top)) groups.set(top, { heading, items: [] });
+      groups.get(top).items.push({ sub, subHeading, text });
+    });
+
+    const blocks = [];
+    for (const [top, group] of groups) {
+      const filled = group.items.filter((i) => i.text !== '');
+      if (!filled.length) continue;
+      const body = filled.map((i) =>
+        `<!-- study-answer top="${top}" sub="${i.sub}" top-heading="${encodeURIComponent(group.heading)}" sub-heading="${encodeURIComponent(i.subHeading)}" -->\n${escapeSlotContent(i.text)}\n<!-- /study-answer -->`
+      ).join('\n\n');
+      blocks.push(`### ${group.heading}\n\n${body}`);
+    }
+
+    const memo = form.querySelector('.lvd-memo')?.value || '';
+    if (memo !== '') blocks.push(memo);
+    hidden.value = blocks.join('\n\n');
+  });
+})();
+</script>
+{% endblock %}

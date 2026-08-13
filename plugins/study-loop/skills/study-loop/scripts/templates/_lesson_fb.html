@@ -1,0 +1,31 @@
+{# Shared feedback block. Mounted inside the answer form so it submits together. #}
+{# PROTOTYPE: 現状ではタグ + 自由記述だけ収集 — 後続タスクで FEEDBACK.md 編集と Generator/Critic への流し込みが入る。 #}
+{% from "_icons.html" import icon %}
+<div class="feedback-block">
+  <details class="fb-disclosure">
+    <summary class="fb-summary">
+      <span class="fb-icon">{{ icon('chat') }}</span>
+      <span class="fb-title">この課題にフィードバックを残す</span>
+      <span class="fb-hint muted small">（任意）— Generator/Critic が次回以降の参考にします</span>
+    </summary>
+
+    <div class="fb-body">
+      <fieldset class="fb-tags">
+        <legend class="muted small">気になった点（複数選択可）</legend>
+        <label><input type="checkbox" name="fb_tags" value="analogy-far-domain"> アナロジーのドメインが遠い</label>
+        <label><input type="checkbox" name="fb_tags" value="analogy-mismatch"> アナロジーが概念とズレている</label>
+        <label><input type="checkbox" name="fb_tags" value="analogy-too-complex"> 例えが複雑すぎる</label>
+        <label><input type="checkbox" name="fb_tags" value="analogy-overused"> 同じアナロジーの使い回し</label>
+        <label><input type="checkbox" name="fb_tags" value="example-unclear"> 提示された例がピンと来ない</label>
+        <label><input type="checkbox" name="fb_tags" value="explanation-length-off"> 解説の長さが合わない</label>
+        <label><input type="checkbox" name="fb_tags" value="pace-off"> 難易度・ペースが合わない</label>
+      </fieldset>
+
+      <label class="fb-freetext">
+        <span class="muted small">自由記述（どんなアナロジーなら分かりやすかったか、など）</span>
+        <textarea name="fb_note" rows="3" spellcheck="false"
+                  placeholder="例: 「TypeScript の型をレシピで例えるより、API クエリのバリデーションで例えてくれた方がピンと来る」"></textarea>
+      </label>
+    </div>
+  </details>
+</div>

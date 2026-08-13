@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}ホーム{% endblock %}
+
+{% block main %}
+<section class="page home-page">
+  <p class="eyebrow reveal">今日の学習</p>
+  <h1 class="reveal">続きから始める</h1>
+  <p class="home-lede reveal">前回の学習内容と進捗を確認して再開できます。</p>
+
+  {% if resume %}
+    <div class="resume-bezel reveal">
+      <section class="home-resume-card">
+        <div class="resume-copy">
+          <p class="lesson-kicker">
+            <span>{{ '診断' if resume.resume_kind == 'diagnostic' else 'レッスン' }}</span>
+            {{ resume.topic }}{% if resume.active_stage %} · Stage {{ resume.active_stage.index }}{% endif %}
+          </p>
+          <h2>{{ resume.resume_title }}</h2>
+          {% if resume.success_caption %}<p class="resume-goal">{{ resume.success_caption }}</p>{% endif %}
+          <p class="resume-meta">最終更新 {{ resume.last_updated }}</p>
+        </div>
+        <aside class="resume-panel">
+          <div>
+            <small>{% if resume.active_stage %}Stage {{ resume.active_stage.index }} の進捗{% else %}学習の進捗{% endif %}</small>
+            <strong>{{ resume.done }} / {{ resume.total }}</strong>
+            <p>{% if resume.total %}全{{ resume.total }}件中{{ resume.done }}件を完了しています。{% else %}最初の課題を準備しています。{% endif %}</p>
+          </div>
+          <a class="btn btn-primary" href="{{ resume.resume_url }}">学習を再開 <span class="btn-icon">{{ icon('arrow-right') }}</span></a>
+        </aside>
+      </section>
+    </div>
+
+    <div class="section-heading home-section-heading reveal">
+      <h2>最近の記録</h2>
+    </div>
+    <a class="recent-session reveal" href="{{ resume.library_url }}">
+      <div class="recent-progress">
+        <div class="progress-heading">
+          <div>
+            <h3>{% if resume.active_stage %}Stage {{ resume.active_stage.index }} · {{ resume.active_stage.name }}{% else %}{{ resume.topic }}{% endif %}</h3>
+            <p>{{ resume.success_caption or '学習内容と進捗を確認できます。' }}</p>
+          </div>
+          <strong>{{ resume.done }}/{{ resume.total }}</strong>
+        </div>
+        <div class="track" aria-label="進捗 {{ resume.pct }}%"><i style="--progress: {{ resume.pct }}%"></i></div>
+        <div class="progress-note"><span>{{ resume.pct }}% 完了</span><span>残り {{ [resume.total - resume.done, 0]|max }}件</span></div>
+      </div>
+      <div class="recent-score">
+        <span class="score-mark">{{ icon('graded') }}</span>
+        <div>
+          <strong>{{ resume.latest_score or '—' }}</strong>
+          <small>{{ resume.latest_scored_title or '採点結果はまだありません' }}</small>
+        </div>
+      </div>
+      <footer><span>レッスン一覧と進捗を見る</span>{{ icon('arrow-right') }}</footer>
+    </a>
+  {% else %}
+    <section class="empty home-empty reveal">
+      <span class="empty-mark">{{ icon('feather') }}</span>
+      <h2>最初の学習を始める</h2>
+      <p>学びたい内容をチャットで確認し、診断を作成します。</p>
+      <a class="btn btn-primary" href="{{ url_for('new_learning') }}">新しい学習 <span class="btn-icon">{{ icon('arrow-right') }}</span></a>
+    </section>
+  {% endif %}
+
+  <a class="new-learning-link reveal" href="{{ url_for('new_learning') }}">
+    <span><strong>新しい学習を始める</strong><small>別のテーマについて学習目標を設定します。</small></span>
+    {{ icon('arrow-right') }}
+  </a>
+</section>
+{% endblock %}

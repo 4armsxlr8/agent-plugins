@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}学習一覧{% endblock %}
+
+{% block main %}
+<section class="page learning-page">
+  <p class="eyebrow reveal">Learning</p>
+  <h1 class="reveal">学習一覧</h1>
+  <p class="home-lede reveal">テーマを選び、レッスンまたは診断を開きます。</p>
+
+  {% if sessions %}
+    <div class="course-list">
+      {% for session in sessions %}
+        <details class="course-card reveal" id="course-{{ session.slug }}"
+                 {% if session.slug == selected_topic or (not selected_topic and loop.first) %}open{% endif %}
+                 style="--i: {{ loop.index0 }}">
+          <summary>
+            <span class="course-summary">
+              <span class="course-mark">{{ session.topic[:1] }}</span>
+              <span class="course-copy">
+                <strong>{{ session.topic }}</strong>
+                <small>{{ session.success_caption or '学習目標を確認できます。' }}</small>
+              </span>
+            </span>
+            <span class="course-side">
+              <span class="course-progress">
+                {% if session.active_stage %}Stage {{ session.active_stage.index }} · {% endif %}
+                <strong>{{ session.done }} / {{ session.total }}</strong>
+              </span>
+              <span class="course-chevron" aria-hidden="true"></span>
+            </span>
+          </summary>
+
+          <div class="course-lessons">
+            {% if session.diagnostic %}
+              <p class="course-section-label">診断</p>
+              {% for item in session.diagnostic %}
+                <a class="lesson-row {% if session.resume_kind == 'diagnostic' and item.name == session.resume_name %}current{% endif %}"
+                   href="{{ url_for('diagnostic_view', topic=session.slug, name=item.name) }}">
+                  <span class="lesson-index">{{ "%02d"|format(loop.index) }}</span>
+                  <span><strong>{{ item.title }}</strong></span>
+                  <span class="lesson-state {% if item.graded %}done{% endif %}">
+                    {% if item.graded %}{{ icon('graded') }} 完了{% elif session.resume_kind == 'diagnostic' and item.name == session.resume_name %}続きから{% else %}未完了{% endif %}
+                  </span>
+                </a>
+              {% endfor %}
+            {% endif %}
+
+            {% if session.lessons %}
+              <p class="course-section-label">レッスン</p>
+              {% for item in session.lessons %}
+                <a class="lesson-row {% if session.resume_kind == 'lesson' and item.name == session.resume_name %}current{% endif %}"
+                   href="{{ url_for('lesson_view', topic=session.slug, name=item.name) }}">
+                  <span class="lesson-index">{{ "%03d"|format(loop.index) }}</span>
+                  <span><strong>{{ item.title }}</strong></span>
+                  <span class="lesson-state {% if item.graded %}done{% endif %}">
+                    {% if item.graded %}{{ icon('graded') }} 完了{% elif session.resume_kind == 'lesson' and item.name == session.resume_name %}続きから{% else %}未着手{% endif %}
+                  </span>
+                </a>
+              {% endfor %}
+            {% else %}
+              <div class="course-empty">
+                <p>レッスンはまだ作成されていません。</p>
+                <a href="{{ session.resume_url }}">現在の学習を確認する {{ icon('arrow-right') }}</a>
+              </div>
+            {% endif %}
+
+            <nav class="course-support" aria-label="{{ session.topic }}の補助資料">
+              <a href="{{ url_for('curriculum', topic=session.slug) }}">カリキュラム</a>
+              {% if session.has_glossary %}<a href="{{ url_for('glossary', topic=session.slug) }}">用語集</a>{% endif %}
+              {% if session.has_resources %}<a href="{{ url_for('resources', topic=session.slug) }}">資料室</a>{% endif %}
+            </nav>
+
+            <details class="course-record">
+              <summary>学習記録の詳細</summary>
+              <article class="prose">{{ session.readme_html|safe }}</article>
+            </details>
+
+            {% if session.ended in ('', '-') %}
+              <section class="course-controls codex-controls" data-topic="{{ session.slug }}">
+                <div>
+                  <strong>学習を進める</strong>
+                  <span class="status-pill" data-codex-status>Codex を確認中</span>
+                </div>
+                <div class="course-control-actions">
+                  <button class="btn" type="button" data-start-action="spaced_review" data-topic="{{ session.slug }}">復習課題を作る</button>
+                  <button class="btn" type="button" data-start-action="session_end" data-topic="{{ session.slug }}">セッションを終了する</button>
+                </div>
+                <p class="field-error" data-job-error></p>
+              </section>
+            {% endif %}
+          </div>
+        </details>
+      {% endfor %}
+    </div>
+  {% else %}
+    <section class="empty reveal">
+      <span class="empty-mark">{{ icon('feather') }}</span>
+      <h2>学習はまだありません</h2>
+      <p>新しい学習を始めると、ここからテーマとレッスンを選べます。</p>
+      <a class="btn btn-primary" href="{{ url_for('new_learning') }}">新しい学習 <span class="btn-icon">{{ icon('arrow-right') }}</span></a>
+    </section>
+  {% endif %}
+</section>
+{% endblock %}

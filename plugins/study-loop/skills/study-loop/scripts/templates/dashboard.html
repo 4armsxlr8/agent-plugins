@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ topic }} — Dashboard{% endblock %}
+
+{% block topnav %}
+  <a href="{{ url_for('index') }}">{{ icon('arrow-left') }} 一覧</a>
+  <a href="{{ url_for('curriculum', topic=topic_slug) }}">{{ icon('roadmap') }} カリキュラム</a>
+  {% if has_glossary %}
+    <a href="{{ url_for('glossary', topic=topic_slug) }}">{{ icon('note') }} 用語集</a>
+  {% endif %}
+  {% if has_resources %}
+    <a href="{{ url_for('resources', topic=topic_slug) }}">{{ icon('file') }} リソース</a>
+  {% endif %}
+{% endblock %}
+
+{% block main %}
+<section class="page">
+  <header class="page-header reveal">
+    <h1>{{ topic }}</h1>
+    <div class="header-meta">
+      {% if headers.Stage and headers.Stage != '-' %}
+        <span class="chip">Stage: {{ headers.Stage }}</span>
+      {% endif %}
+      {% if headers['Current Level'] and headers['Current Level'] != '-' %}
+        <span class="chip">Level: {{ headers['Current Level'] }} &rarr; {{ headers['Target Level'] }}</span>
+      {% endif %}
+      {% if headers.Confidence and headers.Confidence != '-' %}
+        <span class="chip">Confidence: {{ headers.Confidence }}</span>
+      {% endif %}
+      {% if headers['Retention Interval'] %}
+        <span class="chip">保持期間: {{ headers['Retention Interval'] }}</span>
+      {% endif %}
+    </div>
+  </header>
+
+  {% if mission_html %}
+  <section class="card reveal">
+    <h2>Mission</h2>
+    <article class="prose">{{ mission_html|safe }}</article>
+  </section>
+  {% endif %}
+
+  <div class="dashboard-grid">
+    <section class="card reveal" style="--i: 0">
+      <h2>進捗</h2>
+      {% if progress %}
+        {% for st in progress %}
+          <div class="progress-row">
+            <div class="progress-label">
+              <span>Stage {{ st.index }} — {{ st.name }}</span>
+              <span class="progress-counter">{{ st.done }} / {{ st.total }}</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-bar-fill" style="--p: {{ st.pct / 100 }};"></div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="muted">まだ進捗データがありません。Claude Code でカリキュラムを生成してください。</p>
+      {% endif %}
+    </section>
+
+    <section class="card reveal" style="--i: 1">
+      <h2>Profile</h2>
+      <div class="profile-grid">
+        <div>
+          <h3 class="h3-strong">{{ icon('trend') }} Strong</h3>
+          {% if profile.strong %}
+            <ul class="tag-list">
+              {% for t in profile.strong %}<li class="tag tag-strong">{{ t }}</li>{% endfor %}
+            </ul>
+          {% else %}
+            <p class="muted">まだなし</p>
+          {% endif %}
+        </div>
+        <div>
+          <h3 class="h3-weak">{{ icon('target') }} Weak</h3>
+          {% if profile.weak %}
+            <ul class="tag-list">
+              {% for t in profile.weak %}<li class="tag tag-weak">{{ t }}</li>{% endfor %}
+            </ul>
+          {% else %}
+            <p class="muted">まだなし</p>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card codex-controls" data-topic="{{ topic_slug }}">
+    <div class="section-heading"><h2>学習を進める</h2><span class="status-pill" data-codex-status>Codex を確認中</span></div>
+    <p class="muted">Codex を使う操作は、ここで明示的に選んだときだけ開始します。</p>
+    <div class="answer-actions">
+      <button class="btn" data-start-action="spaced_review" data-topic="{{ topic_slug }}">復習課題を作る</button>
+      <button class="btn" data-start-action="session_end" data-topic="{{ topic_slug }}">セッションを終了する</button>
+      <a class="btn" href="{{ url_for('curriculum', topic=topic_slug) }}">カリキュラムを確認</a>
+    </div>
+    <p class="muted" data-job-error></p>
+  </section>
+
+  <section class="card reveal">
+    <h2>診断 (Diagnostic)</h2>
+    {% if diagnostic %}
+      <ul class="file-list">
+        {% for f in diagnostic %}
+          <li class="file-item {% if f.graded %}graded{% endif %}">
+            <a href="{{ url_for('diagnostic_view', topic=topic_slug, name=f.name) }}">
+              <span class="file-status {% if f.graded %}is-graded{% else %}is-pending{% endif %}">{{ icon('graded' if f.graded else 'ungraded') }}</span>
+              <span class="file-title">{{ f.title }}</span>
+              <span class="file-chevron">{{ icon('caret-right') }}</span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">診断問題はまだ生成されていません。</p>
+    {% endif %}
+  </section>
+
+  <section class="card reveal">
+    <h2>Lessons</h2>
+    {% if lessons %}
+      <ul class="file-list">
+        {% for f in lessons %}
+          <li class="file-item {% if f.graded %}graded{% endif %}">
+            <a href="{{ url_for('lesson_view', topic=topic_slug, name=f.name) }}">
+              <span class="file-status {% if f.graded %}is-graded{% else %}is-pending{% endif %}">{{ icon('graded' if f.graded else 'ungraded') }}</span>
+              <span class="file-title">{{ f.title }}</span>
+              <span class="file-chevron">{{ icon('caret-right') }}</span>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">レッスンファイルはまだ生成されていません。</p>
+    {% endif %}
+  </section>
+
+  <details class="extras-disclosure reveal">
+    <summary>README.md（raw view）</summary>
+    <article class="prose">{{ readme_html|safe }}</article>
+  </details>
+</section>
+{% endblock %}

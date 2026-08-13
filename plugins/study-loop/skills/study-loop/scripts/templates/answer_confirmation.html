@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}回答の確認{% endblock %}
+{% block topnav %}<a href="{{ back_url }}">回答を編集</a>{% endblock %}
+{% block main %}
+<section class="page page-narrow">
+  <header class="page-header"><span class="index-kicker">Answer saved</span><h1>回答を保存しました</h1><p>次に、自分の考えを一言で振り返ってから採点を始められます。</p></header>
+  <article class="card prose"><h2>保存した回答</h2><pre>{{ answer }}</pre>{% if feedback_tags or feedback_note %}<h3>採点者への補足</h3>{% if feedback_tags %}<p>{{ feedback_tags|join(', ') }}</p>{% endif %}{% if feedback_note %}<p>{{ feedback_note }}</p>{% endif %}{% endif %}</article>
+  {% if graded %}
+    <p class="card">この課題はすでに採点済みです。<a href="{{ back_url }}">課題に戻る</a></p>
+  {% else %}
+    <label class="card self-explanation">なぜその答えにしたか（任意）<textarea rows="4" maxlength="4000" data-self-explanation placeholder="理由や迷った点を書いてください"></textarea></label>
+    <div class="answer-actions">
+      <a class="btn" href="{{ back_url }}">回答を編集する</a>
+      <button class="btn btn-primary" data-start-action="{{ 'diagnostic_grade' if kind == 'diagnostic' else 'lesson_grade' }}" data-confirmation-token="{{ confirmation_token }}">Codex で採点する</button>
+      <a class="btn" href="{{ back_url }}">Claude Code で手動採点する</a>
+    </div>
+    <p class="muted" data-job-error></p>
+  {% endif %}
+</section>
+{% endblock %}

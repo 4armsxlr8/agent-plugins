@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Codex の処理{% endblock %}
+{% block main %}
+<section class="page page-narrow" data-job-id="{{ job.id }}" data-topic="{{ job.topic }}">
+  <header class="page-header"><span class="index-kicker">Codex</span><h1>学習を進めています</h1><p data-job-phase>{{ job.phase }}</p></header>
+  <section class="card job-card"><span class="status-pill" data-job-status>{{ job.status }}</span><p data-job-message>{{ job.message }}</p><p class="muted" data-job-error>{{ job.error or '' }}</p>
+    <div data-job-result hidden><h2>完了</h2><p data-job-summary></p><a data-job-result-link class="btn">成果物を開く</a></div>
+    <div data-diagnostic-decision hidden><h2>診断結果を確認する</h2><p>調整したい点があれば書き、カリキュラムの作成を始めます。</p><textarea data-diagnostic-adjustment rows="3" maxlength="4000" placeholder="例: 基礎から始めたい"></textarea><button class="btn btn-primary" data-accept-diagnostic>診断を受け入れてカリキュラムを作る</button></div>
+    <div data-lesson-decision hidden><h2>次の学習を選ぶ</h2><p>同じ課題を別の切り口でやり直すか、次の課題へ進むかを選べます。</p><button class="btn" data-lesson-resolution="retry">別の切り口でやり直す</button><button class="btn btn-primary" data-lesson-resolution="continue">次の課題へ進む</button></div>
+    <form data-job-input hidden><div data-job-questions></div><button class="btn btn-primary">回答を送る</button></form>
+    <div data-job-approval hidden><p>Codex がこの1回だけの承認を求めています。</p><dl data-approval-details><dt>理由</dt><dd data-detail-reason></dd><dt>コマンド</dt><dd data-detail-command></dd><dt>作業場所</dt><dd data-detail-cwd></dd><dt>通信先</dt><dd data-detail-network></dd><dt>対象パス</dt><dd data-detail-paths></dd><dt>追加権限</dt><dd data-detail-permissions></dd></dl><button class="btn" data-approval="decline">拒否</button><button class="btn btn-primary" data-approval="accept">今回だけ許可</button><button class="btn" data-approval="cancel">処理中止</button></div>
+    <button class="btn" data-cancel-job>処理をキャンセル</button>
+  </section>
+</section>
+{% endblock %}

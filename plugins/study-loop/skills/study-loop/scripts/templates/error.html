@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ code }} {{ name }}{% endblock %}
+
+{% block topnav %}
+  <a href="{{ url_for('index') }}">{{ icon('arrow-left') }} セッション一覧へ</a>
+{% endblock %}
+
+{% block main %}
+<section class="page page-narrow error-page">
+  <span class="error-mark">{{ icon('feather') }}</span>
+  <div class="error-code">Error {{ code }}</div>
+  <h1>{{ message }}</h1>
+  <p>{{ detail }}</p>
+  <a class="btn btn-primary" href="{{ url_for('index') }}">セッション一覧に戻る <span class="btn-icon">{{ icon('arrow-right') }}</span></a>
+</section>
+{% endblock %}

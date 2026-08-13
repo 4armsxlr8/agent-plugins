@@ -1,0 +1,50 @@
+{# 共通インライン SVG アイコン（Phosphor 系の太めモノライン、currentColor 追従）。
+   emoji を一切使わず、ここから {{ icon('name') }} で呼び出す。
+   既定 stroke-width 1.75 / 24x24 / round caps。 #}
+{%- macro icon(name, cls='') -%}
+<svg class="ic {{ cls }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+{%- if name == 'feather' -%}
+<path d="M19 5C11.5 5 5 11.5 5 19c7.5 0 14-6.5 14-14Z"/><path d="M17.5 6.5 8 16"/><path d="M14 6.5l-2 3M10 10.5l-2.2 3.5"/>
+{%- elif name == 'list' -%}
+<path d="M4 6h16M4 12h16M4 18h16"/>
+{%- elif name == 'roadmap' -%}
+<path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>
+{%- elif name == 'home' -%}
+<path d="M4 11 12 4l8 7"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9"/><path d="M10 20v-5h4v5"/>
+{%- elif name == 'graded' -%}
+<path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z"/><path d="M8.4 12.2l2.4 2.4 4.8-5.2"/>
+{%- elif name == 'ungraded' -%}
+<path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z" stroke-dasharray="2.2 3"/>
+{%- elif name == 'pencil' -%}
+<path d="M5 19l1-4.2L15.5 5.3a1.5 1.5 0 0 1 2.1 0l1.1 1.1a1.5 1.5 0 0 1 0 2.1L9.2 18 5 19Z"/><path d="M14 7l3 3"/>
+{%- elif name == 'bulb' -%}
+<path d="M12 3a6 6 0 0 0-3.8 10.7c.8.7 1.3 1.5 1.3 2.3h5c0-.8.5-1.6 1.3-2.3A6 6 0 0 0 12 3Z"/><path d="M9.5 19h5M10.5 21.5h3"/>
+{%- elif name == 'note' -%}
+<path d="M6 4h8.5L18 7.5V19a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"/><path d="M14 4v4h4"/><path d="M8.5 12h6M8.5 15.5h3.5"/>
+{%- elif name == 'chat' -%}
+<path d="M5 4h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9.5L5 19.5V5a1 1 0 0 1 1-1Z"/><path d="M8.5 9h7M8.5 12h4"/>
+{%- elif name == 'target' -%}
+<path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z"/><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/><path d="M12 12h.01"/>
+{%- elif name == 'trend' -%}
+<path d="M4 16l5-5 3.2 3.2L20 7"/><path d="M15.5 7H20v4.5"/>
+{%- elif name == 'eye' -%}
+<path d="M3 12s3.6-6.5 9-6.5S21 12 21 12s-3.6 6.5-9 6.5S3 12 3 12Z"/><path d="M12 14.6a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2Z"/>
+{%- elif name == 'file' -%}
+<path d="M7 3h7l4 4v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M14 3v4h4"/><path d="M9 12.5h6M9 16h4"/>
+{%- elif name == 'contrast' -%}
+<path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Z"/><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" stroke="none"/>
+{%- elif name == 'caret-right' -%}
+<path d="M9.5 6l6 6-6 6"/>
+{%- elif name == 'arrow-left' -%}
+<path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/>
+{%- elif name == 'arrow-right' -%}
+<path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>
+{%- elif name == 'close' -%}
+<path d="M6 6l12 12"/><path d="M18 6 6 18"/>
+{%- elif name == 'arrow-up-right' -%}
+<path d="M7 17 17 7"/><path d="M8 7h9v9"/>
+{%- elif name == 'corner-up-left' -%}
+<path d="M9 7 4 12l5 5"/><path d="M4 12h9a6 6 0 0 1 6 6v1"/>
+{%- endif -%}
+</svg>
+{%- endmacro -%}

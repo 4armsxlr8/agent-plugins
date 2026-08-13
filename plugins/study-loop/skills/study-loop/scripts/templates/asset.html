@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}{{ page_title if asset_key == 'glossary' else topic }} — {{ topic if asset_key == 'glossary' else kicker }}{% endblock %}
+{% block body_class %}{% if asset_key == 'glossary' %}support-mode{% endif %}{% endblock %}
+
+{% block topnav %}
+  {% if asset_key != 'glossary' %}
+    <a href="{{ url_for('learning', topic=topic_slug, _anchor='course-' + topic_slug) }}">{{ icon('arrow-left') }} {{ topic }}</a>
+    <a href="{{ url_for('curriculum', topic=topic_slug) }}">{{ icon('roadmap') }} カリキュラム</a>
+  {% endif %}
+{% endblock %}
+
+{% block header_content %}
+  {% if asset_key == 'glossary' %}
+    <a class="context-back support-back" href="{{ return_url }}">
+      {{ icon('arrow-left') }} <span>戻る</span>
+    </a>
+    <strong class="support-context-title">{{ page_title }}</strong>
+  {% else %}
+    {{ super() }}
+  {% endif %}
+{% endblock %}
+
+{% block main %}
+<section class="page page-narrow">
+  <header class="page-header reveal">
+    <span class="index-kicker">{{ icon(kicker_icon) }} {{ topic if asset_key == 'glossary' else kicker }}</span>
+    <h1>{{ page_title if asset_key == 'glossary' else topic }}</h1>
+  </header>
+  <article class="prose reveal">
+    {{ asset_html|safe }}
+  </article>
+</section>
+{% endblock %}

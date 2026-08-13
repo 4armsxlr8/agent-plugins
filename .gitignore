@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# OS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Study Loop (the plugin's web server bundles a venv when used locally)
+plugins/study-loop/skills/study-loop/scripts/.venv/
+plugins/study-loop/skills/study-loop/scripts/.study-server.pid
+plugins/study-loop/skills/study-loop/scripts/.study-server.meta
+plugins/study-loop/skills/study-loop/scripts/.study-server.log
+
+# Study Loop user sessions (never commit personal learning data)
+.study/

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}カリキュラム — {{ topic }}{% endblock %}
+{% block body_class %}support-mode{% endblock %}
+
+{% block header_content %}
+  <a class="context-back support-back" href="{{ return_url }}">
+    {{ icon('arrow-left') }} <span>戻る</span>
+  </a>
+  <strong class="support-context-title">カリキュラム</strong>
+{% endblock %}
+
+{% block main %}
+<section class="page page-narrow">
+  <header class="page-header reveal">
+    <span class="index-kicker">{{ icon('roadmap') }} {{ topic }}</span>
+    <h1>カリキュラム</h1>
+  </header>
+  <article class="prose curriculum reveal">
+    {{ curriculum_html|safe }}
+  </article>
+  <section class="card codex-controls" data-topic="{{ topic_slug }}">
+    <h2>カリキュラムの確認</h2>
+    <p class="muted">内容を採用するか、修正したい点を伝えてください。</p>
+    <div class="answer-actions">
+      <button class="btn btn-primary" data-start-action="curriculum_accept" data-topic="{{ topic_slug }}">この内容で最初の課題を作る</button>
+    </div>
+    <label>修正したいこと<textarea data-curriculum-feedback rows="3" maxlength="4000" placeholder="例: 仕事で使う範囲を優先したい"></textarea></label>
+    <button class="btn" data-revise-curriculum data-topic="{{ topic_slug }}">Codex に修正を依頼する</button>
+    <p class="muted" data-job-error></p>
+  </section>
+</section>
+{% endblock %}

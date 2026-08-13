@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}新しい学習{% endblock %}
+{% block body_class %}setup-mode{% endblock %}
+
+{% block header_content %}
+  <a class="context-back" href="{{ url_for('index') }}">{{ icon('arrow-left') }} <span>戻る</span></a>
+  <div class="setup-context">
+    <strong>新しい学習</strong>
+    <span id="setup-progress">質問 1 / 5</span>
+  </div>
+{% endblock %}
+
+{% block main %}
+<section class="new-learning-screen" data-setup-chat>
+  <form class="setup-chat" id="setup-chat-form" method="post" action="{{ url_for('setup_session') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="topic">
+    <input type="hidden" name="why">
+    <input type="hidden" name="success_criteria">
+    <input type="hidden" name="constraints">
+    <input type="hidden" name="out_of_scope">
+    <input type="hidden" name="retention_interval">
+    <input type="hidden" name="target_level" value="4">
+    <input type="hidden" name="time_budget">
+
+    <div class="setup-thread" id="setup-thread" role="log" aria-live="polite" aria-relevant="additions text">
+      <div class="setup-message assistant">
+        <span class="setup-avatar" aria-hidden="true">{{ icon('feather') }}</span>
+        <div><span class="setup-speaker">Study Loop</span><p>何を学びたいですか？</p></div>
+      </div>
+    </div>
+
+    <div class="setup-dock">
+      <div class="quick-replies" id="setup-quick-replies" aria-label="回答候補"></div>
+      <div class="setup-composer">
+        <label class="sr-only" for="setup-answer">回答</label>
+        <input id="setup-answer" autocomplete="off" placeholder="例: Next.js のデータ取得">
+        <button class="setup-send" type="submit" aria-label="送信">{{ icon('arrow-up-right') }}</button>
+      </div>
+      <p class="field-error" id="setup-error" role="alert" hidden>回答を入力してください。</p>
+    </div>
+  </form>
+</section>
+{% endblock %}

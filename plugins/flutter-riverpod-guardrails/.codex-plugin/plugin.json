@@ -1,0 +1,24 @@
+{
+  "name": "flutter-riverpod-guardrails",
+  "version": "0.1.0",
+  "description": "Flutter + Riverpod プロジェクト向けアーキテクチャ検査と pre-commit lint を束ねる guardrail プラグイン",
+  "author": {
+    "name": "kyouyagenki"
+  },
+  "keywords": ["flutter", "dart", "riverpod", "clean-architecture", "lint", "hooks"],
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "Flutter Riverpod Guardrails",
+    "shortDescription": "Flutter + Riverpod の構成チェック",
+    "longDescription": "Guardrails for Flutter and Riverpod projects, including architecture guidance and lint-oriented workflows.",
+    "developerName": "kyouyagenki",
+    "category": "Coding",
+    "capabilities": ["Read", "Write", "Interactive"],
+    "defaultPrompt": [
+      "Check this Flutter Riverpod architecture."
+    ],
+    "brandColor": "#059669",
+    "screenshots": []
+  }
+}

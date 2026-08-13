@@ -1,0 +1,9 @@
+{
+  "name": "study-loop",
+  "version": "0.1.0",
+  "description": "任意トピックの段階的学習。レベル診断 → 出題 → 採点 → フィードバックのループを回す勉強用スキル",
+  "author": {
+    "name": "kyouyagenki"
+  },
+  "keywords": ["learning", "tutor", "quiz", "rubric", "adaptive", "study"]
+}

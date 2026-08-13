@@ -1,0 +1,23 @@
+{
+  "name": "study-loop",
+  "version": "0.1.0",
+  "description": "任意トピックの段階的学習。レベル診断 → 出題 → 採点 → フィードバックのループを回す勉強用スキル",
+  "author": {
+    "name": "kyouyagenki"
+  },
+  "keywords": ["learning", "tutor", "quiz", "rubric", "adaptive", "study"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Study Loop",
+    "shortDescription": "段階的に学ぶための学習スキル",
+    "longDescription": "Adaptive study workflows for topic diagnosis, quiz generation, grading, and feedback loops.",
+    "developerName": "kyouyagenki",
+    "category": "Education",
+    "capabilities": ["Read", "Write", "Interactive"],
+    "defaultPrompt": [
+      "Teach me a topic step by step."
+    ],
+    "brandColor": "#7C3AED",
+    "screenshots": []
+  }
+}

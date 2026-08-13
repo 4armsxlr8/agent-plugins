@@ -1,0 +1,64 @@
+{% from "_icons.html" import icon %}
+<aside class="lesson-sidebar" id="lesson-sidebar" aria-label="レッスン一覧">
+  <header class="lesson-sidebar-head">
+    <strong>レッスン一覧</strong>
+    <button class="lesson-sidebar-close" type="button" data-sidebar-close aria-label="レッスン一覧を閉じる">
+      {{ icon('close') }}
+    </button>
+  </header>
+
+  <div class="outline-course">
+    <h2>{{ topic }}</h2>
+    <div class="outline-meta">
+      <span>{% if overview and overview.active_stage %}Stage {{ overview.active_stage.index }} · {% endif %}{{ overview.done if overview else 0 }} / {{ overview.total if overview else 0 }}</span>
+      <span>{% if overview and overview.ended not in ('', '-') %}完了{% else %}進行中{% endif %}</span>
+    </div>
+    <div class="outline-progress" aria-label="進捗 {{ overview.pct if overview else 0 }}%">
+      <i style="--progress: {{ overview.pct if overview else 0 }}%"></i>
+    </div>
+  </div>
+
+  <div class="outline-score">
+    <span><small>直近の理解度</small><strong>{{ overview.latest_score if overview and overview.latest_score else '—' }}</strong></span>
+    <small>{{ overview.latest_scored_title if overview and overview.latest_scored_title else '採点結果はまだありません' }}</small>
+  </div>
+
+  {% if sidebar_diagnostic %}
+    <p class="outline-heading">診断</p>
+    <nav class="side-list" aria-label="診断一覧">
+      {% for f in sidebar_diagnostic %}
+        {% set is_current = (kind == 'diagnostic' and f.name == name) %}
+        <a href="{{ url_for('diagnostic_view', topic=topic_slug, name=f.name) }}"
+           class="lesson-row {% if is_current %}current active{% endif %}"
+           {% if is_current %}aria-current="page"{% endif %}>
+          <span class="lesson-index">{{ "%02d"|format(loop.index) }}</span>
+          <span><strong>{{ f.title }}</strong></span>
+          <span class="lesson-state {% if f.graded %}done{% endif %}">{{ icon('graded') if f.graded else '未完了' }}</span>
+        </a>
+      {% endfor %}
+    </nav>
+  {% endif %}
+  {% if sidebar_lessons %}
+    <p class="outline-heading">レッスン一覧</p>
+    <nav class="side-list" aria-label="レッスン一覧">
+      {% for f in sidebar_lessons %}
+        {% set is_current = (kind == 'lessons' and f.name == name) %}
+        <a href="{{ url_for('lesson_view', topic=topic_slug, name=f.name) }}"
+           class="lesson-row {% if is_current %}current active{% endif %}"
+           {% if is_current %}aria-current="page"{% endif %}>
+          <span class="lesson-index">{{ "%03d"|format(loop.index) }}</span>
+          <span><strong>{{ f.title }}</strong></span>
+          <span class="lesson-state {% if f.graded %}done{% endif %}">{% if f.graded %}{{ icon('graded') }}{% elif is_current %}現在{% else %}未着手{% endif %}</span>
+        </a>
+      {% endfor %}
+    </nav>
+  {% endif %}
+
+  <p class="outline-heading">補助資料</p>
+  <nav class="outline-support" aria-label="補助資料">
+    <a href="{{ url_for('learning', topic=topic_slug, _anchor='course-' + topic_slug) }}">学習一覧へ戻る</a>
+    <a href="{{ url_for('curriculum', topic=topic_slug, return_to=request.path) }}">カリキュラム</a>
+    {% if overview and overview.has_glossary %}<a href="{{ url_for('glossary', topic=topic_slug, return_to=request.path) }}">用語集</a>{% endif %}
+    {% if overview and overview.has_resources %}<a href="{{ url_for('resources', topic=topic_slug) }}">資料室</a>{% endif %}
+  </nav>
+</aside>

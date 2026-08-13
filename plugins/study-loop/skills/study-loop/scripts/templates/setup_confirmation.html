@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}開始内容の確認{% endblock %}
+{% block topnav %}<a href="{{ url_for('new_learning') }}">編集</a>{% endblock %}
+{% block main %}
+<section class="page page-narrow">
+  <header class="page-header"><span class="index-kicker">Confirm</span><h1>この内容で始めますか？</h1><p>診断を始める前に、目的と範囲を確認します。</p></header>
+  <article class="card prose setup-summary">
+    <h2>{{ draft.topic }}</h2><h3>Why</h3><p>{{ draft.why }}</p>
+    <h3>Success looks like</h3><ul>{% for item in draft.successCriteria %}<li>{{ item }}</li>{% endfor %}</ul>
+    <h3>Constraints</h3><p>{{ draft.constraints }}</p><h3>Out of scope</h3><p>{{ draft.outOfScope }}</p>
+    <p class="muted">保持期間: {{ draft.retentionInterval }} ／ 目標レベル: {{ draft.targetLevel }} ／ 時間予算: {{ draft.timeBudget }}</p>
+  </article>
+  <div class="answer-actions">
+    <a class="btn" href="{{ url_for('new_learning') }}">編集する</a>
+    <button class="btn btn-primary" data-create-codex-session data-payload='{{ draft|tojson }}'>Codex で診断を始める</button>
+    <form method="post" action="{{ url_for('save_manual_setup') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn" type="submit">保存して Claude Code で続ける</button></form>
+  </div>
+  <p class="muted" data-job-error></p>
+</section>
+{% endblock %}

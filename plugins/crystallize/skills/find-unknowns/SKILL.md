@@ -140,7 +140,7 @@ Explore subagent でコードベースを探索させ、結果を「ユーザー
 2. `docs/crystallize/plans/<task-slug>.md` と `docs/crystallize/plans/<task-slug>/` を担当 worktree へ移動する (plan はこの時点ではまだコミットされていないため、worktree を切っても自動では現れない。`docs/` 配下は追跡対象のパスであり、plan は確定時に削除されるまでの間だけ一時的に履歴に入る)
 3. 各 worktree でセッションを起動する — Orca が使える環境なら orca-cli で worktree を管理下に置いて Claude を起動し、`/plan-implement <plan の絶対パス>` を terminal send で送る。無い環境では、worktree ごとの雛形プロンプトを提示してユーザーに各ターミナルで開いてもらう (対話セッションが必要なため、起動だけは環境の道具に依存する)
 
-以降の対話 (挙動の門・例外の門) は各 worktree のセッションが直接ユーザーと行う。本セッションは配置の完了報告 (worktree 一覧と各セッションの状態) で終了し、司令塔として残らない — 進捗の観察はユーザー側の道具 (Orca があれば cardStatus) が担う。
+以降の対話 (挙動ゲート・例外ゲート) は各 worktree のセッションが直接ユーザーと行う。本セッションは配置の完了報告 (worktree 一覧と各セッションの状態) で終了し、司令塔として残らない — 進捗の観察はユーザー側の道具 (Orca があれば cardStatus) が担う。
 
 プロンプトに plan の要約や補足を膨らませない — 実装に必要な情報が plan の外に漏れ出すと、plan の自己完結性が崩れて二重管理になる。足りない情報に気づいたら plan 側に書き足す。
 

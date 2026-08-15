@@ -26,14 +26,14 @@ Flutter + Riverpod プロジェクトで Clean Architecture のレイヤー分�
 
 ### crystallize — plan駆動開発フロー
 
-対話から確定事項を1つずつ析出させて plan に結晶化し、その plan を機械の門・挙動の門・例外の門の3つに通してからコミットへ結晶化させる、開発フロー一式をまとめたプラグインです。
+対話から確定事項を1つずつ析出させて plan に結晶化し、その plan を機械ゲート・挙動ゲート・例外ゲートの3つに通してからコミットへ結晶化させる、開発フロー一式をまとめたプラグインです。
 
 主な構成要素:
 
 - **`skills/issue-create`** — 会話で出たバグ・思いつき・雑務を、テンプレに沿った GitHub issue として起票します。
 - **`skills/find-unknowns`** — 実装着手前の認識合わせ。unknowns を洗い出してユーザーと潰し、plan を1枚作ります。
 - **`skills/question-evaluator`** — `find-unknowns` がユーザーに出す質問の前提・二択の正当性を、出題側とは別コンテキストで監査します。
-- **`skills/plan-implement`** — plan を受け取り、実装から機械・挙動・例外の3つの門、コミットへの引き継ぎまでを一続きで駆動します。
+- **`skills/plan-implement`** — plan を受け取り、実装から機械・挙動・例外の3つのゲート、コミットへの引き継ぎまでを一続きで駆動します。
 - **`skills/test-generator`** / **`skills/code-generator`** — TDD の red 側と green 側を別サブエージェントに分け、同じエージェントがテストと辻褄合わせの実装を両方書けないようにします。
 - **`skills/diff-review`** — 動作確認が済んだあとの差分から、危険な箇所だけを人間に見せる例外ビューアです。
 - **`skills/html-report`** — 長い散文の報告を自己完結 HTML レポートに整形します。

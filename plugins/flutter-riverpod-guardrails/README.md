@@ -44,18 +44,18 @@ flowchart TD
 
 ## どう動くか
 
-検査の門は2つあります。編集のたびに走るアーキテクチャ検査と、コミット直前の `dart analyze` です。
+検査のゲートは2つあります。編集のたびに走るアーキテクチャ検査と、コミット直前の `dart analyze` です。
 
 ```mermaid
 flowchart TD
-    subgraph gate1[門1 — 編集のたび]
+    subgraph gate1[ゲート1 — 編集のたび]
         A[エージェントが Edit / Write] --> B[PostToolUse hook<br>check-architecture.sh]
         B -->|違反あり| C[違反リストをエージェントに返す]
         C --> D[その場で修正して再編集]
         D --> B
         B -->|違反なし| E[続行]
     end
-    subgraph gate2[門2 — コミット直前]
+    subgraph gate2[ゲート2 — コミット直前]
         F[git commit] --> G[PreToolUse hook<br>dart analyze]
         G -->|error / warning| H[コミットを deny<br>指摘を返す]
         H --> F

@@ -1,6 +1,6 @@
 # flutter-riverpod-guardrails
 
-Flutter + Riverpod プロジェクトの Clean Architecture レイヤー分離を、**AI エージェントがコードを書いた直後に**機械検査する Claude Code / Codex プラグインです。
+Flutter + Riverpod プロジェクトの Clean Architecture レイヤー分離を、**AI エージェントがコードを書いた直後に**機械検査する Claude Code プラグインです。Codex ではスキル部分が利用できます（対応状況は後述）。
 
 ## なぜ作ったか
 
@@ -111,6 +111,21 @@ Claude Code なしで試す場合は、clone してスキャンモードを直�
 ```
 
 lint による恒久化（`import_lint` / `riverpod_lint` の導入・設定）は、同梱の `lint-setup` スキルがセットアップを担当します。
+
+### Codex での対応状況（実測）
+
+Codex CLI は Claude 形式の marketplace を読めるため、インストール自体は同じ流れで通ります:
+
+```bash
+codex plugin marketplace add 4armsxlr8/agent-plugins
+codex plugin add flutter-riverpod-guardrails@agent-plugins
+```
+
+ただし対応範囲に差があります（Codex CLI 0.144 時点の検証結果）:
+
+- **スキルは動きます** — `architecture`（レイヤー規約の知識）と `lint-setup` は Codex のスキルとして読み込まれます
+- **hook の自動検査は Claude Code のみ** — Codex はプラグイン同梱の hooks を配線しないため、編集直後の検査とコミット前の `dart analyze` は発火しません
+- Codex で境界を守りたい場合は、`lint-setup` で `import_lint` / `riverpod_lint` を導入してください。エージェントに依存せず、`dart analyze` のレベルで同じ境界が検査されます（スキャンモードの手動実行も利用できます）
 
 ## テスト
 

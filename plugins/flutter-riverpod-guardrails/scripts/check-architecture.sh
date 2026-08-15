@@ -17,6 +17,10 @@ set -euo pipefail
 
 VIOLATIONS=()
 
+# How many violations to list in the hook feedback. A single generated file can
+# produce hundreds of hits, and dumping all of them floods Claude's context.
+MAX_LISTED_VIOLATIONS=50
+
 # ---------------------------------------------------------------------------
 # Pattern checker
 # ---------------------------------------------------------------------------
@@ -118,11 +122,17 @@ check_file() {
 
 # ---------------------------------------------------------------------------
 # Hook mode: triggered by Claude Code PostToolUse
+#
+# Violations are reported twice on purpose:
+#   systemMessage                       -> shown to the user only
+#   hookSpecificOutput.additionalContext -> the only field Claude actually reads
+#
+# Input that cannot be parsed is ignored silently (fail open).
 # ---------------------------------------------------------------------------
 hook_mode() {
   local input file_path
   input=$(cat)
-  file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
+  file_path=$(jq -r '.tool_input.file_path // empty' <<<"$input" 2>/dev/null) || exit 0
 
   [[ -z "$file_path" ]] && exit 0
 
@@ -130,15 +140,30 @@ hook_mode() {
 
   [[ ${#VIOLATIONS[@]} -eq 0 ]] && exit 0
 
-  # Build feedback message for Claude
-  local msg
+  # Build feedback message, listing at most MAX_LISTED_VIOLATIONS entries.
+  local msg total shown
+  total=${#VIOLATIONS[@]}
+  shown=0
   msg="Architecture Violation Detected:"$'\n'
   for v in "${VIOLATIONS[@]}"; do
+    if [[ $shown -ge $MAX_LISTED_VIOLATIONS ]]; then
+      break
+    fi
     msg+="  - ${v}"$'\n'
+    shown=$((shown + 1))
   done
+  if [[ $total -gt $MAX_LISTED_VIOLATIONS ]]; then
+    msg+="  ... and $((total - MAX_LISTED_VIOLATIONS)) more violations (${total} total)"$'\n'
+  fi
   msg+=$'\n'"Fix these violations to maintain clean architecture compliance."
 
-  jq -n --arg msg "$msg" '{ "continue": true, "systemMessage": $msg }'
+  jq -n --arg msg "$msg" '{
+    systemMessage: $msg,
+    hookSpecificOutput: {
+      hookEventName: "PostToolUse",
+      additionalContext: $msg
+    }
+  }'
 }
 
 # ---------------------------------------------------------------------------

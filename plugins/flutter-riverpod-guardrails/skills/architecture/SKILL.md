@@ -1,5 +1,5 @@
 ---
-name: flutter-riverpod-architecture
+name: architecture
 description: Clean Architecture patterns for Flutter with Riverpod state management. Use when building or reviewing Flutter apps with layered architecture (Domain, Data, Application, Presentation).
 paths: "lib/**/*.dart"
 metadata:
@@ -62,6 +62,7 @@ lib/
 3. **State Management?** -> See `references/application-layer.md`
 4. **Building UI?** -> See `references/presentation-layer.md`
 5. **Widget Patterns?** -> See `references/ui-patterns.md`
+6. **Enforce layer boundaries with lint?** -> See the `lint-setup` skill
 
 ## Gotchas
 

@@ -73,6 +73,10 @@ claude --plugin-dir ./plugins/crystallize
 
 `codex plugin marketplace add 4armsxlr8/agent-plugins` → `codex plugin add crystallize@agent-plugins` でインストール自体は通ります（Codex CLI 0.144 で確認）。ただし各スキルは、サブエージェントへの実装委任・fork コンテキストでの監査など **Claude Code の実行基盤を前提にした手順**を含むため、現状は Claude Code 向けです。Codex ではフローの知識として読み込まれる範囲の利用にとどまり、動作保証はありません。
 
+## 参考にした設計
+
+フローの骨格 — plan を `plans/` に作る → 実装 → レビュー用画面で確認 → plan の内容をそのままコミットメッセージにしてコミットし、plan ファイルを消す — は、[catnose さん（@catnose99）のこのポスト](https://x.com/catnose99/status/2080568062563201436)で紹介されていた開発の進め方が元です。これを参考に自作していた仕組みを、プラグインとして改造しました。
+
 ## tdd スキルの出所
 
 `skills/tdd/` は [mattpocock/skills](https://github.com/mattpocock/skills)（MIT License）の [tdd スキル](https://github.com/mattpocock/skills/tree/main/skills/engineering/tdd)をフォークし、日本語化・改造したものです。

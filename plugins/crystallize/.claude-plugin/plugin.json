@@ -1,0 +1,9 @@
+{
+  "name": "crystallize",
+  "version": "0.1.0",
+  "description": "対話から確定事項を析出させて plan に結晶化し、機械・挙動・例外の3つの門を通してコミットへ結晶化させる plan 駆動開発フロー",
+  "author": {
+    "name": "kyouyagenki"
+  },
+  "keywords": ["plan", "tdd", "workflow", "code-review", "github-issue"]
+}

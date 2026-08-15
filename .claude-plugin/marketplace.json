@@ -1,8 +1,9 @@
 {
   "name": "agent-plugins",
-  "description": "Claude Code / Codex 向けのプラグイン集。flutter-riverpod-guardrails（Flutter + Riverpod アーキテクチャ guardrail）を提供。study-loop（段階的学習ループ）は dev/ で開発中。",
+  "description": "Claude Code / Codex 向けのプラグイン集。flutter-riverpod-guardrails（Flutter + Riverpod アーキテクチャ guardrail）、crystallize（plan駆動開発フロー）を提供。study-loop（段階的学習ループ）は dev/ で開発中。",
   "owner": { "name": "kyouyagenki" },
   "plugins": [
-    { "name": "flutter-riverpod-guardrails", "source": "./plugins/flutter-riverpod-guardrails", "version": "0.1.0", "description": "Flutter + Riverpod 向けアーキテクチャ検査と pre-commit lint" }
+    { "name": "flutter-riverpod-guardrails", "source": "./plugins/flutter-riverpod-guardrails", "version": "0.1.0", "description": "Flutter + Riverpod 向けアーキテクチャ検査と pre-commit lint" },
+    { "name": "crystallize", "source": "./plugins/crystallize", "version": "0.1.0", "description": "対話から確定事項を析出させ plan に結晶化し、3つの門を通してコミットへ結晶化させる plan 駆動開発フロー" }
   ]
 }

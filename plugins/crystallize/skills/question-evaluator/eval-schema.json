@@ -1,0 +1,22 @@
+{
+  "version": "1",
+  "skill": "question-evaluator",
+  "score_field": "quality.overall",
+  "breakdown_keys": [
+    {"key": "premise_grounding", "label": "前提の事実性 (コードベース/Web裏取り)", "threshold": 15, "weight": 35},
+    {"key": "dilemma_validity", "label": "二択の正当性 (両立不能の証明)", "threshold": 15, "weight": 30},
+    {"key": "neutrality", "label": "誘導のなさ・前提の開示", "threshold": 15, "weight": 20},
+    {"key": "option_coverage", "label": "選択肢の網羅 (両立案の欠落等)", "threshold": 15, "weight": 15}
+  ],
+  "extras": {
+    "plan_implementation": "supplemental",
+    "feedback": "required",
+    "passed": "required",
+    "evaluator_skill": "required",
+    "rewrite": "required_when_failed"
+  },
+  "passing_rule": "no_false_premise AND score >= threshold",
+  "ref": "find-unknowns/SKILL.md#質問の関所",
+  "rubric": null,
+  "notes": "基準の正本は find-unknowns §質問の関所 の 3 規則 + 監査項目。SKILL.md §採点観点の定義 はその対応表。検証可能な前提の誤りが確認された質問は score に関わらず passed=false"
+}

@@ -8,6 +8,40 @@ AI エージェントに実装を任せると、コードが出てくる速度�
 
 そこで「人間が全部読んで違反を探す」のをやめて、**エージェントがファイルを保存した瞬間に機械が検査し、違反があればその場でエージェント自身に直させる**構成にしました。ルールは、公開中の自作 iOS アプリ（アニ100）で使っているアーキテクチャ規約をそのまま検査可能な形に落としたものです。
 
+## 前提とするアーキテクチャ
+
+このプラグインは、**feature-first の4レイヤー構成**（パスに `domain / data / application / presentation` を含むディレクトリ構成）を前提に、次の依存ルールを守らせます。この形を採っている・採ろうとしているプロジェクトが導入対象です。
+
+許可される依存の向きはこの図のとおりで、点線が代表的な違反です。
+
+```mermaid
+flowchart TD
+    P[Presentation<br>画面・Widget] --> A[Application<br>Provider・サービス]
+    P --> Dm[Domain<br>エンティティ・純粋 Dart]
+    A --> Dm
+    A --> Dt[Data<br>Repository・永続化]
+    Dt --> Dm
+    P -. ✗ 直接参照禁止 .-> Dt
+    Dm -. ✗ import 禁止 .-> X[Flutter / Riverpod / Firebase / http]
+    linkStyle 5,6 stroke:#cc0000,color:#cc0000
+```
+
+| レイヤー | 依存してよいもの | 禁止の代表例 |
+|---|---|---|
+| Domain | なし（純粋 Dart のみ） | flutter / riverpod / firebase / http / dio の import |
+| Data | Domain | Flutter・Riverpod の import、`BuildContext`、`kIsWeb` の直接参照（コンストラクタ注入で受ける）、インターフェース分離のための abstract class |
+| Application | Domain・Data（`flutter_riverpod` は可） | `package:flutter/` の import、`BuildContext`・`Navigator`・`showDialog`・`ScaffoldMessenger` |
+| Presentation | Application・Domain | Data のリポジトリ直接 import、関数型ウィジェット（`build` 以外の `Widget xxx()` 宣言） |
+
+一部は意見の分かれる規約です。たとえば Data 層の abstract class 禁止は、「Dart のクラスは暗黙のインターフェースを持つので、テストでの差し替えは具象クラス + provider override で足りる」という判断で、個人開発の規模では層の薄さを優先しています。
+
+### 参考にした設計
+
+このレイヤー構成と規約は、次の2つをベースに、自作アプリでの運用に合わせて取捨選択したものです。
+
+- mono さん [Flutterアプリにおける、過不足ない設計の考察🎅](https://medium.com/flutter-jp/architecture-240d3c56b597)
+- Andrea Bizzotto さん [Flutter App Architecture with Riverpod: An Introduction](https://codewithandrea.com/articles/flutter-app-architecture-riverpod-introduction/) のシリーズ
+
 ## どう動くか
 
 検査の門は2つあります。編集のたびに走るアーキテクチャ検査と、コミット直前の `dart analyze` です。
@@ -50,38 +84,6 @@ Violations:
 
 </details>
 
-## 検査ルール
-
-許可される依存の向きはこの図のとおりで、点線が代表的な違反です。
-
-```mermaid
-flowchart TD
-    P[Presentation<br>画面・Widget] --> A[Application<br>Provider・サービス]
-    P --> Dm[Domain<br>エンティティ・純粋 Dart]
-    A --> Dm
-    A --> Dt[Data<br>Repository・永続化]
-    Dt --> Dm
-    P -. ✗ 直接参照禁止 .-> Dt
-    Dm -. ✗ import 禁止 .-> X[Flutter / Riverpod / Firebase / http]
-    linkStyle 5,6 stroke:#cc0000,color:#cc0000
-```
-
-| レイヤー | 依存してよいもの | 禁止の代表例 |
-|---|---|---|
-| Domain | なし（純粋 Dart のみ） | flutter / riverpod / firebase / http / dio の import |
-| Data | Domain | Flutter・Riverpod の import、`BuildContext`、`kIsWeb` の直接参照（コンストラクタ注入で受ける）、インターフェース分離のための abstract class |
-| Application | Domain・Data（`flutter_riverpod` は可） | `package:flutter/` の import、`BuildContext`・`Navigator`・`showDialog`・`ScaffoldMessenger` |
-| Presentation | Application・Domain | Data のリポジトリ直接 import、関数型ウィジェット（`build` 以外の `Widget xxx()` 宣言） |
-
-一部は意見の分かれる規約です。たとえば Data 層の abstract class 禁止は、「Dart のクラスは暗黙のインターフェースを持つので、テストでの差し替えは具象クラス + provider override で足りる」という判断で、個人開発の規模では層の薄さを優先しています。
-
-## 参考にした設計
-
-このレイヤー構成と規約は、次の2つをベースに、自作アプリでの運用に合わせて取捨選択したものです。
-
-- mono さん [Flutterアプリにおける、過不足ない設計の考察🎅](https://medium.com/flutter-jp/architecture-240d3c56b597)
-- Andrea Bizzotto さん [Flutter App Architecture with Riverpod: An Introduction](https://codewithandrea.com/articles/flutter-app-architecture-riverpod-introduction/) のシリーズ
-
 ## 設計上の判断
 
 - **編集直後（PostToolUse）に検査する** — コミット後のレビューで見つかった違反は「指摘 → 文脈の復元 → 修正」のコストがかかりますが、書いた直後ならエージェントがその場で直せます。違反を安く潰せる最速のタイミングに検査を置いています。
@@ -121,5 +123,5 @@ bash plugins/flutter-riverpod-guardrails/tests/hooks_test.sh
 ## 制約と今後
 
 - grep ベースのため、コメント内の import 文などで誤検知・見逃しの可能性があります。厳密な境界は `lint-setup` による lint 設定側で担保する前提です
-- 検査対象はパスに `domain / data / application / presentation` を含むファイルのみです（feature-first のディレクトリ構成を前提としています）
+- 検査対象はパスに `domain / data / application / presentation` を含むファイルのみです（前提とするアーキテクチャの節を参照）
 - 検討中: ルールのプロジェクト別カスタマイズ、誤検知の低減

@@ -8,9 +8,30 @@ AI エージェントに実装を任せると、コードが出てくる速度�
 
 そこで「人間が全部読んで違反を探す」のをやめて、**エージェントがファイルを保存した瞬間に機械が検査し、違反があればその場でエージェント自身に直させる**構成にしました。ルールは、公開中の自作 iOS アプリ（アニ100）で使っているアーキテクチャ規約をそのまま検査可能な形に落としたものです。
 
-## デモ：何が検出されるか
+## どう動くか
 
-違反を仕込んだサンプルに対するスキャン結果（実際の出力）:
+検査の門は2つあります。編集のたびに走るアーキテクチャ検査と、コミット直前の `dart analyze` です。
+
+```mermaid
+flowchart TD
+    subgraph gate1[門1 — 編集のたび]
+        A[エージェントが Edit / Write] --> B[PostToolUse hook<br>check-architecture.sh]
+        B -->|違反あり| C[違反リストをエージェントに返す]
+        C --> D[その場で修正して再編集]
+        D --> B
+        B -->|違反なし| E[続行]
+    end
+    subgraph gate2[門2 — コミット直前]
+        F[git commit] --> G[PreToolUse hook<br>dart analyze]
+        G -->|error / warning| H[コミットを deny<br>指摘を返す]
+        H --> F
+        G -->|クリーン| I[コミット成立]
+    end
+    E -.-> F
+```
+
+<details>
+<summary>実際の検出出力を見る（違反を仕込んだサンプルへのスキャン結果）</summary>
 
 ```
 $ ./scripts/check-architecture.sh --scan demo/lib
@@ -27,9 +48,23 @@ Violations:
   - [features/home/presentation/home_view.dart:7] Presentation: function-style widget prohibited — extract to a class extending StatelessWidget/StatefulWidget (Widget Classes NOT Functions)
 ```
 
-Claude Code の hook として動くときは、この内容が編集直後のエージェントにフィードバックされ、エージェントはそのまま修正に入ります。あわせて `git commit` の直前には `dart analyze` が走り、error / warning が残っているコミットはブロックされます。
+</details>
 
 ## 検査ルール
+
+許可される依存の向きはこの図のとおりで、点線が代表的な違反です。
+
+```mermaid
+flowchart TD
+    P[Presentation<br>画面・Widget] --> A[Application<br>Provider・サービス]
+    P --> Dm[Domain<br>エンティティ・純粋 Dart]
+    A --> Dm
+    A --> Dt[Data<br>Repository・永続化]
+    Dt --> Dm
+    P -. ✗ 直接参照禁止 .-> Dt
+    Dm -. ✗ import 禁止 .-> X[Flutter / Riverpod / Firebase / http]
+    linkStyle 5,6 stroke:#cc0000,color:#cc0000
+```
 
 | レイヤー | 依存してよいもの | 禁止の代表例 |
 |---|---|---|
@@ -39,6 +74,13 @@ Claude Code の hook として動くときは、この内容が編集直後の�
 | Presentation | Application・Domain | Data のリポジトリ直接 import、関数型ウィジェット（`build` 以外の `Widget xxx()` 宣言） |
 
 一部は意見の分かれる規約です。たとえば Data 層の abstract class 禁止は、「Dart のクラスは暗黙のインターフェースを持つので、テストでの差し替えは具象クラス + provider override で足りる」という判断で、個人開発の規模では層の薄さを優先しています。
+
+## 参考にした設計
+
+このレイヤー構成と規約は、次の2つをベースに、自作アプリでの運用に合わせて取捨選択したものです。
+
+- mono さん [Flutterアプリにおける、過不足ない設計の考察🎅](https://medium.com/flutter-jp/architecture-240d3c56b597)
+- Andrea Bizzotto さん [Flutter App Architecture with Riverpod: An Introduction](https://codewithandrea.com/articles/flutter-app-architecture-riverpod-introduction/) のシリーズ
 
 ## 設計上の判断
 

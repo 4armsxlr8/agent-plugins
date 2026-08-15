@@ -90,7 +90,7 @@ hunk 1 つずつに対し、以下 6 条件のいずれかに該当するか判�
 
 ## Step 4: HTML の構成
 
-diff は base `references/templates.md` の diff コンポーネント (行番号2列・hunk ヘッダ・sticky ファイルヘッダ・右側ファイルナビ) を **構造ごとそのまま使う**。変えるのは `<details class="file">` の `open`/`closed` の既定と、昇格 hunk への理由バッジの追加だけ。バッジ用の CSS は style.css を編集せず、レポート内の追記分 `<style>` に色は CSS 変数 (`var(--primary)` 等) 経由で足す。タブ・HTML 骨格の雛形も base の `references/templates.md` を流用する。
+diff は base である html-report の `../html-report/references/templates.md` の diff コンポーネント (行番号2列・hunk ヘッダ・sticky ファイルヘッダ・右側ファイルナビ) を **構造ごとそのまま使う**。変えるのは `<details class="file">` の `open`/`closed` の既定と、昇格 hunk への理由バッジの追加だけ。バッジ用の CSS は style.css を編集せず、レポート内の追記分 `<style>` に色は CSS 変数 (`var(--primary)` 等) 経由で足す。タブ・HTML 骨格の雛形も同じく `../html-report/references/templates.md` を流用する。
 
 1. **ヘッダ**: タイトル (タスク名 + 差分レビュー)、`N files / M hunks +追加 -削除`、**「人間が見るべき箇所 N 件 / 全 M hunk」の要約行**、グループ別リスク・指摘の集計 (Step 2 の表をそのまま小さく表示。各行に「うち昇格 n 件」を添える。AI レビューが済んでいる根拠として置く)、承認プログレス「確認 0/N」(N = 昇格件数)
 2. **受け入れ基準** (plan にあれば): 挙動チェックリストとしてヘッダ付近に並べる。ここでチェックさせるのではなく、挙動ゲートを通過済みという記録として表示するだけ。plan が無い/受け入れ基準の節が無ければこの節ごと省略する

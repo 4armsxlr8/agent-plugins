@@ -1,24 +1,28 @@
 # crystallize
 
-crystallize は plan 駆動開発フローをまとめた Claude Code プラグインです。ユーザーとの対話から確定事項を1つずつ析出させて `docs/crystallize/plans/` 配下の plan ファイル(結晶)にまとめ、その plan を「機械の門(テスト・lint・AI コードレビュー)」「挙動の門(ユーザー自身による動作確認)」「例外の門(危険箇所だけを見せる diff レビュー)」の3つの門に順に通してから、plan の内容をそのままコミットメッセージにして確定させます。認識合わせ・実装・検証・コミットまでを1本のフローとしてつなぐことで、曖昧な依頼が実装に流れ込む前に潰し、レビューは「全部読む」から「危ない箇所だけ読む」に絞ります。
+対話から確定事項を析出させて plan（結晶）に固め、3つの門を通してコミットまで運ぶ、plan 駆動開発フローの Claude Code プラグインです。
 
-## フロー
+## なぜ作ったか
 
-```
-issue-create
-  └─ 会話中のバグ・思いつき・雑務を GitHub issue に起票
-      ↓
-find-unknowns
-  └─ unknowns(未知)を洗い出して潰し、plan (docs/crystallize/plans/<slug>.md) を作る
-      ↓
-plan-implement
-  ├─ 実装 (TDD 対象は test-generator → code-generator、それ以外は code-generator)
-  ├─ 機械の門   … テスト・lint・AI コードレビュー
-  ├─ 挙動の門   … ユーザー自身が動かして「意図どおりか」を確認
-  └─ 例外の門   … diff-review で危険箇所だけを人間に見せる
-      ↓
-plan-commit
-  └─ plan の内容をコミットメッセージにして確定・plan ファイルを削除
+AI エージェントとの開発では、仕様は対話の中で決まっていきます。ところが会話は流れるので、決めたことがコンテキストの彼方に揮発し、曖昧さが残ったまま実装が走り出します。そして出てきた大量の diff を前に、レビューは「全部読む」しかなくなって破綻する——自分の開発で繰り返し起きた失敗です。
+
+crystallize はこれを3つの手で潰します。**実装の前に**確定事項を plan ファイルという結晶に固める。**実装の後は**検証を3つの門（機械・挙動・例外）に分業させ、人間が読むのは危険箇所だけに絞る。**最後に** plan 本文をそのままコミットメッセージにして、決定の記録を git 履歴に恒久保存する。
+
+## 全体像
+
+```mermaid
+flowchart TD
+    I[issue-create<br>会話中のバグ・思いつきを issue に起票] --> F
+    F[find-unknowns<br>未知を洗い出して潰し plan を作る] --> P
+    Q[question-evaluator<br>質問を独立コンテキストで監査] -.-> F
+    subgraph P[plan-implement — plan を一続きの契約で駆動]
+        direction TB
+        IM[実装<br>test-generator が RED → code-generator が GREEN] --> G1
+        G1[機械の門<br>テスト・lint・AI コードレビュー] --> G2
+        G2[挙動の門<br>ユーザーが動かして意図どおりか確認] --> G3
+        G3[例外の門<br>diff-review が危険箇所だけを見せる]
+    end
+    P --> C[plan-commit<br>plan 本文がコミットメッセージになり<br>plan ファイルは消える]
 ```
 
 ## スキル一覧
@@ -29,21 +33,26 @@ plan-commit
 | `find-unknowns` | 実装に入る前の認識合わせ。unknowns を洗い出して潰し、plan を1枚作る |
 | `question-evaluator` | `find-unknowns` がユーザーに出す質問の前提・二択の正当性を、出題側とは別コンテキストで監査する |
 | `plan-implement` | plan を受け取り、実装 → 機械の門 → 挙動の門 → 例外の門 → コミットまでを一続きで駆動する |
-| `test-generator` | TDD 対象スライスの実装前に、失敗するテスト(RED)だけを書く |
+| `test-generator` | TDD 対象スライスの実装前に、失敗するテスト（RED）だけを書く |
 | `code-generator` | スライスを実装して GREEN にする。レビュー指摘の修正でも使う |
 | `diff-review` | 動作確認が収束したあとの差分から、危険な箇所だけを人間に見せるレビュー画面を作る |
-| `html-report` | 30行を超える散文の報告を、自己完結 HTML レポートに整形して開く(`diff-review` の派生元) |
+| `html-report` | 30行を超える散文の報告を、自己完結 HTML レポートに整形して開く（`diff-review` の派生元） |
 | `plan-commit` | plan の内容をそのままコミットメッセージにしてコミットし、plan ファイルを削除する |
 | `tdd` | red → green のループから残す価値のあるテストを書くためのリファレンス |
 
+## 設計上の判断
+
+- **plan はファイルとしては消え、コミット履歴が恒久保存先になる** — 設計文書を残すと、コードと文書の乖離という第二のメンテナンス対象が生まれます。plan をコミットメッセージに畳み込めば、決定の記録は該当コミットに永続し、腐る文書は残りません。
+- **挙動の門が収束するまで diff-review を作らない** — 修正ループの途中で diff を見せると、直すたびに陳腐化して結局読まれないままコミットに流れます（実際に繰り返し観測された失敗パターン）。レビューは差分が固まった最後に1回だけ出します。
+- **サブエージェントの完了報告を証拠として扱わない** — 「テスト通りました」という自己申告と、テストが通っている事実は別物です。機械の門では、統括役がテスト・lint コマンドを自分で実行し直します。
+- **書いた本人に採点させない** — RED を書く `test-generator`、GREEN にする `code-generator`、質問を監査する `question-evaluator` はそれぞれ別コンテキストで動きます。特に question-evaluator は、出題側の実装案を**渡されても読まない**（案を見た監査者は同じバイアスに迎合するため）・評価基準を書き換えられない（Read のみ）という制約つきです。
+- **逸脱は記録して進むか、止まるか** — plan と食い違う発見があったとき、可逆で局所的な選択だけ Deviations ログに書いて進み、確定事項と矛盾する変更は止めてユーザーに戻します。迷ったら止まる側に倒します。
+- **リファクタリングと機能変更を混ぜない** — plan-commit がコミット時の関所になり、両方を含む差分は分割コミットにします。
+
 ## 成果物の保存先
 
-- `docs/crystallize/plans/` — `find-unknowns` が作る plan と作業ファイル。plan は `plan-commit` でコミットメッセージに畳み込まれると同時に削除されるため、リポジトリの履歴には一時的にしか残りません
+- `docs/crystallize/plans/` — `find-unknowns` が作る plan と作業ファイル。`plan-commit` でコミットメッセージに畳み込まれると同時に削除されるため、リポジトリには一時的にしか存在しません
 - `docs/crystallize/reports/` — `html-report` / `diff-review` が生成する HTML レポート
-
-## tdd スキルの出所
-
-`skills/tdd/` は [mattpocock/skills](https://github.com/mattpocock/skills)(MIT License)の [tdd スキル](https://github.com/mattpocock/skills/tree/main/skills/engineering/tdd)をフォークし、日本語化・改造したものです。
 
 ## インストール
 
@@ -52,15 +61,16 @@ plan-commit
 /plugin install crystallize@agent-plugins
 ```
 
-### ローカルでの開発・検証
+ローカルでの開発・検証:
 
 ```bash
 claude --plugin-dir ./plugins/crystallize
 ```
 
-または、この checkout をローカル marketplace として登録する:
+### Codex での対応状況（実測）
 
-```bash
-/plugin marketplace add /path/to/agent-plugins
-/plugin install crystallize@agent-plugins
-```
+`codex plugin marketplace add 4armsxlr8/agent-plugins` → `codex plugin add crystallize@agent-plugins` でインストール自体は通ります（Codex CLI 0.144 で確認）。ただし各スキルは、サブエージェントへの実装委任・fork コンテキストでの監査など **Claude Code の実行基盤を前提にした手順**を含むため、現状は Claude Code 向けです。Codex ではフローの知識として読み込まれる範囲の利用にとどまり、動作保証はありません。
+
+## tdd スキルの出所
+
+`skills/tdd/` は [mattpocock/skills](https://github.com/mattpocock/skills)（MIT License）の [tdd スキル](https://github.com/mattpocock/skills/tree/main/skills/engineering/tdd)をフォークし、日本語化・改造したものです。

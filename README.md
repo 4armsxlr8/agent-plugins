@@ -33,6 +33,7 @@ Main components:
 - **`skills/issue-create`** — turns a chat aside (bug, idea, chore) into a GitHub issue from the repo's issue templates.
 - **`skills/find-unknowns`** — pre-implementation alignment: surfaces and resolves unknowns with the user, writes a single plan file.
 - **`skills/question-evaluator`** — audits `find-unknowns`' questions for false premises and false dilemmas in an isolated context before they reach the user.
+- **`skills/plan-evaluator`** — audits the plan `find-unknowns` writes — premises, acceptance criteria, self-containedness — in an isolated context before it reaches the implementation session.
 - **`skills/plan-implement`** — drives implementation and the mechanical/behavioral/exception gates through to the commit handoff.
 - **`skills/test-generator`** / **`skills/code-generator`** — the red and green sides of TDD, run as separate subagents so the same agent can't write both a test and the code that games it.
 - **`skills/diff-review`** — an "exception viewer" that surfaces only risky hunks once behavior is confirmed, instead of asking a human to read every line.

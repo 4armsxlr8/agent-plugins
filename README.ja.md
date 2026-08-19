@@ -33,6 +33,7 @@ Flutter + Riverpod プロジェクトで Clean Architecture のレイヤー分�
 - **`skills/issue-create`** — 会話で出たバグ・思いつき・雑務を、テンプレに沿った GitHub issue として起票します。
 - **`skills/find-unknowns`** — 実装着手前の認識合わせ。unknowns を洗い出してユーザーと潰し、plan を1枚作ります。
 - **`skills/question-evaluator`** — `find-unknowns` がユーザーに出す質問の前提・二択の正当性を、出題側とは別コンテキストで監査します。
+- **`skills/plan-evaluator`** — `find-unknowns` が書き出した plan の前提・受け入れ基準・自己完結性を、作成側とは別コンテキストで監査します。
 - **`skills/plan-implement`** — plan を受け取り、実装から機械・挙動・例外の3つのゲート、コミットへの引き継ぎまでを一続きで駆動します。
 - **`skills/test-generator`** / **`skills/code-generator`** — TDD の red 側と green 側を別サブエージェントに分け、同じエージェントがテストと辻褄合わせの実装を両方書けないようにします。
 - **`skills/diff-review`** — 動作確認が済んだあとの差分から、危険な箇所だけを人間に見せる例外ビューアです。

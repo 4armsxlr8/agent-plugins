@@ -5,7 +5,7 @@
   "breakdown_keys": [
     {"key": "premise_grounding", "label": "前提の事実性 (コードベース/Web裏取り。ユーザー選好は対象外)", "threshold": 15, "weight": 35},
     {"key": "acceptance_observability", "label": "受け入れ基準の観測可能性と境界の網羅", "threshold": 15, "weight": 25},
-    {"key": "structure_completeness", "label": "構成6要素と検証コマンドの充足", "threshold": 15, "weight": 15},
+    {"key": "structure_completeness", "label": "構成6要素・検証コマンド・否定形の帰結の充足", "threshold": 15, "weight": 15},
     {"key": "self_containedness", "label": "自己完結性 (作業ファイル依存・相対リンクなし)", "threshold": 15, "weight": 15},
     {"key": "volatility_ordering", "label": "実装計画の並び (変わりやすい順)", "threshold": 15, "weight": 10}
   ],

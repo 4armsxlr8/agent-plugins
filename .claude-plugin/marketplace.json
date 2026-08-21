@@ -4,6 +4,6 @@
   "owner": { "name": "kyouyagenki" },
   "plugins": [
     { "name": "flutter-riverpod-guardrails", "source": "./plugins/flutter-riverpod-guardrails", "version": "0.1.0", "description": "Flutter + Riverpod 向けアーキテクチャ検査と pre-commit lint" },
-    { "name": "crystallize", "source": "./plugins/crystallize", "version": "0.2.0", "description": "仕様決め → 実装 → 3段階の検証 → コミットを1本のフローで進める plan 駆動開発" }
+    { "name": "crystallize", "source": "./plugins/crystallize", "version": "0.2.1", "description": "仕様決め → 実装 → 3段階の検証 → コミットを1本のフローで進める plan 駆動開発" }
   ]
 }

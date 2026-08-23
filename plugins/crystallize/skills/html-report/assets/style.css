@@ -121,6 +121,14 @@ a:hover { color: var(--primary-active); }
 }
 .markdown-body { max-width: none; min-width: 0; }
 
+/* templates.md 共通骨格の <main class="report"> 用コンテナ。.layout (md2html 由来の
+   散文レイアウト) より広い — レポートは表・グリッド・diff が主役の作業画面のため。 */
+.report {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 32px 96px;
+}
+
 /* Theme toggle button (top-right). Re-themes itself via tokens. */
 .theme-toggle {
   position: fixed; top: 14px; right: 18px; z-index: 50;

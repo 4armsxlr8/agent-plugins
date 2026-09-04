@@ -43,6 +43,15 @@ Flutter + Riverpod プロジェクトで Clean Architecture のレイヤー分�
 
 plan とレポートは、対象リポジトリの `docs/crystallize/plans/` と `docs/crystallize/reports/` に生成されます。
 
+### ui-craft — 目で見られないエージェントのための UI/UX デザイン知識
+
+UI/UX のエッセンス——デザイナーが経験則として持っている「なんとなく美しい／なんとなく揃っていない」の判断——を、目で見ることのできないエージェントが実行できる形に翻訳したスキル集です。翻訳の中身は「数値の初期値」「トークンでの書き方」「スクリーンショットでの検証手順」の3点。スキルは今後増やしていく前提で、現在は `visual-adjustment`（錯視補正）の1本のみです。
+
+主な構成要素:
+
+- **`skills/visual-adjustment/SKILL.md`** — 上方距離過大の錯視 / 色の面積効果 / 三角形分割錯視（重心揃え） / 形による見かけの大きさ / オーバーシュート / 密度と重心 / ハーマングリッドの7項目について、それぞれ初期値・トークンでの補正の書き方・二重補正への注意点をまとめます。発動ワードは「錯視補正」「視覚調整」。モック作成や UI 実装で余白・色・アイコン配置を「揃える」判断をする場面でも自動発動します。
+- **`skills/visual-adjustment/references/sources.md`** — SKILL.md の各数値がどこから来ているか（原佑一氏（CyberAgent / Ameba）の Speaker Deck、Bjango の光学補正の公式、Material Design の icon keyline など）を、出典あり・幾何計算・経験則のいずれかに区分して対応させた一覧です。
+
 ## 開発中（未リリース）
 
 ### study-loop — 任意トピックの段階的学習

@@ -43,6 +43,15 @@ Main components:
 
 Plans and reports are written to `docs/crystallize/plans/` and `docs/crystallize/reports/` in the target repository.
 
+### ui-craft — UI/UX design knowledge, translated for an agent that can't see
+
+Translates UI/UX essentials — the judgment calls a designer carries as experience, like "this is subtly beautiful" or "this is subtly off" — into a form an agent that cannot actually look at the screen can execute: a starting numeric value, a token-based way to write it down, and a screenshot-based verification step. Meant to grow over time; currently ships one skill, `visual-adjustment`.
+
+Main components:
+
+- **`skills/visual-adjustment/SKILL.md`** — seven optical-adjustment patterns (optical vertical centering, color area effect, centroid alignment for asymmetric shapes, apparent size by shape, overshoot, density vs. centroid, Hermann grid), each with a starting value, a token-based way to write the correction, and a caveat about double-correcting already-adjusted assets. Fires on "optical correction" / "visual adjustment," and also whenever a mock or UI implementation is about to "align" spacing, color, or icon placement to a uniform value.
+- **`skills/visual-adjustment/references/sources.md`** — the source for each number the skill uses (a Speaker Deck by Yuichi Hara of CyberAgent/Ameba, Bjango's optical-adjustment formulas, Material Design's icon keylines, and others), tagged by whether the value is sourced, derived geometrically, or a placeholder heuristic.
+
 ## In development (not released)
 
 ### study-loop — step-by-step learning for any topic

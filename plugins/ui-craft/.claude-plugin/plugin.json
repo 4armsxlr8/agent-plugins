@@ -1,0 +1,9 @@
+{
+  "name": "ui-craft",
+  "version": "0.1.0",
+  "description": "UI/UX のデザイン知識を数値の初期値と検証手順としてエージェントが実行できる形に翻訳するスキル集で、最初のスキルは錯視補正 (visual-adjustment)",
+  "author": {
+    "name": "kyouyagenki"
+  },
+  "keywords": ["ui-design", "visual-adjustment", "optical-illusion", "design-knowledge", "mock"]
+}

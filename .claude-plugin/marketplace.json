@@ -4,7 +4,7 @@
   "owner": { "name": "kyouyagenki" },
   "plugins": [
     { "name": "flutter-riverpod-guardrails", "source": "./plugins/flutter-riverpod-guardrails", "version": "0.1.0", "description": "Flutter + Riverpod 向けアーキテクチャ検査と pre-commit lint" },
-    { "name": "crystallize", "source": "./plugins/crystallize", "version": "0.3.0", "description": "spec (育てる要件) → plan → 実装 → 3段階の検証 → コミットを1本のフローで進める plan 駆動開発" },
+    { "name": "crystallize", "source": "./plugins/crystallize", "version": "0.3.1", "description": "spec (育てる要件) → plan → 実装 → 3段階の検証 → コミットを1本のフローで進める plan 駆動開発" },
     { "name": "ui-craft", "source": "./plugins/ui-craft", "version": "0.1.0", "description": "UI/UX のデザイン知識 (錯視補正など) をエージェントが実行できる形に翻訳したスキル集" }
   ]
 }

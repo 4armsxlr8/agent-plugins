@@ -2,6 +2,8 @@
 
 diff-review のレポートで使う **diff-review 固有部品の唯一の正本**。ページ骨格・タブ・diff テーブル・ファイルナビは派生元 `../../html-report/references/templates.md` と `../../html-report/assets/style.css` が正本であり、本ファイルは**その上に足す部品だけ**を定義する (基盤側の構造を再掲しない — 同じ要素の正本が2つあると必ず乖離する)。
 
+**diff-review の `<main>` は `class="report report-numbered"` とし、`markdown-body` を付けない** — `.markdown-body table` のような子孫セレクタ (詳細度 (0,1,1)) が本ファイルの固有部品の単一 class (0,1,0) に勝ち、無改変層で貼ったはずの見た目 (グループ集計表・決裁カードの dl・diff テーブル) が上書きされる。
+
 ## なぜ正本を固定するか
 
 バッジ・ヘッダ集計・承認チェック・保存 JS は従来 SKILL.md の散文指示だけで定義されており、生成のたびに fork がマークアップ・CSS・JS を即興で発明していた。散文は「何を作るか」は固定できても「どう見えるか」は固定できない。完全に書き下した部品 (templates.md のファイルナビ JS) が揺れなかった実績に合わせ、固有部品も全部品を書き下す。
@@ -16,14 +18,15 @@ diff-review のレポートで使う **diff-review 固有部品の唯一の正�
 - プレースホルダ規約: `{title}` のような `{}` 単一値と、`<!-- 繰り返し: <単位> -->` の直下1ブロックを反復する2形式のみ
 - 色は必ず style.css の CSS 変数経由。**新しい色・新しい class を発明しない**。部品が足りないと感じたら即興で足さず、本ファイルへの追記として提案する (正本の外に生まれた部品は次の生成で消える)
 
-## 部品一覧 (この6つで全固有部品)
+## 部品一覧 (この7つで全固有部品)
 
 1. **ヘッダブロック** — タイトル、`N files / M hunks +a -d` 統計、要約行「人間が見るべき箇所 N 件 / 全 M hunk」、グループ集計表 (グループ名・タグ・リスク・hunk 数「うち昇格 n」・指摘)、承認プログレス「確認 0/N」
-2. **受け入れ基準節** — 挙動ゲート通過済みの記録としての表示専用リスト (チェックさせない)
+2. **受け入れ基準節** — 挙動ゲート通過済みの記録としての表示専用リスト (チェックさせない)。出所は spec の「受け入れ基準 (テストケース表)」、spec が無い旧形式なら plan の受け入れ基準節
 3. **セクション見出し** — `01 昇格 (人間が見る)` / `02 非昇格 (畳み済み)` の2見出しと、02 のグループ単位の小見出し + 意図解説
-4. **昇格理由バッジ** — `hunk-head` 内に置く ①〜⑥ のバッジ (複数可)。**形は全種共通・色は2系統のみ**: ①② (不可逆・対外境界) = `--diff-del-bg` 地 + `--diff-del-fg` 字、③〜⑥ = `--primary-tint` 地 + `--primary` 字。番号 + 短ラベル (例: `① 不可逆`) で種別を運ぶ — 6色に塗り分けない (トークンに6色は無く、発明した色は揺れの再発源になる)
-5. **承認チェック** — 昇格ファイルの `<details class="file">` **内の末尾**に置くチェックブロック (ラベルは「挙動確認済み + この昇格箇所を見た」の宣言)。`file-head` への状態バッジ (✓ 確認済み / 未確認) は **`.file-name` の直後に挿入**する (file-head 自体の構造は templates.md の正本のまま)。**昇格 0 件のときの宣言チェック1個の variant** もここで定義する
-6. **承認 JS** — チェック変更で `details.file` に `.approved` を付け外しし、状態バッジ・ファイルナビ・ヘッダの「確認 n/N」カウンタへ反映、localStorage へ保存する。**templates.md のファイルナビ生成スクリプトより後に置く** (ナビ項目を装飾するため)。キーは `diff-review:` + レポートのファイル名 (`location.pathname` の basename)。**復元時はカウンタだけでなく `.approved`・状態バッジ・ナビ表示も再適用する**
+4. **昇格理由バッジ** — 決裁カード (部品7) の見出し行に置く ①〜⑥ のバッジ (複数可)。**形は全種共通・色は2系統のみ**: ①② (不可逆・対外境界) = `--diff-del-bg` 地 + `--diff-del-fg` 字、③〜⑥ = `--primary-tint` 地 + `--primary` 字。番号 + 短ラベル (例: `① 不可逆`) で種別を運ぶ — 6色に塗り分けない (トークンに6色は無く、発明した色は揺れの再発源になる)
+5. **承認チェック** — 昇格ファイルの `<details class="file">` **内の末尾**に置くチェックブロック (ラベルは「このリスクを受け入れる」の決裁)。`file-head` への状態バッジ (✓ 確認済み / 未確認) は **`.file-name` の直後に挿入**する (file-head 自体の構造は templates.md の正本のまま)。1 ファイルに決裁カードが複数あっても**チェックは 1 個**で、そのファイルの全カードを覆う (部品6 JS が `details.file` 単位で保存キーを作るため、粒度をファイルより細かくできない)。**昇格 0 件のときの単独チェックの variant は廃止した** — 昇格 0 件なら SKILL.md のスキップ規則で HTML 自体を作らないので、置かれる場面が存在しない
+6. **承認 JS** — チェック変更で `details.file` に `.approved` を付け外しし、状態バッジ・ファイルナビ・ヘッダの「確認 n/N」カウンタへ反映、localStorage へ保存する。**templates.md のファイルナビ生成スクリプトより後に置く** (ナビ項目を装飾するため)。キーは `diff-review:` + レポートのファイル名 (`location.pathname` の basename)。**復元時はカウンタだけでなく `.approved`・状態バッジ・ナビ表示も再適用する**。チェック1件ごとのキーは `.file-name` の文字列 + そのファイル先頭の `.decision-locus` (**無改変層をここだけ改訂した**。以前は `details.file` の id を使っていたが、id は登場順の連番なので、同じ日に同じ slug で作り直したレポートに別ファイルの承認が復元されていた)
+7. **決裁カード** — 昇格 hunk 1 件につき 1 枚。コードより先に平文 4 点 (何が起きうるか / 元に戻せるか / 影響範囲 / AI レビューの判定と根拠) を置き、diff 本体は `<details class="decision-diff">` に畳む (既定 closed)。人間に求めるのはリスクを受け入れるかどうかの決裁であって、コードが正しいかの判定ではない — 判定に要らないコードを既定で開いておくと、読む対象が決裁の材料からコードにすり替わる。4 点の見出し語は固定で言い換えない (毎回違う言葉になると、読み手がどこを見ればよいか毎回探し直す)
 
 ## class 命名
 
@@ -36,8 +39,8 @@ style.css の既存イディオムに合わせる (セマンティックな keba
 <!--
   diff-review 固有部品 — components.md の「テンプレート」節へそのまま埋め込む断片。
   無改変層: <style> と <script> は一字も変えずに貼る。
-  スロット層: マークアップ雛形は {…} と <!-- 繰り返し: … --> の中身・反復回数だけ差し替える。
-  部品1〜5は report-main (templates.md の .report-layout > .report-main) の中に置く。
+  スロット層: マークアップ雛形は {…} プレースホルダと繰り返しコメントの中身・反復回数だけ差し替える。
+  部品1〜5・7は report-main (templates.md の .report-layout > .report-main) の中に置く。
 -->
 
 <!-- ═══ 部品1: ヘッダブロック ═══ -->
@@ -74,7 +77,8 @@ style.css の既存イディオムに合わせる (セマンティックな keba
 </header>
 
 <!-- ═══ 部品2: 受け入れ基準節 ═══ -->
-<!-- plan に受け入れ基準が無ければこの節ごと省略する。チェックさせない — 挙動ゲート通過済みの記録として並べるだけ -->
+<!-- spec (無ければ plan) に受け入れ基準が無ければこの節ごと省略する。チェックさせない — 挙動ゲート通過済みの記録として並べるだけ -->
+<!-- spec のテストケース表は 1 行 1 項目に畳む: 「<seam> — <ケース> → <期待結果>」。「テストしないと決めたもの」は通過記録ではないので載せない -->
 <section class="acceptance-section">
   <h2 class="section-head">受け入れ基準</h2>
   <ul class="acceptance-list">
@@ -86,7 +90,7 @@ style.css の既存イディオムに合わせる (セマンティックな keba
 
 <!-- ═══ 部品3: セクション見出し ═══ -->
 <h2 class="section-head section-head--escalated">01 昇格 (人間が見る)</h2>
-<!-- ここに昇格した details.file (部品4・部品5A/5Bを含む) を並べる。open がデフォルト -->
+<!-- ここに昇格した details.file (部品5A・部品7 の決裁カード・部品5B をこの順で含む) を並べる。open がデフォルト -->
 
 <h2 class="section-head section-head--folded">02 非昇格 (畳み済み)</h2>
 <!-- 繰り返し: グループ (そのグループに非昇格 hunk が1件も残らないなら、このグループ丸ごと省略してよい) -->
@@ -98,16 +102,14 @@ style.css の既存イディオムに合わせる (セマンティックな keba
 <!-- 繰り返し終わり -->
 
 <!-- ═══ 部品4: 昇格理由バッジ ═══ -->
-<!-- 昇格した hunk の hunk-head 内、テキストの直前に差し込む (hunk-head 自体は templates.md 正本のまま)。1 hunk に複数バッジ可 -->
+<!-- 置き場所は部品7 決裁カードの見出し行 (.decision-head) の先頭。1 hunk に複数バッジ可 -->
+<!-- hunk-head 側には入れない — 昇格 hunk の diff は既定で畳まれており、開かないと昇格理由が見えなくなるため -->
 <!-- 番号↔短ラベルの対応は固定 (自分で言い換えない): ①不可逆 ②対外境界 ③依存追加 ④指摘あり ⑤逸脱 ⑥未分類 -->
 <!-- ①②は escalation-badge--critical、③〜⑥は escalation-badge--notice -->
-<div class="hunk-head">
-  <!-- 繰り返し: バッジ (該当した昇格理由の数だけ。例は①③の2個同時該当) -->
-  <span class="escalation-badge escalation-badge--critical">① 不可逆</span>
-  <span class="escalation-badge escalation-badge--notice">③ 依存追加</span>
-  <!-- 繰り返し終わり -->
-  hunk 1/5 — @@ 3,7 → 3,7 @@ セッション検証の前後
-</div>
+<!-- 繰り返し: バッジ (該当した昇格理由の数だけ。例は①③の2個同時該当) -->
+<span class="escalation-badge escalation-badge--critical">① 不可逆</span>
+<span class="escalation-badge escalation-badge--notice">③ 依存追加</span>
+<!-- 繰り返し終わり -->
 
 <!-- ═══ 部品5: 承認チェック ═══ -->
 
@@ -119,25 +121,55 @@ style.css の既存イディオムに合わせる (セマンティックな keba
   <!-- 以下 mark.sev-* / .file-meta は templates.md 正本のまま続く -->
 </summary>
 
-<!-- 5B: 承認チェック本体 — 昇格ファイルの details.file の末尾 (最後の hunk・note の直後) に置く -->
+<!-- 5B: 承認チェック本体 — 昇格ファイルの details.file の末尾 (最後の決裁カードの直後) に置く -->
 <!-- 対象の details.file には data-escalated="true" を必ず付ける (部品6 JS が昇格ファイルの判定に使う固定 data 属性) -->
-<!-- 例: <details class="file" data-escalated="true" open> … <div class="approval-check">(このブロック)</div></details> -->
+<!-- ラベルは決裁の文言に固定する。「diff を読んだ」に戻さない — 求めているのはリスクの受容であって読了報告ではない -->
 <div class="approval-check">
   <label class="approval-check-label">
     <input type="checkbox" class="approval-checkbox">
-    挙動確認済み・この昇格箇所を見た
+    このリスクを受け入れる
   </label>
 </div>
 
-<!-- 5C: 昇格0件のときの variant — 5B の代わりにページに1個だけ置く (details.file には紐付かない) -->
-<div class="approval-check approval-check--standalone" id="approval-global">
-  <label class="approval-check-label">
-    <input type="checkbox" class="approval-checkbox">
-    <span class="approval-check-text">挙動確認済み・昇格該当なし</span>
-  </label>
+<!-- ═══ 部品7: 決裁カード ═══ -->
+<!-- 昇格 hunk 1 件につき 1 枚。昇格ファイルの details.file の中に、その hunk の数だけ並べる -->
+<!-- 組み立て順 (昇格ファイル1つ分):
+     <details class="file" data-escalated="true" open>
+       <summary class="file-head">…部品5A…</summary>
+       <div class="decision-card">…</div>   ← 昇格 hunk の数だけ繰り返す
+       <div class="approval-check">…部品5B…</div>
+     </details> -->
+<!-- dt の 4 語は固定。順序も入れ替えない (何が起きうるか → 元に戻せるか → 影響範囲 → AI レビュー) -->
+<!-- 書いてよいのは素材 (diff・plan・spec・Step2 の指摘欄) にある事実だけ。読み取れないことは文頭に「推測:」を付ける -->
+<!-- 繰り返し: 決裁カード (そのファイルの昇格 hunk の数だけ) -->
+<div class="decision-card">
+  <div class="decision-head">
+    <!-- 繰り返し: 昇格理由バッジ (部品4。該当した昇格理由の数だけ) -->
+    <span class="escalation-badge escalation-badge--critical">① 不可逆</span>
+    <!-- 繰り返し終わり -->
+    <span class="decision-locus">{hunkLocus}</span>
+    <span class="decision-group">{groupName}</span>
+  </div>
+  <dl class="decision-points">
+    <dt>何が起きうるか</dt>
+    <dd>{whatCanHappen}</dd>
+    <dt>元に戻せるか</dt>
+    <!-- 可逆 = risk-badge risk-low「可逆」/ 不可逆 = risk-badge risk-warn「不可逆」の2択。第3の値を作らない -->
+    <dd><span class="risk-badge risk-warn">不可逆</span>{reversibilityNote}</dd>
+    <dt>影響範囲</dt>
+    <dd>{blastRadius}</dd>
+    <dt>AI レビューの判定</dt>
+    <!-- 出所は Step2 の指摘欄と plan の ## Deviations だけ。どちらにも無ければ「指摘なし」と書く (判定を創作しない) -->
+    <dd>{reviewVerdict}</dd>
+  </dl>
+  <details class="decision-diff">
+    <summary class="decision-diff-head">diff を見る ({hunkStat})</summary>
+    <!-- ここに templates.md 正本の .hunk ブロック (hunk-head + diff-body > diff-table) を1つ、無改変で置く -->
+  </details>
 </div>
+<!-- 繰り返し終わり -->
 
-<!-- ═══ 固有部品CSS (部品1〜5共通・無改変層) ═══ -->
+<!-- ═══ 固有部品CSS (部品1〜5・7共通・無改変層) ═══ -->
 <style>
 /* 部品1: ヘッダブロック */
 .review-header { margin: 0 0 28px; }
@@ -158,7 +190,7 @@ style.css の既存イディオムに合わせる (セマンティックな keba
 .risk-badge.risk-low { background: var(--surface-strong); color: var(--muted); }
 .risk-badge.risk-caution { background: var(--primary-tint); color: var(--primary); }
 .risk-badge.risk-warn { background: var(--diff-del-bg); color: var(--diff-del-fg); }
-html[data-theme="dark"] .risk-badge.risk-warn { color: #ff8781; }
+html[data-theme="dark"] .risk-badge.risk-warn { color: var(--diff-del-fg-onwash); }
 
 /* 部品2: 受け入れ基準節 */
 .acceptance-section { margin: 0 0 28px; }
@@ -178,7 +210,7 @@ html[data-theme="dark"] .risk-badge.risk-warn { color: #ff8781; }
 .escalation-badge { display: inline-block; margin-right: 6px; padding: 1px 8px; border-radius: 9999px; font-family: var(--sans); font-size: 0.78em; font-weight: 600; letter-spacing: 0.02em; }
 .escalation-badge--critical { background: var(--diff-del-bg); color: var(--diff-del-fg); }
 .escalation-badge--notice { background: var(--primary-tint); color: var(--primary); }
-html[data-theme="dark"] .escalation-badge--critical { color: #ff8781; }
+html[data-theme="dark"] .escalation-badge--critical { color: var(--diff-del-fg-onwash); }
 
 /* 部品5: 承認チェック */
 .approval-state { flex: 0 0 auto; padding: 2px 8px; border-radius: 9999px; background: var(--surface-strong); color: var(--muted); font-family: var(--sans); font-size: 0.72em; font-weight: 600; }
@@ -186,51 +218,72 @@ html[data-theme="dark"] .escalation-badge--critical { color: #ff8781; }
 .approval-check { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--hairline); }
 .approval-check-label { display: flex; align-items: center; gap: 8px; color: var(--body); font-family: var(--sans); font-size: 0.92em; cursor: pointer; }
 .approval-checkbox { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
-.approval-check--standalone.is-approved .approval-check-text { color: var(--diff-add-fg); font-weight: 600; }
 /* details.file が承認済みのときの視覚補強 (部品6 JS が .approved を付け外しする) */
 .file.approved > .file-head { background: var(--diff-add-bg); }
 /* ファイルナビ項目への状態反映 (部品6 JS が対応する <a> に nav-approved を付け外しする) */
 .file-nav-item a.nav-approved { color: var(--diff-add-fg); }
 .file-nav-item a.nav-approved::after { content: "✓"; margin-left: 6px; font-weight: 700; }
+
+/* 部品7: 決裁カード */
+.decision-card { padding: 12px 14px; }
+/* 区切り線はカード同士の間だけ。末尾に線を残すと承認チェックの破線と二重になる */
+.decision-card + .decision-card { border-top: 1px solid var(--hairline); }
+.decision-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 8px; }
+.decision-locus { font-family: var(--mono); font-size: 0.8em; color: var(--muted); }
+.decision-group { font-family: var(--sans); font-size: 0.8em; color: var(--muted); }
+.decision-points { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 5px 14px; font-size: 0.93em; }
+.decision-points dt { color: var(--muted); font-family: var(--sans); font-weight: 600; white-space: nowrap; }
+.decision-points dd { margin: 0; color: var(--body); }
+.decision-points dd .risk-badge { margin-right: 6px; }
+.decision-diff { margin-top: 10px; border: 1px solid var(--hairline); border-radius: var(--radius-md); overflow: hidden; background: var(--surface-card); }
+.decision-diff-head { padding: 6px 12px; background: var(--canvas-soft); cursor: pointer; list-style: none; font-family: var(--sans); font-size: 0.85em; color: var(--muted); }
+.decision-diff-head::-webkit-details-marker { display: none; }
+.decision-diff-head::before { content: "▸"; display: inline-block; margin-right: 6px; transition: transform 0.12s ease; }
+.decision-diff[open] > .decision-diff-head::before { transform: rotate(90deg); }
+/* 開いた直後の hunk-head は decision-diff-head のすぐ下に来る。上線を残すと境界が二重になる */
+.decision-diff .hunk:first-of-type .hunk-head { border-top: 0; }
+@media (max-width: 700px) {
+  .decision-points { grid-template-columns: 1fr; gap: 2px; }
+  .decision-points dd { margin: 0 0 6px; }
+}
 </style>
 
 <!-- ═══ 部品6: 承認JS (無改変層・templates.md のファイルナビ生成スクリプトより後に置く) ═══ -->
 <script>
 (function () {
   var STORAGE_KEY = 'diff-review:' + location.pathname.split('/').pop();
-  var checkboxes = Array.prototype.slice.call(document.querySelectorAll('.approval-checkbox'));
+  // 昇格ファイル (details.file[data-escalated="true"]) の中のチェックだけを扱う。
+  // ここで絞ってあるので、以降 closest は必ず要素を返す。
+  var checkboxes = Array.prototype.slice.call(document.querySelectorAll('.approval-checkbox'))
+    .filter(function (cb) { return !!cb.closest('details.file[data-escalated="true"]'); });
   if (!checkboxes.length) return;
 
   var countEl = document.getElementById('approvedCount');
   var totalEl = document.getElementById('approvalTotal');
   var navList = document.getElementById('fileNavList');
 
-  // 昇格ファイルの判定は data-escalated="true" (details.file 側に付ける固定属性) から行う。
-  // チェックボックス自身は details.file の子孫かどうかで file 紐付き/5C(単独)を判定する。
+  // 保存キーは位置ではなく内容 (ファイル名 + そのファイル先頭の決裁カードの位置) から作る。
+  // details.file の id は登場順の連番 (file-1, file-2 …) なので、id をキーにすると
+  // 同じ日に同じ slug で作り直したレポートに別ファイルの承認が復元される。
   function keyFor(cb) {
     var file = cb.closest('details.file[data-escalated="true"]');
-    if (file) return file.id;
-    var standalone = cb.closest('.approval-check');
-    return (standalone && standalone.id) || '__all-clear__';
+    var name = file.querySelector('.file-name');
+    var locus = file.querySelector('.decision-locus');
+    return (name ? name.textContent.trim() : (file.id || '')) + (locus ? '|' + locus.textContent.trim() : '');
   }
 
   function applyState(cb, approved) {
     cb.checked = approved;
     var file = cb.closest('details.file[data-escalated="true"]');
-    if (file) {
-      file.classList.toggle('approved', approved);
-      var badge = file.querySelector('.approval-state');
-      if (badge) {
-        badge.classList.toggle('approval-state--done', approved);
-        badge.textContent = approved ? '✓ 確認済み' : '未確認';
-      }
-      if (navList) {
-        var link = navList.querySelector('a[href="#' + file.id + '"]');
-        if (link) link.classList.toggle('nav-approved', approved);
-      }
-    } else {
-      var standalone = cb.closest('.approval-check');
-      if (standalone) standalone.classList.toggle('is-approved', approved);
+    file.classList.toggle('approved', approved);
+    var badge = file.querySelector('.approval-state');
+    if (badge) {
+      badge.classList.toggle('approval-state--done', approved);
+      badge.textContent = approved ? '✓ 確認済み' : '未確認';
+    }
+    if (navList) {
+      var link = navList.querySelector('a[href="#' + file.id + '"]');
+      if (link) link.classList.toggle('nav-approved', approved);
     }
   }
 

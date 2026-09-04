@@ -4,9 +4,9 @@
   "score_field": "quality.overall",
   "breakdown_keys": [
     {"key": "premise_grounding", "label": "前提の事実性 (コードベース/Web裏取り。ユーザー選好は対象外)", "threshold": 15, "weight": 35},
-    {"key": "acceptance_observability", "label": "受け入れ基準の観測可能性と境界の網羅", "threshold": 15, "weight": 25},
-    {"key": "structure_completeness", "label": "構成6要素・検証コマンド・否定形の帰結の充足", "threshold": 15, "weight": 15},
-    {"key": "self_containedness", "label": "自己完結性 (作業ファイル依存・相対リンクなし)", "threshold": 15, "weight": 15},
+    {"key": "acceptance_coverage", "label": "spec の受け入れ基準の各行が実装計画項目に対応しているか", "threshold": 15, "weight": 25},
+    {"key": "structure_completeness", "label": "構成5要素・受け入れ基準対応・TDD適否の充足", "threshold": 15, "weight": 15},
+    {"key": "self_containedness", "label": "自己完結性 (plan + spec で足りる。plans/<slug>/ への相対リンクなし)", "threshold": 15, "weight": 15},
     {"key": "volatility_ordering", "label": "実装計画の並び (変わりやすい順)", "threshold": 15, "weight": 10}
   ],
   "extras": {
@@ -17,7 +17,7 @@
     "rewrite": "required_when_failed"
   },
   "passing_rule": "no_false_premise AND score >= threshold",
-  "ref": "find-unknowns/SKILL.md#Step 5: plan の書き出し",
+  "ref": "plan/SKILL.md#3. plan の書き出し",
   "rubric": null,
-  "notes": "基準の正本は find-unknowns Step 5 の構成規則。SKILL.md §採点観点の定義 はその対応表。検証可能な前提の誤りが確認された plan は score に関わらず passed=false。rewrite は plan 全文ではなく見出し単位の置換案"
+  "notes": "基準の正本は plan スキル手順3の構成規則。SKILL.md §採点観点の定義 はその対応表。監査は plan + plan 先頭の spec: 行が指す spec を読み、ledger・impact.md・モックは読まない。検証可能な前提の誤りが確認された plan は score に関わらず passed=false。rewrite は plan 全文ではなく見出し単位の置換案。旧形式 (spec: 行なし) の plan は plan 内の受け入れ基準で acceptance_coverage を採点する"
 }

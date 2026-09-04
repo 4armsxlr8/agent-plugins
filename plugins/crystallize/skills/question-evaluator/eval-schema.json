@@ -17,7 +17,7 @@
     "rewrite": "required_when_failed"
   },
   "passing_rule": "no_false_premise AND score >= threshold",
-  "ref": "find-unknowns/SKILL.md#質問の関所",
+  "ref": "spec/SKILL.md#Step 2: grilling ラウンド",
   "rubric": null,
-  "notes": "基準の正本は find-unknowns §質問の関所 の 4 規則 + 監査項目。SKILL.md §採点観点の定義 はその対応表。検証可能な前提の誤りが確認された質問は score に関わらず passed=false"
+  "notes": "基準の正本は spec §Step 2: grilling ラウンド の質問フォーマットと 4 規則。SKILL.md §採点観点の定義 はその対応表。検証可能な前提の誤りが確認された質問は score に関わらず passed=false"
 }

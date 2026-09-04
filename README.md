@@ -26,22 +26,23 @@ Main components:
 
 ### crystallize — plan-driven development flow
 
-Packages a full personal development workflow: turn a vague request into confirmed decisions, crystallize those into a plan, and run the plan through three gates (mechanical / behavioral / exception) before it becomes a commit.
+Packages a full personal development workflow: turn a vague request into a spec (requirements that live on and grow), derive a throwaway plan from it, and run the plan through three gates (mechanical / behavioral / exception) before it becomes a commit. Requirements are treated as something to grow, not to freeze: a user-initiated "actually, not like that" at the behavioral gate is a spec revision, not a deviation.
 
 Main components:
 
 - **`skills/issue-create`** — turns a chat aside (bug, idea, chore) into a GitHub issue from the repo's issue templates.
-- **`skills/find-unknowns`** — pre-implementation alignment: surfaces and resolves unknowns with the user, writes a single plan file.
-- **`skills/question-evaluator`** — audits `find-unknowns`' questions for false premises and false dilemmas in an isolated context before they reach the user.
-- **`skills/plan-evaluator`** — audits the plan `find-unknowns` writes — premises, acceptance criteria, self-containedness — in an isolated context before it reaches the implementation session.
-- **`skills/plan-implement`** — drives implementation and the mechanical/behavioral/exception gates through to the commit handoff.
-- **`skills/test-generator`** / **`skills/code-generator`** — the red and green sides of TDD, run as separate subagents so the same agent can't write both a test and the code that games it.
-- **`skills/diff-review`** — an "exception viewer" that surfaces only risky hunks once behavior is confirmed, instead of asking a human to read every line.
-- **`skills/html-report`** — turns long prose reports into a self-contained HTML page.
-- **`skills/plan-commit`** — folds the finished plan into the commit message and deletes the plan file.
+- **`skills/spec`** — pre-implementation alignment: asks the settled frontier of questions in numbered rounds with a recommended answer each, uses mocks only when the open question is structural, and writes requirements, non-functional requirements and acceptance criteria (as a test-case table) into a spec that persists and can be revised later.
+- **`skills/question-evaluator`** — optional audit of `spec`'s questions for false premises and false dilemmas in an isolated context (off by default; `audit: on` turns it on).
+- **`skills/plan`** — derives a throwaway implementation plan from the spec, ordered by how likely each item is to change.
+- **`skills/plan-evaluator`** — audits the plan in an isolated context: does it cover every acceptance criterion in the spec, are its premises grounded, is it self-contained.
+- **`skills/plan-implement`** — drives implementation and the mechanical/behavioral/exception gates through to the commit handoff; a user-initiated change at the behavioral gate goes through a spec-revision lane instead of being blocked.
+- **`skills/test-generator`** / **`skills/code-generator`** — the red and green sides of TDD, run as separate subagents so the same agent can't write both a test and the code that games it. RED is written straight from the spec's test-case table, so no seam agreement is re-negotiated at implementation time.
+- **`skills/diff-review`** — an "exception viewer" that shows only escalated hunks as risk-acceptance cards (what could happen, is it reversible, blast radius, AI review verdict) with the code folded away; when nothing escalates it skips the page and asks for go/no-go in one line.
+- **`skills/html-report`** — turns long prose reports into a self-contained HTML page with a fixed structure (key points first) and an inline-SVG diagram catalog.
+- **`skills/plan-commit`** — folds the finished plan into the commit message and deletes the plan file; the spec stays.
 - **`skills/tdd`** — a reference for what makes a test worth keeping, forked from [mattpocock/skills](https://github.com/mattpocock/skills) (MIT).
 
-Plans and reports are written to `docs/crystallize/plans/` and `docs/crystallize/reports/` in the target repository.
+Specs, plans and reports are written to `docs/crystallize/specs/`, `docs/crystallize/plans/` and `docs/crystallize/reports/` in the target repository.
 
 ### ui-craft — UI/UX design knowledge, translated for an agent that can't see
 

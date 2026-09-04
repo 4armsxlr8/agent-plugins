@@ -78,7 +78,7 @@ metadata:
 1. **候補を洗い出す** — 上の「対象」列を当てて、該当箇所を列挙する。固定高さ × 中央揃え / ブランド色の文字 / 非対称アイコン in 円 / 円と四角の混在 / 密度差のあるブロックの隣接 / 暗いタイルグリッド
 2. **現状を測る** — スクリーンショットを撮り、上下・左右の余白を px で計測する。デザインツール由来の SVG やフォントは既に光学補正されていることがあり、測らずに補正を足すと二重になる
 3. **初期値をトークンで入れる** — 補正ごとに名前付きトークンと理由コメント。値を散らさず 1 か所に集める
-4. **人間に見せて確定する** — 撮り直したスクリーンショットで比較する。crystallize の find-unknowns モック (`docs/crystallize/plans/<slug>/mock-*.html`) の中なら、`opticalShiftY` / `brandInk` のようなキーで TWEAKS に晒し、ユーザーがその場で動かして決められるようにする (正本は crystallize の `find-unknowns/references/tweak-panel.md`)
+4. **人間に見せて確定する** — 撮り直したスクリーンショットで比較する。crystallize の spec モック (`docs/crystallize/specs/<slug>/mock.html`) の中なら、`opticalShiftY` / `brandInk` のようなキーで TWEAKS に晒し、ユーザーがその場で動かして決められるようにする (正本は crystallize の `spec/references/mock-kit.md`)
 5. **確定値を記録する** — トークン定義のそばに、何の錯視に対する補正かを一文で残す
 
 ## 直接呼ばれたとき

@@ -23,3 +23,6 @@ dev/study-loop/skills/study-loop/scripts/.study-server.log
 
 # Local tool outputs (skill eval results, scratch reports)
 output/
+
+# crystallize が生成する HTML レポート (このリポジトリで作業したときの出力)
+docs/crystallize/reports/

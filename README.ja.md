@@ -26,22 +26,23 @@ Flutter + Riverpod プロジェクトで Clean Architecture のレイヤー分�
 
 ### crystallize — plan駆動開発フロー
 
-対話から確定事項を1つずつ析出させて plan に結晶化し、その plan を機械ゲート・挙動ゲート・例外ゲートの3つに通してからコミットへ結晶化させる、開発フロー一式をまとめたプラグインです。
+対話から要件を spec（残して育てる文書）に析出させ、spec から使い捨ての plan を作り、その plan を機械ゲート・挙動ゲート・例外ゲートの3つに通してからコミットへ結晶化させる、開発フロー一式をまとめたプラグインです。要件は固定するものではなく育てるものとして扱い、挙動ゲートでユーザーが「やっぱり違う」と言ったら逸脱ではなく spec の改訂として処理します。
 
 主な構成要素:
 
 - **`skills/issue-create`** — 会話で出たバグ・思いつき・雑務を、テンプレに沿った GitHub issue として起票します。
-- **`skills/find-unknowns`** — 実装着手前の認識合わせ。unknowns を洗い出してユーザーと潰し、plan を1枚作ります。
-- **`skills/question-evaluator`** — `find-unknowns` がユーザーに出す質問の前提・二択の正当性を、出題側とは別コンテキストで監査します。
-- **`skills/plan-evaluator`** — `find-unknowns` が書き出した plan の前提・受け入れ基準・自己完結性を、作成側とは別コンテキストで監査します。
-- **`skills/plan-implement`** — plan を受け取り、実装から機械・挙動・例外の3つのゲート、コミットへの引き継ぎまでを一続きで駆動します。
-- **`skills/test-generator`** / **`skills/code-generator`** — TDD の red 側と green 側を別サブエージェントに分け、同じエージェントがテストと辻褄合わせの実装を両方書けないようにします。
-- **`skills/diff-review`** — 動作確認が済んだあとの差分から、危険な箇所だけを人間に見せる例外ビューアです。
-- **`skills/html-report`** — 長い散文の報告を自己完結 HTML レポートに整形します。
-- **`skills/plan-commit`** — plan の内容をそのままコミットメッセージにしてコミットし、plan ファイルを削除します。
+- **`skills/spec`** — 実装着手前の認識合わせ。前提が解決済みの質問を番号付きのラウンドで一括して出し（各質問に推奨回答つき）、構造の論点があるときだけモックで反応を取り、要件・非機能要件・受け入れ基準（テストケース表）を spec に書きます。既存 spec を渡せば改訂モードで育てます。
+- **`skills/question-evaluator`** — `spec` がユーザーに出す質問の前提・二択の正当性を別コンテキストで監査します。既定では動かず、`audit: on` で任意に使います。
+- **`skills/plan`** — spec から、変わりやすい順に並べた使い捨ての実装計画を作ります。
+- **`skills/plan-evaluator`** — plan が spec の受け入れ基準を全て覆っているか・前提が裏取りされているか・自己完結しているかを、作成側とは別コンテキストで監査します。
+- **`skills/plan-implement`** — plan と spec を受け取り、実装から機械・挙動・例外の3つのゲート、コミットへの引き継ぎまでを一続きで駆動します。挙動ゲートでのユーザー発の変更は止めずに仕様改訂レーンで処理します。
+- **`skills/test-generator`** / **`skills/code-generator`** — TDD の red 側と green 側を別サブエージェントに分け、同じエージェントがテストと辻褄合わせの実装を両方書けないようにします。RED は spec のテストケース表から直接書くので、実装開始時に seam の合意を取り直しません。
+- **`skills/diff-review`** — 動作確認が済んだあとの差分から、昇格した箇所だけを決裁カード（何が起きうるか・戻せるか・影響範囲・AI レビューの判定）で見せ、コードは畳む例外ビューアです。昇格が 0 件なら画面を作らず 1 行で go を取ります。
+- **`skills/html-report`** — 長い散文の報告を、要点先行の固定構成とインライン SVG の図解カタログで自己完結 HTML レポートに整形します。
+- **`skills/plan-commit`** — plan の内容をそのままコミットメッセージにしてコミットし、plan ファイルを削除します。spec は残ります。
 - **`skills/tdd`** — 残す価値のあるテストとは何かのリファレンスです。[mattpocock/skills](https://github.com/mattpocock/skills)（MIT）からのフォークです。
 
-plan とレポートは、対象リポジトリの `docs/crystallize/plans/` と `docs/crystallize/reports/` に生成されます。
+spec・plan・レポートは、対象リポジトリの `docs/crystallize/specs/`・`docs/crystallize/plans/`・`docs/crystallize/reports/` に生成されます。
 
 ### ui-craft — 目で見られないエージェントのための UI/UX デザイン知識
 

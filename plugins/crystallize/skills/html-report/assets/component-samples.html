@@ -1,3 +1,21 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>html-report 部品見本</title>
+<!--
+  crystallize / html-report — 部品見本
+
+  レポートに使える部品を 1 枚に並べた「見た目の正本」。レポートを生成する前に
+  必ずこのファイルを Read し、ここにある部品と class だけで組む。
+  ここに無い見た目が要ると感じたら、その場で CSS を足さず、
+  assets/style.css への追記として提案する (正本の外に生まれた部品は次の生成で消える)。
+
+  直下の CSS ブロックは assets/style.css の全文コピー。**手で編集しない** —
+  style.css を変更したら、この節ごと貼り直す。同期の検算コマンドは SKILL.md にある。
+-->
+<style>
 /* md2html — Notion-inspired theme, two-column with sticky side TOC.
    Design tokens are derived from references/notion-design.md: a warm paper
    canvas (never clinical white), soft near-black ink, and exactly one
@@ -950,3 +968,393 @@ td.rowhead { color: var(--ink); font-weight: 600; }
 }
 .report:not(.markdown-body) table:not(.diff-table):not(.group-table) th,
 .report:not(.markdown-body) table:not(.diff-table):not(.group-table) td { border: 1px solid var(--hairline); padding: 8px 12px; }
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="themeToggle" type="button" aria-label="テーマ切り替え">◐</button>
+<main class="report markdown-body report-numbered">
+
+<h1>html-report 部品見本</h1>
+<p class="lede">レポートに使える部品の実物。右上のボタンでライト / ダークを切り替えて、両方で崩れないことを確認する。</p>
+
+<!-- ═══ 要点 (レポート先頭に固定・3 行以内・見出しは書かない) ═══ -->
+<div class="keypoints">
+  <ol>
+    <li>部品の見た目の正本は <code>assets/style.css</code> にあり、レポート側は class を選ぶだけにする。</li>
+    <li>図は <code>references/diagrams.md</code> の 5 種から選ぶ。インライン SVG で描き、色は <code>dg-*</code> class 経由にする。</li>
+    <li>見出しの走査目印は絵文字ではなく自動採番 (01, 02 …)。番号は本文と目次の両方に同じ counter で入る。</li>
+  </ol>
+</div>
+
+<!-- ═══ 目次 (li は本文の h2 と document 順で 1 対 1) ═══ -->
+<nav class="report-toc">
+  <p class="report-toc-title">目次</p>
+  <ol>
+    <li><a href="#s-terms">用語</a></li>
+    <li><a href="#s-heading">見出しと採番</a></li>
+    <li><a href="#s-card">カード・グリッド・バッジ</a></li>
+    <li><a href="#s-table">表</a></li>
+    <li><a href="#s-figure">図 (5 種 + 折れ線)</a></li>
+    <li><a href="#s-tabs">タブ</a></li>
+    <li><a href="#s-fold">詳細 (畳む)</a></li>
+    <li><a href="#s-diff">diff テーブル</a></li>
+    <li><a href="#s-inline">強調と補助テキスト</a></li>
+  </ol>
+</nav>
+
+<h2 id="s-terms">用語</h2>
+<p>タスク固有の語だけを <code>&lt;dl class="terms"&gt;</code> に並べる。一般的な技術用語は書かない — 知っている語の説明は読む対象を増やすだけ。無ければ節ごと省く。</p>
+
+<dl class="terms">
+  <dt>無改変層</dt>
+  <dd>テンプレートのうち、一字も変えずに貼る CSS / JS のブロック。</dd>
+  <dt>昇格</dt>
+  <dd>diff の hunk のうち、人間が決裁する対象として選び出したもの。</dd>
+</dl>
+
+<h2 id="s-heading">見出しと採番</h2>
+<p>h2 の番号は CSS の counter が振る。番号を本文に手で書かない — 節を入れ替えたときに番号だけが古いまま残るため。h3 以下は採番しない。</p>
+
+<h3>h3 の見た目</h3>
+<p>本文は平易な完全文で書く。用語は初出で一言補足する。<code>インラインコード</code> と <a href="#s-figure">リンク</a> はこの見た目になる。</p>
+
+<h2 id="s-card">カード・グリッド・バッジ</h2>
+
+<div class="cards">
+  <section class="card">
+    <h3>案 A <span class="badge">推奨</span></h3>
+    <p>一言サマリ。カードは <code>.card</code>、横並びは <code>.cards</code> で包む。</p>
+    <dl><dt>強み</dt><dd>既存の仕組みに載る</dd><dt>弱み</dt><dd>初期の移行が要る</dd></dl>
+  </section>
+  <section class="card">
+    <h3>案 B <span class="badge plain">対抗</span></h3>
+    <p>バッジは推奨に 1 つだけ色を付け、それ以外は <code>.badge.plain</code> にする。</p>
+    <dl><dt>強み</dt><dd>移行が不要</dd><dt>弱み</dt><dd>後から差し替えにくい</dd></dl>
+  </section>
+  <section class="card">
+    <h3>案 C <span class="badge plain">見送り</span></h3>
+    <p>見送る案も残す — 検討した範囲が読者に伝わらないと、同じ案が次回また出る。</p>
+    <dl><dt>強み</dt><dd>実装量が最小</dd><dt>弱み</dt><dd>要件を満たさない</dd></dl>
+  </section>
+</div>
+
+<h2 id="s-table">表</h2>
+<p>列は 3 つまで。セルに文を書かない。行見出しの列には <code>class="rowhead"</code> を付けて折り返しを止める。</p>
+
+<table>
+<thead><tr><th>項目</th><th>before</th><th>after</th></tr></thead>
+<tbody>
+<tr><td class="rowhead">冒頭</td><td>結論カード</td><td>要点 (ラベル自動)</td></tr>
+<tr><td class="rowhead">見出しの目印</td><td>絵文字</td><td>自動採番</td></tr>
+<tr><td class="rowhead">図</td><td>折れ線 1 種</td><td>カタログ 5 種</td></tr>
+<tr><td class="rowhead">部品の正本</td><td>各レポートの style</td><td>style.css</td></tr>
+</tbody>
+</table>
+
+<h2 id="s-figure">図 (5 種 + 折れ線)</h2>
+<p>型の選び方と座標の式は <code>references/diagrams.md</code> が正本。以下は 5 種すべてを実寸で並べたもの。</p>
+
+<h3>1. 縦フロー</h3>
+<figure class="figure">
+  <svg viewBox="0 0 560 300" style="max-width:560px" role="img" aria-label="spec から plan-commit までの 4 段階の流れ">
+    <defs>
+      <marker id="flow-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 Z" class="dg-arrow"/>
+      </marker>
+    </defs>
+    <rect class="dg-node" x="70" y="20" width="420" height="44" rx="8"/>
+    <text class="dg-label" x="280" y="42" dy=".35em" text-anchor="middle">spec — 認識合わせと要件</text>
+    <line class="dg-line" x1="280" y1="64" x2="280" y2="89" marker-end="url(#flow-arrow)"/>
+
+    <rect class="dg-node" x="70" y="92" width="420" height="44" rx="8"/>
+    <text class="dg-label" x="280" y="114" dy=".35em" text-anchor="middle">plan — 実装計画</text>
+    <line class="dg-line" x1="280" y1="136" x2="280" y2="161" marker-end="url(#flow-arrow)"/>
+
+    <rect class="dg-node-em" x="70" y="164" width="420" height="44" rx="8"/>
+    <text class="dg-label" x="280" y="186" dy=".35em" text-anchor="middle">plan-implement — 実装と挙動ゲート</text>
+    <line class="dg-line" x1="280" y1="208" x2="280" y2="233" marker-end="url(#flow-arrow)"/>
+
+    <rect class="dg-node" x="70" y="236" width="420" height="44" rx="8"/>
+    <text class="dg-label" x="280" y="258" dy=".35em" text-anchor="middle">plan-commit — 確定</text>
+  </svg>
+  <figcaption>色付き = 今回の変更が集中する段階。分岐が無い手順なら図にせず番号付き箇条書きにする。</figcaption>
+</figure>
+
+<h3>2. 比較マトリクス</h3>
+<figure class="figure">
+  <svg viewBox="0 0 560 242" style="max-width:560px" role="img" aria-label="3 案を 4 つの評価軸で比べた表">
+    <text class="dg-title" x="211" y="38" text-anchor="middle">案 A</text>
+    <text class="dg-title" x="341" y="38" text-anchor="middle">案 B</text>
+    <text class="dg-title" x="471" y="38" text-anchor="middle">案 C</text>
+
+    <text class="dg-label" x="20" y="71" dy=".35em">学習コスト</text>
+    <rect class="dg-node-em" x="150" y="52" width="122" height="38" rx="6"/>
+    <text class="dg-label" x="211" y="71" dy=".35em" text-anchor="middle">低い</text>
+    <rect class="dg-node" x="280" y="52" width="122" height="38" rx="6"/>
+    <text class="dg-label" x="341" y="71" dy=".35em" text-anchor="middle">中くらい</text>
+    <rect class="dg-node" x="410" y="52" width="122" height="38" rx="6"/>
+    <text class="dg-label" x="471" y="71" dy=".35em" text-anchor="middle">高い</text>
+
+    <text class="dg-label" x="20" y="115" dy=".35em">移行の手間</text>
+    <rect class="dg-node" x="150" y="96" width="122" height="38" rx="6"/>
+    <text class="dg-label" x="211" y="115" dy=".35em" text-anchor="middle">1 回だけ</text>
+    <rect class="dg-node-em" x="280" y="96" width="122" height="38" rx="6"/>
+    <text class="dg-label" x="341" y="115" dy=".35em" text-anchor="middle">不要</text>
+    <rect class="dg-node" x="410" y="96" width="122" height="38" rx="6"/>
+    <text class="dg-label" x="471" y="115" dy=".35em" text-anchor="middle">段階的</text>
+
+    <text class="dg-label" x="20" y="159" dy=".35em">拡張性</text>
+    <rect class="dg-node-em" x="150" y="140" width="122" height="38" rx="6"/>
+    <text class="dg-label" x="211" y="159" dy=".35em" text-anchor="middle">高い</text>
+    <rect class="dg-node" x="280" y="140" width="122" height="38" rx="6"/>
+    <text class="dg-label" x="341" y="159" dy=".35em" text-anchor="middle">頭打ち</text>
+    <rect class="dg-node" x="410" y="140" width="122" height="38" rx="6"/>
+    <text class="dg-label" x="471" y="159" dy=".35em" text-anchor="middle">高い</text>
+
+    <text class="dg-label" x="20" y="203" dy=".35em">撤退のしやすさ</text>
+    <rect class="dg-node" x="150" y="184" width="122" height="38" rx="6"/>
+    <text class="dg-label" x="211" y="203" dy=".35em" text-anchor="middle">やや難</text>
+    <rect class="dg-node-em" x="280" y="184" width="122" height="38" rx="6"/>
+    <text class="dg-label" x="341" y="203" dy=".35em" text-anchor="middle">容易</text>
+    <rect class="dg-node" x="410" y="184" width="122" height="38" rx="6"/>
+    <text class="dg-label" x="471" y="203" dy=".35em" text-anchor="middle">やや難</text>
+  </svg>
+  <figcaption>色付き = その軸で最も良い案。セルは短い語にする — 記号だけでは理由が読めない。</figcaption>
+</figure>
+
+<h3>3. before-after 並置</h3>
+<figure class="figure">
+  <svg viewBox="0 0 640 326" style="max-width:640px" role="img" aria-label="レポートの構成の変更前と変更後">
+    <defs>
+      <marker id="ba-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 Z" class="dg-arrow"/>
+      </marker>
+    </defs>
+    <text class="dg-title" x="20" y="30">BEFORE</text>
+    <text class="dg-title" x="350" y="30">AFTER</text>
+    <line class="dg-line" x1="296" y1="163" x2="344" y2="163" marker-end="url(#ba-arrow)"/>
+
+    <rect class="dg-node" x="20" y="46" width="270" height="44" rx="8"/>
+    <text class="dg-label" x="32" y="70" dy=".35em">自己完結 HTML (CDN 禁止)</text>
+    <rect class="dg-node" x="350" y="46" width="270" height="44" rx="8"/>
+    <text class="dg-label" x="362" y="70" dy=".35em">自己完結 HTML (CDN 禁止)</text>
+
+    <rect class="dg-node" x="20" y="100" width="270" height="44" rx="8"/>
+    <text class="dg-label" x="32" y="124" dy=".35em">冒頭に結論カード</text>
+    <rect class="dg-node-em" x="350" y="100" width="270" height="44" rx="8"/>
+    <text class="dg-label" x="362" y="124" dy=".35em">冒頭に要点 (ラベル自動)</text>
+
+    <rect class="dg-node" x="20" y="154" width="270" height="44" rx="8"/>
+    <text class="dg-label" x="32" y="178" dy=".35em">見出しに絵文字</text>
+    <rect class="dg-node-em" x="350" y="154" width="270" height="44" rx="8"/>
+    <text class="dg-label" x="362" y="178" dy=".35em">見出しは 01, 02 の自動採番</text>
+
+    <rect class="dg-node" x="20" y="208" width="270" height="44" rx="8"/>
+    <text class="dg-label" x="32" y="232" dy=".35em">図は折れ線 1 種</text>
+    <rect class="dg-node-em" x="350" y="208" width="270" height="44" rx="8"/>
+    <text class="dg-label" x="362" y="232" dy=".35em">図は 5 種のカタログ</text>
+
+    <rect class="dg-node" x="20" y="262" width="270" height="44" rx="8"/>
+    <text class="dg-label" x="32" y="286" dy=".35em">diff テーブルとファイルナビ</text>
+    <rect class="dg-node" x="350" y="262" width="270" height="44" rx="8"/>
+    <text class="dg-label" x="362" y="286" dy=".35em">diff テーブルとファイルナビ</text>
+  </svg>
+  <figcaption>色付き = 今回変わる箇所。左右の行数を揃え、変わらない行も残す — 行がずれると対応関係が読めなくなる。</figcaption>
+</figure>
+
+<h3>4. ツリー</h3>
+<figure class="figure">
+  <svg viewBox="0 0 330 290" style="max-width:330px" role="img" aria-label="html-report スキルのファイル構成">
+    <text class="dg-label" x="30" y="30" dy=".35em">skills/html-report/</text>
+
+    <line class="dg-line" x1="34" y1="40" x2="34" y2="210"/>
+    <line class="dg-line" x1="34" y1="60" x2="54" y2="60"/>
+    <text class="dg-label" x="60" y="60" dy=".35em">SKILL.md<tspan class="dg-sub" dx="8">手順と規則</tspan></text>
+    <line class="dg-line" x1="34" y1="90" x2="54" y2="90"/>
+    <text class="dg-label" x="60" y="90" dy=".35em">references/</text>
+
+    <line class="dg-line" x1="64" y1="100" x2="64" y2="180"/>
+    <line class="dg-line" x1="64" y1="120" x2="84" y2="120"/>
+    <text class="dg-label" x="90" y="120" dy=".35em">templates.md<tspan class="dg-sub" dx="8">骨格・タブ・diff</tspan></text>
+    <line class="dg-line" x1="64" y1="150" x2="84" y2="150"/>
+    <text class="dg-label" x="90" y="150" dy=".35em">diagrams.md<tspan class="dg-sub" dx="8">図 5 種</tspan></text>
+    <line class="dg-line" x1="64" y1="180" x2="84" y2="180"/>
+    <text class="dg-label" x="90" y="180" dy=".35em">notion-design.md<tspan class="dg-sub" dx="8">トークンの出典</tspan></text>
+
+    <line class="dg-line" x1="34" y1="210" x2="54" y2="210"/>
+    <text class="dg-label" x="60" y="210" dy=".35em">assets/</text>
+
+    <line class="dg-line" x1="64" y1="220" x2="64" y2="270"/>
+    <line class="dg-line" x1="64" y1="240" x2="84" y2="240"/>
+    <text class="dg-label" x="90" y="240" dy=".35em">style.css<tspan class="dg-sub" dx="8">見た目の正本</tspan></text>
+    <line class="dg-line" x1="64" y1="270" x2="84" y2="270"/>
+    <text class="dg-label" x="90" y="270" dy=".35em">component-samples.html<tspan class="dg-sub" dx="8">実物の見本</tspan></text>
+  </svg>
+  <figcaption>深さは 3 まで。4 段目が要るなら、その部分木を別の図に分ける。</figcaption>
+</figure>
+
+<h3>5. タイムライン</h3>
+<figure class="figure">
+  <svg viewBox="0 0 346 228" style="max-width:346px" role="img" aria-label="正本テンプレートを固定してきた経緯">
+    <defs>
+      <marker id="tl-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 Z" class="dg-arrow"/>
+      </marker>
+    </defs>
+    <line class="dg-line" x1="96" y1="26" x2="96" y2="214" marker-end="url(#tl-arrow)"/>
+
+    <circle class="dg-dot" cx="96" cy="36" r="5"/>
+    <text class="dg-mono" x="80" y="36" dy=".35em" text-anchor="end">v0.2.3</text>
+    <text class="dg-label" x="114" y="36" dy=".35em">モック調整パネルを正本化</text>
+    <text class="dg-sub" x="114" y="53">tweak-panel.md</text>
+
+    <circle class="dg-dot" cx="96" cy="88" r="5"/>
+    <text class="dg-mono" x="80" y="88" dy=".35em" text-anchor="end">v0.2.4</text>
+    <text class="dg-label" x="114" y="88" dy=".35em">diff-review 固有部品を正本化</text>
+    <text class="dg-sub" x="114" y="105">components.md</text>
+
+    <circle class="dg-dot-em" cx="96" cy="140" r="6"/>
+    <text class="dg-mono" x="80" y="140" dy=".35em" text-anchor="end">v0.3.0</text>
+    <text class="dg-label" x="114" y="140" dy=".35em">レポートキットを正本化</text>
+    <text class="dg-sub" x="114" y="157">diagrams.md / component-samples.html</text>
+
+    <circle class="dg-dot" cx="96" cy="192" r="5"/>
+    <text class="dg-mono" x="80" y="192" dy=".35em" text-anchor="end">次</text>
+    <text class="dg-label" x="114" y="192" dy=".35em">codex 版へ追随</text>
+    <text class="dg-sub" x="114" y="209">Claude 版の形が固まってから 1 回で</text>
+  </svg>
+  <figcaption>色の濃い点 = 現在地。日付や版の表記は全出来事で統一する。</figcaption>
+</figure>
+
+<h3>付録. スコア推移の折れ線 (type: loop)</h3>
+<figure class="figure">
+  <svg viewBox="0 0 640 240" style="max-width:640px" role="img" aria-label="4 回の採点のスコア推移と閾値">
+    <line class="dg-line" x1="40" y1="220" x2="620" y2="220"/>
+    <line class="dg-line-dash" x1="40" y1="60" x2="620" y2="60"/>
+    <text class="dg-sub" x="40" y="52">閾値 80</text>
+    <polyline class="dg-line-em" points="40,96 227,72 413,62 600,44"/>
+    <circle class="dg-dot" cx="40" cy="96" r="4"/>
+    <text class="dg-sub" x="40" y="86" text-anchor="middle">62</text>
+    <circle class="dg-dot" cx="227" cy="72" r="4"/>
+    <text class="dg-sub" x="227" y="62" text-anchor="middle">74</text>
+    <circle class="dg-dot" cx="413" cy="62" r="4"/>
+    <text class="dg-sub" x="413" y="52" text-anchor="middle">79</text>
+    <circle class="dg-dot-em" cx="600" cy="44" r="5"/>
+    <text class="dg-sub" x="600" y="34" text-anchor="middle">88</text>
+  </svg>
+  <figcaption>破線 = 閾値。色の濃い点 = 合格した回。iteration が 1 つだけなら折れ線を出さず点だけにする。</figcaption>
+</figure>
+
+<h2 id="s-tabs">タブ</h2>
+<p>本論が長いときに畳む。<strong>削って短くせず、畳んで短く見せる</strong> — 紙に印刷したときはタブ列が消えて全ペインが開く。</p>
+
+<nav class="tabs">
+  <button class="tab active" data-pane="pane-1" type="button">概要</button>
+  <button class="tab" data-pane="pane-2" type="button">詳細</button>
+  <button class="tab" data-pane="pane-3" type="button">根拠・出典</button>
+</nav>
+<section id="pane-1" class="pane active">
+  <h3>概要ペイン</h3>
+  <p>既定で開くペインには <code>active</code> を付ける。ペインは <code>.pane</code>、ボタンは <code>.tab</code>。</p>
+</section>
+<section id="pane-2" class="pane">
+  <h3>詳細ペイン</h3>
+  <p>タブの切り替えは末尾の小さな JS が行う。ライブラリは使わない。</p>
+</section>
+<section id="pane-3" class="pane">
+  <h3>根拠・出典ペイン</h3>
+  <p>出典はファイルパスや URL をそのまま書く<span class="src">plugins/crystallize/skills/html-report/</span></p>
+</section>
+
+<h2 id="s-fold">詳細 (畳む)</h2>
+
+<details class="fold">
+  <summary>畳んだ詳細 — クリックで開く</summary>
+  <div class="fold-body">
+    <p>長い引用・全文・ログはここに入れる。省略はしない。</p>
+    <pre><code>$ git -C "$PROJROOT" diff --stat
+ 3 files changed, 42 insertions(+), 7 deletions(-)</code></pre>
+  </div>
+</details>
+
+<details class="fold" open>
+  <summary>既定で開いた詳細</summary>
+  <div class="fold-body">
+    <p>読ませたい詳細には <code>open</code> を付ける。</p>
+  </div>
+</details>
+
+<h2 id="s-diff">diff テーブル</h2>
+<p>diff の表示構造は <code>references/templates.md</code> が正本 (この見本は 1 ファイル分の抜粋)。行番号 2 列 + コード列の 3 列を崩さない。<code>+</code> と <code>-</code> の記号はコード列に残す — 色だけに頼ると色覚多様性への配慮が抜ける。</p>
+<p>重大度は3段。<code>file-head</code> のファイル名の直後に <mark class="sev-high">HIGH</mark> <mark class="sev-med">MED</mark> <mark class="sev-low">LOW</mark> のどれか1つを置く(定義は style.css にあるので追記しない)。</p>
+
+<details class="file" open>
+  <summary class="file-head">
+    <span class="file-badge mod">変更</span>
+    <span class="file-name">src/auth/session.ts</span>
+    <span class="file-meta">
+      <span class="hunk-count">1 hunk</span>
+      <span class="stat-add">+1</span>
+      <span class="stat-del">-1</span>
+    </span>
+  </summary>
+  <div class="hunk">
+    <div class="hunk-head">hunk 1/1 — @@ 3,7 → 3,7 @@ セッション検証の前後</div>
+    <div class="diff-body">
+      <table class="diff-table">
+        <tbody>
+          <tr class="diff-ctx"><td class="diff-ln-old">3</td><td class="diff-ln-new">3</td><td class="diff-code">  function validate(token) {</td></tr>
+          <tr class="diff-del"><td class="diff-ln-old">4</td><td class="diff-ln-new"></td><td class="diff-code">-   if (!token) return true;</td></tr>
+          <tr class="diff-add"><td class="diff-ln-old"></td><td class="diff-ln-new">4</td><td class="diff-code">+   if (!token) return false;</td></tr>
+          <tr class="diff-ctx"><td class="diff-ln-old">5</td><td class="diff-ln-new">5</td><td class="diff-code">  }</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="note">トークンが無いときに検証を通していた。この変更で未認証リクエストが弾かれる。</p>
+</details>
+
+<h2 id="s-inline">強調と補助テキスト</h2>
+<p>有彩色は primary 1 色 + 警告 1 色だけ。<span class="emph">強調は 1 ページ 1 箇所</span>にする — 2 箇所目を足した時点でどちらも目立たなくなる。背景で目立たせたいときは <mark>mark</mark> を使う。</p>
+<p class="note">補足・注意は <code>.note</code>。本文の流れから外れる但し書きに使う。</p>
+<p>折り返したくない語には <span class="nowrap">docs/crystallize/reports/</span> のように <code>.nowrap</code> を付ける。</p>
+
+<blockquote><p>引用はこの見た目。素材の原文をそのまま示したいときに使う。</p></blockquote>
+
+</main>
+
+<script>
+(function () {
+  /* ---- テーマ (style.css は html[data-theme="dark"] だけを見るので JS で付ける) ---- */
+  var root = document.documentElement;
+  var KEY = 'crystallize-report-theme';
+  var saved = null;
+  try { saved = localStorage.getItem(KEY); } catch (e) { saved = null; }
+  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  root.dataset.theme = (saved === 'dark' || saved === 'light') ? saved : (prefersDark ? 'dark' : 'light');
+
+  var btn = document.getElementById('themeToggle');
+  if (btn) {
+    btn.addEventListener('click', function () {
+      var next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+      root.dataset.theme = next;
+      try { localStorage.setItem(KEY, next); } catch (e) { /* プライベートウィンドウ等 */ }
+    });
+  }
+})();
+</script>
+<script>
+(function () {
+  /* ---- タブ ---- */
+  document.querySelectorAll('.tab').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.tab, .pane').forEach(function (e) { e.classList.remove('active'); });
+      b.classList.add('active');
+      var pane = document.getElementById(b.dataset.pane);
+      if (pane) pane.classList.add('active');
+    });
+  });
+})();
+</script>
+</body>
+</html>

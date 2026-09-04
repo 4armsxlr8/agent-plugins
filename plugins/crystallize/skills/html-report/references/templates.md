@@ -1,5 +1,7 @@
 # html-report — マークアップ雛形
 
+ページの骨格と、diff 表示まわりの部品の正本。**部品の見た目 (CSS) の正本は `../assets/style.css`、実物は `../assets/component-samples.html`、図は `diagrams.md`** — このファイルはマークアップの並びだけを持つ。
+
 ## 共通骨格
 
 ```html
@@ -10,29 +12,55 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
 <style>
-/* 1) 同梱の assets/style.css の中身を丸ごとここに貼る */
-/* 2) 以下、本レポート用の追記分 */
+/* 同梱の assets/style.css の中身を丸ごとここに貼る (部品CSSも含まれている) */
 </style>
 </head>
 <body>
-<main class="report">…</main>
-<script>/* タブ等の最小JS */</script>
+<button class="theme-toggle" id="themeToggle" type="button" aria-label="テーマ切り替え">◐</button>
+<!-- <main> はどちらか一方を使う:
+     散文レポート用 (html-report)      <main class="report markdown-body report-numbered">
+     diff レポート用 (diff-review)     <main class="report report-numbered">
+     diff 側で markdown-body を外すのは、`.markdown-body table` のような子孫セレクタ
+     (詳細度 0,1,1) が diff-review 固有部品の単一 class (0,1,0) に勝ってしまうため。 -->
+<main class="report markdown-body report-numbered">…</main>
+<script>
+(function () {
+  /* テーマ: style.css は html[data-theme="dark"] だけを見るので、初期値を JS で入れる */
+  var root = document.documentElement;
+  var KEY = 'crystallize-report-theme';
+  var saved = null;
+  try { saved = localStorage.getItem(KEY); } catch (e) { saved = null; }
+  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  root.dataset.theme = (saved === 'dark' || saved === 'light') ? saved : (prefersDark ? 'dark' : 'light');
+
+  var btn = document.getElementById('themeToggle');
+  if (btn) {
+    btn.addEventListener('click', function () {
+      var next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+      root.dataset.theme = next;
+      try { localStorage.setItem(KEY, next); } catch (e) { /* プライベートウィンドウ等 */ }
+    });
+  }
+})();
+</script>
 </body>
 </html>
 ```
 
-- ダークモードは style.css が `prefers-color-scheme` と CSS 変数で対応済み。**追記分の色も必ず CSS 変数経由にする** — 変数名は style.css を実際に読んで合わせる(推測で `--fg` 等と書かない。名前が違うとダーク側だけ破綻する)
+- `<main>` の class は **散文レポート (html-report) なら 3つセット**: `report`(幅とパディング) + `markdown-body`(本文タイポグラフィ) + `report-numbered`(h2 の自動採番)
+- **diff レポート (diff-review) は `markdown-body` を付けず `report report-numbered` の2つにする** — `markdown-body` の子孫セレクタが `references/components.md` の固有部品 (単一 class) に詳細度で勝ち、無改変層で貼ったはずの見た目が崩れる
+- **テーマ切替ボタンと上の初期化 JS は無改変で入れる** — style.css のダーク配色は `html[data-theme="dark"]` でしか適用されない。この JS が無いと、OS がダークでもライトのまま出る
+- **本レポート用の追記 CSS を書かない**。部品は style.css に揃っている。足りない部品は style.css への追記として提案する(その場で書いた CSS は次の生成で消え、レポートごとの見た目の揺れになる)
 
 ## タブ(依存ライブラリなし)
 
 ```html
 <nav class="tabs">
-  <button class="tab active" data-pane="p1">概要</button>
-  <button class="tab" data-pane="p2">詳細</button>
+  <button class="tab active" data-pane="p1" type="button">概要</button>
+  <button class="tab" data-pane="p2" type="button">詳細</button>
 </nav>
 <section id="p1" class="pane active">…</section>
 <section id="p2" class="pane">…</section>
-<style>.pane{display:none}.pane.active{display:block}</style>
 <script>
 document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
   document.querySelectorAll('.tab,.pane').forEach(e => e.classList.remove('active'));
@@ -42,25 +70,30 @@ document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () =>
 </script>
 ```
 
-## 結論カード(research 冒頭)
+- `.tabs` / `.tab` / `.pane` の CSS は style.css にある。印刷時は全ペインが開いてタブ列が消える(畳んだ内容を紙から落とさないため)
+- **`h2` は `.pane` の外に置く(タブの中は `h3` 以下)** — 非表示のペイン内の `h2` は採番されず、本文と目次の番号がずれる
+
+## 要点(全レポート共通・先頭固定)
 
 ```html
-<section class="card conclusion">
-  <h2>💡 結論</h2>
-  <ul><li>…最大3点、1点1文…</li></ul>
-</section>
+<div class="keypoints">
+  <ol><li>…最大3点、1点1文…</li></ol>
+</div>
 ```
+
+- **見出しを書かない**。「要点」のラベルは `.keypoints::before` が付ける — 文言と位置をレポート側に任せると「結論」「サマリ」と揺れる
+- 目次を出すなら直後に `<nav class="report-toc">`。番号は CSS counter が振るので手で書かない
 
 ## 比較グリッド + トレードオフ表(compare)
 
 ```html
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+<div class="cards">
   <section class="card">
     <h3>案A <span class="badge">推奨</span></h3>
     <p>一言サマリ</p>
     <dl><dt>強み</dt><dd>…</dd><dt>弱み</dt><dd>…</dd></dl>
   </section>
-  <!-- 案B, 案C … -->
+  <!-- 案B, 案C … 推奨以外のバッジは class="badge plain" -->
 </div>
 ```
 
@@ -69,7 +102,7 @@ document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () =>
 
 ## diff 表示(diff)
 
-CSS は同梱の `assets/style.css` に含まれている(`.file` `.file-head` `.hunk-head` `.diff-table` `.report-layout` `.file-nav` 等)。**この構造をそのまま使い、独自の diff スタイル(行番号なし・縞模様・1行ごとの隙間など)を発明しない** — 構造を即興にするとセッションごとに見た目が揺れ、行番号なしで読みにくい版・縞模様つきの版が混ざって出た実績がある。追記が要るのは severity バッジ (`.sev-high` 等。任意で定義する) だけ。
+CSS は同梱の `assets/style.css` に含まれている(`.file` `.file-head` `.hunk-head` `.diff-table` `.report-layout` `.file-nav` 等)。**この構造をそのまま使い、独自の diff スタイル(行番号なし・縞模様・1行ごとの隙間など)を発明しない** — 構造を即興にするとセッションごとに見た目が揺れ、行番号なしで読みにくい版・縞模様つきの版が混ざって出た実績がある。severity バッジ (`.sev-high` / `.sev-med` / `.sev-low`) は style.css に定義済み。追記は不要。
 
 本文全体を `.report-layout` で包み、右側にファイル一覧ナビ(`.file-nav`)を出す。**ナビは手書きしない — ページ内の `details.file` を JS が document 順に自動走査して生成する**(手書きだとファイルの入れ忘れや本文とのズレが起きるため、生成は常に構造から導く)。
 
@@ -102,7 +135,7 @@ CSS は同梱の `assets/style.css` に含まれている(`.file` `.file-head` `
         </div>
       </div>
       <!-- hunk 2/5 … 以降も同じ .hunk ブロックを繰り返す -->
-      <p class="note">⚠ この変更が影響する挙動の説明(平易な言葉で)</p>
+      <p class="note">この変更が影響する挙動の説明(平易な言葉で)</p>
     </details>
     <!-- 2つ目以降の <details class="file"> … 同一ファイルが複数箇所に分かれて出てもよい -->
   </div>
@@ -206,26 +239,6 @@ CSS は同梱の `assets/style.css` に含まれている(`.file` `.file-head` `
 - 同一ファイルが複数の diff ブロックに分かれて登場するレポート(diff-review は意図単位でグループ分けするため起こりうる)では、ナビにも登場順のまま複数出てよい。1ファイル1エントリへ無理に統合しない
 - 960px 以下ではナビが非表示になり1カラムに戻る(style.css のメディアクエリで対応済み)
 
-## SVG 折れ線(loop ダッシュボード)
+## 図(縦フロー / 比較マトリクス / before-after / ツリー / タイムライン / 折れ線)
 
-```html
-<svg viewBox="0 0 640 240" role="img" aria-label="スコア推移">
-  <!-- 閾値線(破線) y = H-pad - (threshold/100)*(H-2*pad) -->
-  <line x1="40" y1="{yThr}" x2="620" y2="{yThr}" stroke="var(--muted)" stroke-dasharray="4 4"/>
-  <polyline fill="none" stroke="currentColor" stroke-width="2" points="{x1},{y1} {x2},{y2} …"/>
-  <!-- 各点: circle + score の text ラベル。passed=true の点は塗りを変える -->
-</svg>
-```
-
-- 座標計算: `x = 40 + i * (600 - 40) / max(N-1, 1)`、`y = 220 - (score / 100) * 200`(pad=20/40, W=640, H=240)
-- iteration が1つだけなら polyline を出さず circle のみ
-- criteria 別推移は同じ SVG に細線で重ねるか、breakdown キーごとに小さな SVG を並べる(キーは全 iteration で固定)
-
-## eval データ収集(loop)
-
-```bash
-# EVAL_DIR = iteration ごとの eval JSON が並ぶディレクトリ (ファイル名は iteration 順に整列すること)
-for f in "$EVAL_DIR"/*-eval.json; do
-  jq -c '{score, passed, breakdown: .quality.breakdown}' "$f"
-done
-```
+図の正本は `diagrams.md` に移した。「見せたいもの → 図の型」の対応表、5種のSVGテンプレの座標、日本語ラベルの幅の計算式、loop のスコア推移の折れ線と eval データの集計コマンドはすべてそちらにある。**このファイルには図を書かない** — 同じ図の正本が2つあると必ず乖離する。

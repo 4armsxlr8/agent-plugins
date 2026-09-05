@@ -116,7 +116,7 @@ N. 機械的な作業 (リファクタ・配線・テスト整備) は末尾に�
 
 1. `git worktree add` で worktree を作成する (git ネイティブ機能 — 特定ツールに依存しない)
 2. `plans/<plan の basename>.md` と `plans/<plan の basename>/` を担当 worktree へ移動する。**spec は追跡状態で扱いを分ける** — `git ls-files --error-unmatch specs/<slug>.md` が通る (追跡済み) なら worktree 側に既に同じファイルがあるので、**移動せず、未コミットの改訂分だけをコピーする** (`mv` すると本流の作業ツリーに spec の削除が残る)。追跡されていない (今回新規に書いた) spec は `specs/<slug>.md` と `specs/<slug>/` ごと移動する — コミットされていないため worktree には現れず、移し忘れると実装セッションが plan 先頭の `spec:` 行を解決できない
-3. 各 worktree でセッションを起動する — Orca が使える環境なら orca-cli で worktree を管理下に置いて Claude を起動し、`/plan-implement <plan の絶対パス>` を terminal send で送る。無い環境では、worktree ごとの雛形プロンプトを提示してユーザーに各ターミナルで開いてもらう (対話セッションが必要なため、起動だけは環境の道具に依存する)。`depends-on:` で繋がった plan 群は先頭の 1 枚だけを送る — 後続は先行の plan-commit が終わってから、同じセッションで次の `/plan-implement` を送る
+3. 各 worktree で対話セッションを起動し、`/plan-implement <plan の絶対パス>` を最初のプロンプトとして渡す。**起動手段は本スキルが決めない** — 環境にセッション起動を担う道具 (worktree 管理ツールや端末の自動化) があればそれを使い、無ければ worktree ごとの雛形プロンプトを提示してユーザーに各ターミナルで開いてもらう。特定の製品名をここに書かない — プラグインは配布物で、利用者ごとの道具は利用者側のスキルや CLAUDE.md が担う。`depends-on:` で繋がった plan 群は先頭の 1 枚だけを送る — 後続は先行の plan-commit が終わってから、同じセッションで次の `/plan-implement` を送る
 
 以降の対話 (挙動ゲート・例外ゲート) は各 worktree のセッションが直接ユーザーと行う。本セッションは配置の完了報告 (worktree 一覧と各セッションの状態) で終了し、司令塔として残らない。
 

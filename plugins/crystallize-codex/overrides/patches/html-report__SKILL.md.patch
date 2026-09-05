@@ -1,0 +1,97 @@
+--- a/skills/html-report/SKILL.md
++++ b/skills/html-report/SKILL.md
+@@ -3,27 +3,22 @@
+ description: >-
+   「レポートにして」「HTMLレポート」で発動。散文の報告が30行を超えそうなときにも発動。
+   長い報告を自己完結HTMLにして開く。
+-user-invocable: true
+-argument-hint: "<素材ファイルの絶対パス | インライン素材> [type: research|compare|diff|loop] [title: <表示タイトル>]"
+-context: fork
+-agent: general-purpose
+-allowed-tools: "*"
+-metadata:
+-  purpose: produce
+-  trigger: user
+-  shape: forked
+ ---
+ 
+ # html-report — 長い報告を自己完結HTMLで渡す
+ 
+-あなたは fork されたレポート整形係。渡された素材を、**作業を見ていなかった読者**が最短で理解できる単一HTMLに整形して開く。チャットに長文を書く代わりに、このレポートが読まれる。
++## Codex 実行境界
++
++最初に `../../references/codex-runtime.md` を全文読む。このスキルは独立コンテキストでだけ実行する。入力に `CRYSTALLIZE_CODEX_ROLE=html-report` マーカーが無ければ、履歴を渡さない新規サブエージェントを起動し、同マーカー、この SKILL.md の絶対パス、素材の絶対パスまたは scoped_payload、output_contract を渡す。子の完了後、親は生成HTMLを確認してCodex内で表示する。独立実行を利用できない場合は同一コンテキストへフォールバックせず停止する。
++
++あなたは独立サブエージェントとして動くレポート整形係。渡された素材を、**作業を見ていなかった読者**が最短で理解できる単一HTMLに整形する。チャットに長文を書く代わりに、このレポートが読まれる。
+ 
+ 構成も部品も図も、このスキルが正本を持っている。**見た目を毎回ゼロから描かず、正本にある部品を選んで並べる** — 規則がこれだけ多いのはそのためで、見せ方を毎回考えると、同じ種類の報告がセッションごとに別物の見た目で出てくる。
+ 
+ ## Input / Output
+ 
+-- **Input**: `$ARGUMENTS` = 素材ファイルの絶対パス(推奨)またはインライン素材。任意指定: `type:`(research / compare / diff / loop)、`title:`
+-- **Output**: `<projroot>/docs/crystallize/reports/YYYY-MM-DD-<slug>.html` を生成して `open` する。最終応答は「結論の要約(3行以内)+生成ファイルのパス」のみ
++- **Input**: `起動メッセージまたは委任メッセージ` = 素材ファイルの絶対パス(推奨)またはインライン素材。任意指定: `type:`(research / compare / diff / loop)、`title:`
++- **Output**: `<projroot>/docs/crystallize/reports/YYYY-MM-DD-<slug>.html` を生成し、親がCodex内のファイルまたはブラウザプレビューで表示する。最終応答は「結論の要約(3行以内)+生成ファイルのパス」のみ
+ 
+ ## 最重要ルール(理由つき)
+ 
+@@ -32,11 +27,11 @@
+ - **削って短くせず、畳んで短く見せる** — 詳細はタブ・`<details class="fold">` に格納する。用語は初出で一言補足し、本文は平易な完全文で書く
+ - **部品を即興で作らない** — 見た目の正本は `assets/style.css` と `assets/component-samples.html`。ここに無い見た目が要ると感じたら、その場で CSS を書かず、style.css への追記として最終応答で提案する(正本の外に生まれた部品は次の生成で消え、レポートごとに見た目が揺れる原因になる)
+ - **チャットにHTMLの中身を貼らない** — 親コンテキストの温存がこのスキルの存在理由
+-- **Artifactツール（claude.aiへのアップロード）は使わない** — レポートはローカル生成して `open` でブラウザ表示するのが既定。アップロードはユーザーが明示的に頼んだ場合のみ
++- **外部サービスへアップロードしない** — レポートはローカル生成して Codex内でプレビューするのが既定。アップロードはユーザーが明示的に頼んだ場合のみ
+ 
+ ## Step 1: 入力解析
+ 
+-`$ARGUMENTS` からファイルパス / type / title を抽出し、パスがあれば Read する。type 未指定なら素材から推定する:
++`起動メッセージまたは委任メッセージ` からファイルパス / type / title を抽出し、パスがあれば読む。type 未指定なら素材から推定する:
+ 
+ | 素材の特徴 | type |
+ |---|---|
+@@ -49,7 +44,7 @@
+ 
+ ## Step 2: 生成前に必ず読む(3ファイル)
+ 
+-書き始める前に次を Read する。**読まずに書き始めない** — 部品の見た目と図の座標は文章では伝わらず、思い出しで書くと必ず前回と違うものになる。
++書き始める前に次を読む。**読まずに書き始めない** — 部品の見た目と図の座標は文章では伝わらず、思い出しで書くと必ず前回と違うものになる。
+ 
+ | ファイル | 何のために読むか |
+ |---|---|
+@@ -57,7 +52,7 @@
+ | `<skill-dir>/references/diagrams.md` | 「見せたいもの → 図の型」の対応表と、5種のSVGテンプレの座標 |
+ | `<skill-dir>/assets/style.css` | `<style>` に丸ごとインライン化する土台。変数名を目で確認する(推測で `--fg` 等と書かない) |
+ 
+-マークアップの骨格・タブ・diff テーブル・ファイルナビJSは `<skill-dir>/references/templates.md`。**`<skill-dir>` = スキル本文の先頭に注入される「Base directory for this skill」の絶対パス**。同梱ファイルはこれを起点にした絶対パスで開く — fork の cwd は呼び出し元と一致する保証がなく、相対パスでは見つからない。`${CLAUDE_PLUGIN_ROOT}` は hooks や commands の設定では使えるが、fork したスキルの Bash では空だった (実測) ので使わない。
++マークアップの骨格・タブ・diff テーブル・ファイルナビJSは `<skill-dir>/references/templates.md`。**`<skill-dir>` = この SKILL.md の絶対パスから解決したスキルディレクトリ**。同梱ファイルはこれを起点にした絶対パスで読む — 子の cwd は呼び出し元と一致する保証がなく、相対パスでは見つからない。Claude固有の変数は使わず、渡された絶対パスを使う。
+ 
+ ## Step 3: 固定構成
+ 
+@@ -107,8 +102,8 @@
+ ```bash
+ PROJROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+ mkdir -p "$PROJROOT/docs/crystallize/reports"
+-# YYYY-MM-DD-<slug>.html を Write したあと:
+-open "$PROJROOT/docs/crystallize/reports/<file>.html"
++# YYYY-MM-DD-<slug>.html をファイル編集ツールで作る
++# 親がCodex内で表示する
+ ```
+ 
+ `docs/crystallize/reports/` がそのプロジェクトの .gitignore に無い場合は、最終応答に「gitignore 未設定」と一言添える(勝手に .gitignore を編集しない — 整形係が対象リポジトリを変更すると作業diffが汚れる)。
+@@ -123,13 +118,13 @@
+ - SVG の日本語ラベルが箱から溢れるのは SVG のせいではなく幅を見積もっていないから — diagrams.md の幅の式(全角1.0em / 半角0.6em)で計算してから置く。溢れるのが怖いという理由で図を CSS の div に置き換えない(見た目が別物になった実績がある)
+ - 1ページに図を複数置くとき、SVG の `marker` の `id` が重複すると**最初の定義だけが黙って使われる** — id は figure ごとに固有にする
+ - ダークは `html[data-theme="dark"]` でのみ切り替わる(`prefers-color-scheme` を直接見ているのは初期値の決定だけ) — テーマ切替ボタンと初期化JSは templates.md の骨格に入っている。自前で書き直さない
+-- 素材パスは絶対パスで受ける前提。相対パスで見失ったら、推測で探し回らず「不足」として返す — fork の cwd は呼び出し元と一致する保証がない
++- 素材パスは絶対パスで受ける前提。相対パスで見失ったら、推測で探し回らず「不足」として返す — 子の cwd は呼び出し元と一致する保証がない
+ - 巨大 diff(数千行)を全部埋め込むと HTML が数MBになる — ファイル別タブ+ブロック単位の `<details>` で畳む(省略はしない)
+-- `open` は macOS 専用。失敗しても致命ではない — パスさえ返せば呼び出し元が対処できる
++- Codex内の表示に失敗しても生成失敗にはしない — クリック可能な絶対パスを返して呼び出し元が対処できる
+ 
+ ## Additional resources
+ 
+-- `assets/component-samples.html` — **全部品を1枚に並べた見本(見た目の正本)**。生成前に必ず Read する。単体でブラウザで開ける
++- `assets/component-samples.html` — **全部品を1枚に並べた見本(見た目の正本)**。生成前に必ず読む。単体でブラウザで開ける
+ - `assets/style.css` — 土台スタイル + 部品CSSの正本。CSS変数でライト/ダークを管理
+ - `references/diagrams.md` — 図解カタログ(「見せたいもの → 図の型」の対応表、5種のSVGテンプレ、loop の折れ線)
+ - `references/templates.md` — HTML骨格(テーマ切替つき)、タブJS、diff テーブル、ファイルナビJS

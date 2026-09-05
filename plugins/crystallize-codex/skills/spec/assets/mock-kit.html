@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>モックキット — 見本</title>
+
+<!--
+  モックキット — 無改変層の実体 (正本: plugins/crystallize/skills/spec/assets/mock-kit.html)
+
+  このファイルをそのままモックの出発点にする:
+    cp <このファイル> docs/crystallize/specs/<slug>/mock.html
+  そのうえで「スロット」と書かれた3ブロック (モック専用スタイル / 案 (variant) / TWEAKS と applyTweaks)
+  だけを書き換える。CZ-KIT:*:BEGIN 〜 CZ-KIT:*:END で囲まれたブロックは一字も変えない。
+  契約と規則は references/mock-kit.md を読むこと。
+-->
+
+<!-- CZ-KIT:STYLE:BEGIN 無改変層 — 一字も変えない -->
+<style id="cz-kit-style">
+  /* キットの外枠 (ページ地・ステージ・端末フレーム・切替バー・調整パネル)。
+     素の要素セレクタは使わない — モック側の CSS と取り合いになるため、すべて cz- プレフィックス付きの class で書く。
+     フレームの中身 (.cz-frame-viewport の子孫) には一切触れない — 触るとモックのデザイン評価が汚れる。 */
+
+  body.cz-page {
+    display: block;
+    margin: 0;
+    padding: 0;
+    background: #eceef1;
+    color: #23262b;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    -webkit-text-size-adjust: 100%;
+    --cz-frame-w: 390px;
+    --cz-frame-h: 844px;
+    --cz-scale: 1;
+    --cz-frame-gap: 24px;
+  }
+
+  /* JS が初期化を終えるまでステージを隠す — 全案・全状態が一瞬同時に見えるのを防ぐ */
+  body.cz-page:not(.cz-ready) .cz-stage { visibility: hidden; }
+
+  .cz-stage {
+    display: block;
+    box-sizing: content-box;
+    margin: 0;
+    padding: 24px 24px 128px;
+  }
+  .cz-variant {
+    display: block;
+    box-sizing: content-box;
+    margin: 0;
+    padding: 0;
+  }
+  .cz-frame-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: var(--cz-frame-gap);
+    /* 1行は最大3フレーム。4つ目以降は必ず折り返す — 4つ並ぶと1枚あたりが読めない大きさになる */
+    max-width: calc(var(--cz-frame-w) * var(--cz-scale) * 3 + var(--cz-frame-gap) * 2);
+    margin: 0 auto 32px;
+    padding: 0;
+  }
+  .cz-frame {
+    box-sizing: content-box;
+    width: calc(var(--cz-frame-w) * var(--cz-scale));
+    margin: 0;
+    padding: 0;
+  }
+  .cz-frame-label {
+    display: block;
+    box-sizing: content-box;
+    margin: 0 0 6px;
+    padding: 0;
+    height: 18px;
+    line-height: 18px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #5c626c;
+    letter-spacing: 0.02em;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cz-frame-shell {
+    box-sizing: content-box;
+    width: calc(var(--cz-frame-w) * var(--cz-scale));
+    height: calc(var(--cz-frame-h) * var(--cz-scale));
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+    border: 1px solid #b8bdc6;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+  .cz-frame-viewport {
+    box-sizing: border-box;
+    width: var(--cz-frame-w);
+    height: var(--cz-frame-h);
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+    color: #23262b;
+    overflow: auto;
+    transform: scale(var(--cz-scale));
+    transform-origin: top left;
+    /* モック側が @container で端末幅に反応できるようにする — 拡大縮小の外側にある window 幅では
+       @media が端末幅を表さないため */
+    container-type: inline-size;
+  }
+
+  /* ─── 切替バー ─── */
+  .cz-bar,
+  .cz-bar * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #e6e6ea;
+    text-align: left;
+    background: none;
+    letter-spacing: normal;
+    text-shadow: none;
+    box-shadow: none;
+  }
+  .cz-bar {
+    position: fixed;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    z-index: 99998;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: max-content;
+    max-width: calc(100vw - 32px);
+    padding: 8px 12px;
+    background: #24262b;
+    border: 1px solid #3a3d44;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+  .cz-bar-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .cz-bar-sep {
+    display: block;
+    width: 1px;
+    height: 20px;
+    background: #3f434a;
+  }
+  .cz-bar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 26px;
+    padding: 0 10px;
+    background: #35383f;
+    border: 1px solid #4a4e56;
+    border-radius: 6px;
+    color: #e6e6ea;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .cz-bar-btn:hover { background: #40444c; }
+  .cz-bar-btn:active { background: #2c2f34; }
+  .cz-bar-btn[aria-pressed="true"] {
+    background: #d7d9de;
+    border-color: #d7d9de;
+    color: #1a1c20;
+  }
+  .cz-bar-btn[hidden],
+  .cz-bar-group[hidden],
+  .cz-bar-sep[hidden] { display: none; }
+  .cz-bar-name {
+    display: inline-block;
+    min-width: 128px;
+    padding: 0 8px;
+    color: #f1f1f4;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .cz-bar-meta {
+    display: inline-block;
+    padding-left: 2px;
+    color: #9aa0a9;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  /* ─── 調整パネル ─── */
+  .cz-tweak-panel,
+  .cz-tweak-panel *,
+  .cz-tweak-panel *::before,
+  .cz-tweak-panel *::after {
+    box-sizing: border-box !important;
+  }
+  .cz-tweak-panel,
+  .cz-tweak-panel * {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Sans", "Noto Sans JP", sans-serif !important;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #e6e6ea;
+    text-align: left;
+    background: none;
+    letter-spacing: normal;
+    text-shadow: none;
+    box-shadow: none;
+  }
+  .cz-tweak-panel {
+    position: fixed !important;
+    right: 16px !important;
+    bottom: 76px !important;
+    z-index: 99999 !important;
+  }
+  .cz-tweak-panel.cz-tweak-collapsed .cz-tweak-inner {
+    display: none;
+  }
+  .cz-tweak-inner {
+    display: flex;
+    flex-direction: column;
+    width: 264px;
+    max-width: calc(100vw - 32px);
+    max-height: 62vh;
+    background: #24262b !important;
+    border: 1px solid #3a3d44 !important;
+    border-radius: 10px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+    overflow: hidden;
+  }
+  .cz-tweak-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: #2b2e34 !important;
+    border-bottom: 1px solid #3a3d44 !important;
+    flex: 0 0 auto;
+  }
+  .cz-tweak-title {
+    font-weight: 700 !important;
+    color: #f1f1f4 !important;
+  }
+  .cz-tweak-collapse-btn {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #35383f !important;
+    border: 1px solid #454951 !important;
+    border-radius: 6px !important;
+    color: #e6e6ea !important;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .cz-tweak-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 10px 12px 12px;
+  }
+  .cz-tweak-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .cz-tweak-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .cz-tweak-row-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .cz-tweak-label {
+    color: #b7bac2 !important;
+    font-size: 11px;
+  }
+  .cz-tweak-value {
+    color: #f1f1f4 !important;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .cz-tweak-input {
+    width: 100%;
+    display: block;
+    background: #1a1c20 !important;
+    border: 1px solid #454951 !important;
+    border-radius: 6px !important;
+    color: #e6e6ea !important;
+  }
+  .cz-tweak-input-range {
+    height: 18px;
+    padding: 0;
+    background: transparent !important;
+    border: 0 !important;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .cz-tweak-input-range::-webkit-slider-runnable-track {
+    height: 4px;
+    background: #454951 !important;
+    border-radius: 2px !important;
+  }
+  .cz-tweak-input-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    margin-top: -5px;
+    border-radius: 50% !important;
+    background: #d7d9de !important;
+    border: 1px solid #8f939c !important;
+    cursor: pointer;
+  }
+  .cz-tweak-input-range::-moz-range-track {
+    height: 4px;
+    background: #454951 !important;
+    border-radius: 2px !important;
+  }
+  .cz-tweak-input-range::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50% !important;
+    background: #d7d9de !important;
+    border: 1px solid #8f939c !important;
+    cursor: pointer;
+  }
+  .cz-tweak-input-number {
+    height: 26px;
+    padding: 0 8px;
+  }
+  .cz-tweak-input-color {
+    height: 26px;
+    padding: 2px;
+    cursor: pointer;
+  }
+  .cz-tweak-select {
+    height: 26px;
+    padding: 0 6px;
+    background: #1a1c20 !important;
+    border: 1px solid #454951 !important;
+    border-radius: 6px !important;
+    color: #e6e6ea !important;
+    cursor: pointer;
+  }
+  .cz-tweak-json-block {
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px solid #3a3d44 !important;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .cz-tweak-json-heading {
+    font-size: 11px;
+    font-weight: 700 !important;
+    color: #b7bac2 !important;
+  }
+  .cz-tweak-json-area {
+    width: 100%;
+    min-height: 96px;
+    resize: vertical;
+    background: #1a1c20 !important;
+    border: 1px solid #454951 !important;
+    border-radius: 6px !important;
+    color: #e6e6ea !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+    font-size: 11px;
+    padding: 6px 8px;
+    white-space: pre;
+  }
+  .cz-tweak-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .cz-tweak-action-btn {
+    flex: 1 1 auto;
+    height: 28px;
+    background: #35383f !important;
+    border: 1px solid #4a4e56 !important;
+    border-radius: 6px !important;
+    color: #f1f1f4 !important;
+    font-weight: 600 !important;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .cz-tweak-action-btn:hover {
+    background: #40444c !important;
+  }
+  .cz-tweak-action-btn:active {
+    background: #2c2f34 !important;
+  }
+  .cz-tweak-feedback {
+    min-height: 14px;
+    font-size: 10.5px;
+  }
+  .cz-tweak-feedback--ok {
+    color: #8bc98f !important;
+  }
+  .cz-tweak-feedback--error {
+    color: #ff9c92 !important;
+  }
+</style>
+<!-- CZ-KIT:STYLE:END -->
+
+<!-- スロット: モック専用スタイル ここから (この見本のデモ用。丸ごと差し替える) -->
+<style id="cz-mock-style">
+  /* 案をまたいで共有する土台。class には demo- のようなモック側のプレフィックスを付け、
+     キットの cz- と混ぜない */
+  .demo-app {
+    box-sizing: border-box;
+    min-height: 100%;
+    background: #fbfbfc;
+    color: #1d2026;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .demo-appbar {
+    position: sticky;
+    top: 0;
+    padding: 14px 16px;
+    background: #ffffff;
+    border-bottom: 1px solid #e3e5e9;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .demo-body { padding: 12px 16px 32px; }
+  .demo-empty { padding: 48px 8px; text-align: center; color: #6b7280; }
+  .demo-empty-title { margin: 0 0 6px; font-size: 15px; font-weight: 700; color: #3a3f47; }
+  .demo-empty-note { margin: 0; font-size: 13px; }
+  .demo-error {
+    margin: 16px 0;
+    padding: 14px 16px;
+    background: #fdf1f0;
+    border: 1px solid #f0c9c4;
+    border-radius: 8px;
+    color: #8a3b32;
+    font-size: 13px;
+  }
+  .demo-banner {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    background: #f3f4f7;
+    border-left: 3px solid var(--demo-accent, #3f6ad8);
+    border-radius: 4px;
+    font-size: 12.5px;
+    color: #4a4f58;
+  }
+  .demo-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--demo-gap, 12px); }
+  .demo-row {
+    padding: 12px 14px;
+    background: #ffffff;
+    border: 1px solid #e3e5e9;
+    border-radius: 8px;
+  }
+  .demo-row-title { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
+  .demo-row-meta { margin: 0; font-size: 12px; color: #6b7280; }
+  .demo-tag {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 2px 8px;
+    background: var(--demo-accent, #3f6ad8);
+    border-radius: 999px;
+    color: #ffffff;
+    font-size: 11px;
+  }
+  :root[data-demo-density="compact"] .demo-row { padding: 7px 10px; }
+  :root[data-demo-density="compact"] .demo-row-title { font-size: 13px; }
+
+  /* 案 B だけのスタイルは案のセレクタ配下に閉じる — 漏れると案どうしが似てしまい、比較の意味が消える */
+  .cz-variant[data-variant="B"] .demo-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  .cz-variant[data-variant="B"] .demo-row { min-height: 92px; }
+  .cz-variant[data-variant="B"] .demo-detail { padding: 16px; }
+  .cz-variant[data-variant="B"] .demo-detail-title { margin: 0 0 8px; font-size: 18px; font-weight: 700; }
+  .cz-variant[data-variant="B"] .demo-detail-body { margin: 0; font-size: 14px; color: #4a4f58; }
+
+  /* 端末幅への反応は @media ではなく @container で書く — フレームは縮小表示された div で、
+     window の幅は端末の幅を表さない */
+  @container (min-width: 700px) {
+    .demo-body { padding: 20px 28px 40px; }
+    .demo-row-title { font-size: 15px; }
+  }
+</style>
+<!-- スロット: モック専用スタイル ここまで -->
+</head>
+<body class="cz-page">
+
+<!-- スロット: 案 (variant) ここから -->
+<!--
+  案は <section class="cz-variant" data-variant="A" data-variant-name="縦リスト"> で並べる。
+  1行に並べる .cz-frame は最大3。状態は [data-state] を付けた要素で切り替える
+  (キー: empty / one / many / limit / error。案ごとに最低 empty と many を持つ)。
+-->
+<main class="cz-stage" id="cz-stage">
+
+  <section class="cz-variant" data-variant="A" data-variant-name="縦リスト">
+    <div class="cz-frame-row">
+      <div class="cz-frame">
+        <div class="cz-frame-label">保存した記事 — 一覧</div>
+        <div class="cz-frame-shell">
+          <div class="cz-frame-viewport">
+            <div class="demo-app">
+              <div class="demo-appbar">保存した記事</div>
+              <div class="demo-body">
+
+                <div data-state="empty">
+                  <div class="demo-empty">
+                    <p class="demo-empty-title">保存した記事はまだありません</p>
+                    <p class="demo-empty-note">記事を開いて保存すると、ここに並びます</p>
+                  </div>
+                </div>
+
+                <div data-state="one">
+                  <ul class="demo-list">
+                    <li class="demo-row">
+                      <p class="demo-row-title">四半期の振り返りテンプレート</p>
+                      <p class="demo-row-meta">2日前に保存 · 6分で読める</p>
+                      <span class="demo-tag">仕事</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div data-state="many">
+                  <ul class="demo-list" data-demo-render="rows"></ul>
+                </div>
+
+                <div data-state="limit">
+                  <p class="demo-banner">保存できる上限の200件に達しました。古いものから自動で消えます</p>
+                  <ul class="demo-list" data-demo-render="rows"></ul>
+                </div>
+
+                <div data-state="error">
+                  <div class="demo-error">
+                    <p>同期に失敗しました。オフラインの可能性があります</p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cz-variant" data-variant="B" data-variant-name="カードグリッド + 詳細">
+    <div class="cz-frame-row">
+      <div class="cz-frame">
+        <div class="cz-frame-label">保存した記事 — 一覧</div>
+        <div class="cz-frame-shell">
+          <div class="cz-frame-viewport">
+            <div class="demo-app">
+              <div class="demo-appbar">保存した記事</div>
+              <div class="demo-body">
+
+                <div data-state="empty">
+                  <div class="demo-empty">
+                    <p class="demo-empty-title">保存した記事はまだありません</p>
+                    <p class="demo-empty-note">記事を開いて保存すると、ここに並びます</p>
+                  </div>
+                </div>
+
+                <div data-state="many">
+                  <ul class="demo-list" data-demo-render="rows"></ul>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cz-frame">
+        <div class="cz-frame-label">保存した記事 — 並び替え (新しい順)</div>
+        <div class="cz-frame-shell">
+          <div class="cz-frame-viewport">
+            <div class="demo-app">
+              <div class="demo-appbar">新しい順</div>
+              <div class="demo-body">
+
+                <div data-state="empty">
+                  <div class="demo-empty">
+                    <p class="demo-empty-title">並び替える記事がありません</p>
+                    <p class="demo-empty-note">記事を保存すると、新しい順に並びます</p>
+                  </div>
+                </div>
+
+                <div data-state="many">
+                  <ul class="demo-list" data-demo-render="rows"></ul>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cz-frame">
+        <div class="cz-frame-label">保存した記事 — 詳細</div>
+        <div class="cz-frame-shell">
+          <div class="cz-frame-viewport">
+            <div class="demo-app">
+              <div class="demo-appbar">詳細</div>
+              <div class="demo-body">
+
+                <div data-state="empty">
+                  <div class="demo-empty">
+                    <p class="demo-empty-title">記事が選ばれていません</p>
+                    <p class="demo-empty-note">左の一覧から記事を選ぶと、ここに全文が出ます</p>
+                  </div>
+                </div>
+
+                <div data-state="many">
+                  <div class="demo-detail">
+                    <p class="demo-detail-title">四半期の振り返りテンプレート</p>
+                    <span class="demo-tag">仕事</span>
+                    <p class="demo-detail-body">
+                      振り返りは事実・解釈・次の一手の3段で書く。事実には数字を置き、解釈には反証を1つ添える。
+                      次の一手は担当と期限まで書いて初めて次の四半期に残る。
+                    </p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+<!-- スロット: 案 (variant) ここまで -->
+
+<!-- CZ-KIT:MARKUP:BEGIN 無改変層 — 一字も変えない -->
+<div class="cz-bar" id="cz-bar" role="toolbar" aria-label="モックの切替">
+  <div class="cz-bar-group" id="cz-variant-group">
+    <button type="button" class="cz-bar-btn" id="cz-prev-btn" aria-label="前の案">&#9664;</button>
+    <span class="cz-bar-name" id="cz-variant-name">&mdash;</span>
+    <button type="button" class="cz-bar-btn" id="cz-next-btn" aria-label="次の案">&#9654;</button>
+  </div>
+  <span class="cz-bar-sep" id="cz-sep-frame"></span>
+  <div class="cz-bar-group" id="cz-frame-group" role="group" aria-label="端末フレーム">
+    <button type="button" class="cz-bar-btn" data-cz-frame-btn="phone" aria-pressed="false">スマホ</button>
+    <button type="button" class="cz-bar-btn" data-cz-frame-btn="tablet" aria-pressed="false">タブレット</button>
+    <button type="button" class="cz-bar-btn" data-cz-frame-btn="desktop" aria-pressed="false">デスクトップ</button>
+  </div>
+  <span class="cz-bar-sep" id="cz-sep-state"></span>
+  <div class="cz-bar-group" id="cz-state-group" role="group" aria-label="状態"></div>
+  <span class="cz-bar-sep" id="cz-sep-tweak"></span>
+  <div class="cz-bar-group" id="cz-tweak-group">
+    <button type="button" class="cz-bar-btn" id="cz-tweak-toggle" aria-pressed="false">調整</button>
+  </div>
+  <span class="cz-bar-meta" id="cz-bar-meta"></span>
+</div>
+
+<div id="cz-tweak-panel" class="cz-tweak-panel cz-tweak-collapsed">
+  <div class="cz-tweak-inner">
+    <div class="cz-tweak-header">
+      <span class="cz-tweak-title">調整パネル</span>
+      <button type="button" id="cz-tweak-collapse-btn" class="cz-tweak-collapse-btn" aria-label="折りたたむ">&#9472;</button>
+    </div>
+    <div class="cz-tweak-body">
+      <div class="cz-tweak-controls" id="cz-tweak-controls"></div>
+      <div class="cz-tweak-json-block">
+        <div class="cz-tweak-json-heading">JSON (コピー / 取り込み)</div>
+        <textarea id="cz-tweak-json" class="cz-tweak-json-area" spellcheck="false" rows="6"></textarea>
+        <div class="cz-tweak-actions">
+          <button type="button" id="cz-tweak-import-btn" class="cz-tweak-action-btn">取り込み</button>
+          <button type="button" id="cz-tweak-copy-btn" class="cz-tweak-action-btn">設定をコピー</button>
+        </div>
+        <div id="cz-tweak-feedback" class="cz-tweak-feedback"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- CZ-KIT:MARKUP:END -->
+
+<!-- スロット: TWEAKS と applyTweaks ここから (この見本のデモ用。丸ごと差し替える) -->
+<script id="cz-mock-script">
+  // (a) TWEAKS — 親から渡されたキー一覧どおりに書く。type は range / number / color / select の4種。
+  const TWEAKS = {
+    itemGap:     { label: '行の間隔',     type: 'range',  value: 12, min: 0, max: 32, step: 1, unit: 'px' },
+    itemCount:   { label: '表示件数',     type: 'number', value: 8,  min: 1, max: 12, step: 1, unit: '件' },
+    accentColor: { label: 'アクセント色', type: 'color',  value: '#3f6ad8' },
+    density:     { label: '密度',         type: 'select', value: 'default',
+                   options: [{ value: 'default', label: '標準' }, { value: 'compact', label: '高密度' }] }
+  };
+
+  // ダミーデータ。実データやバックエンドには繋がない
+  const DEMO_ITEMS = [
+    { title: '四半期の振り返りテンプレート', meta: '2日前に保存 · 6分', tag: '仕事' },
+    { title: '通知設計のアンチパターン',     meta: '3日前に保存 · 9分', tag: '設計' },
+    { title: '在庫の締め処理を1日早める案',   meta: '4日前に保存 · 4分', tag: '仕事' },
+    { title: '色覚特性と配色の実務',         meta: '先週に保存 · 12分',  tag: '設計' },
+    { title: '議事録を書かない会議の作り方', meta: '先週に保存 · 5分',   tag: '仕事' },
+    { title: 'オフライン優先のデータ同期',   meta: '先週に保存 · 15分',  tag: '技術' },
+    { title: '見積もりの単位を日から半日へ', meta: '2週間前に保存 · 3分', tag: '仕事' },
+    { title: '文章の推敲を3回に分ける',      meta: '2週間前に保存 · 7分', tag: '文章' },
+    { title: '検索結果の並び順を決める',     meta: '先月に保存 · 8分',   tag: '設計' },
+    { title: '深夜バッチの失敗を朝に気づく', meta: '先月に保存 · 6分',   tag: '技術' },
+    { title: '休暇申請のフローを1画面に',    meta: '先月に保存 · 4分',   tag: '仕事' },
+    { title: '読み終えた記事を自動で畳む',   meta: '先月に保存 · 5分',   tag: '設計' }
+  ];
+
+  function renderDemoRows(count) {
+    var containers = document.querySelectorAll('[data-demo-render="rows"]');
+    var items = DEMO_ITEMS.slice(0, Math.max(1, Math.min(DEMO_ITEMS.length, count)));
+    Array.prototype.forEach.call(containers, function (list) {
+      list.textContent = '';
+      items.forEach(function (item) {
+        var li = document.createElement('li');
+        li.className = 'demo-row';
+        var title = document.createElement('p');
+        title.className = 'demo-row-title';
+        title.textContent = item.title;
+        var meta = document.createElement('p');
+        meta.className = 'demo-row-meta';
+        meta.textContent = item.meta;
+        var tag = document.createElement('span');
+        tag.className = 'demo-tag';
+        tag.textContent = item.tag;
+        li.appendChild(title);
+        li.appendChild(meta);
+        li.appendChild(tag);
+        list.appendChild(li);
+      });
+    });
+  }
+
+  // (b) applyTweaks — flat な {key: value} を受け取ってモックへ反映する唯一の接続点。
+  // 案・状態を切り替えるたびに呼ばれるので、同じ値で何度呼ばれても同じ結果になるように書く。
+  function applyTweaks(values) {
+    var root = document.documentElement;
+    root.style.setProperty('--demo-gap', values.itemGap + 'px');
+    root.style.setProperty('--demo-accent', values.accentColor);
+    root.setAttribute('data-demo-density', values.density);
+    renderDemoRows(values.itemCount);
+  }
+</script>
+<!-- スロット: TWEAKS と applyTweaks ここまで -->
+
+<!-- CZ-KIT:SCRIPT:BEGIN 無改変層 — 一字も変えない -->
+<script id="cz-kit-script">
+(function () {
+  'use strict';
+
+  /* ══ 1. 調整パネル ══
+     TWEAKS 宣言だけからコントロールを生成し、値が変わるたびに applyTweaks を呼ぶ。 */
+  var tweak = (function () {
+    var panelEl = document.getElementById('cz-tweak-panel');
+    var hasConfig =
+      !!panelEl &&
+      typeof TWEAKS !== 'undefined' &&
+      TWEAKS !== null &&
+      typeof TWEAKS === 'object' &&
+      Object.keys(TWEAKS).length > 0 &&
+      typeof applyTweaks === 'function';
+
+    if (!hasConfig) {
+      // 調整項目のないモックではパネルごと出さない — 空のパネルは操作を探させるだけ
+      if (panelEl) panelEl.style.setProperty('display', 'none', 'important');
+      return { enabled: false, refresh: function () {}, setCollapsed: function () {}, isCollapsed: function () { return true; } };
+    }
+
+    var controlsEl = document.getElementById('cz-tweak-controls');
+    var jsonArea = document.getElementById('cz-tweak-json');
+    var importBtn = document.getElementById('cz-tweak-import-btn');
+    var copyBtn = document.getElementById('cz-tweak-copy-btn');
+    var feedbackEl = document.getElementById('cz-tweak-feedback');
+    var collapseBtn = document.getElementById('cz-tweak-collapse-btn');
+
+    var keys = Object.keys(TWEAKS);
+    var state = {};
+    keys.forEach(function (key) {
+      state[key] = TWEAKS[key].value;
+    });
+
+    // 数値系(type: range/number)は数値へ丸めて min/max を尊重、それ以外(color/select)は文字列のまま返す
+    function coerce(key, raw) {
+      var cfg = TWEAKS[key];
+      if (cfg.type === 'range' || cfg.type === 'number') {
+        var n = parseFloat(raw);
+        if (isNaN(n)) return state[key];
+        if (cfg.min !== undefined) n = Math.max(cfg.min, n);
+        if (cfg.max !== undefined) n = Math.min(cfg.max, n);
+        return n;
+      }
+      return raw;
+    }
+
+    // ラベル横の「現在値 + unit」表示を組み立てる
+    function formatValue(key) {
+      var cfg = TWEAKS[key];
+      var v = state[key];
+      if (cfg.type === 'select') {
+        var found = null;
+        (cfg.options || []).forEach(function (opt) {
+          if (opt.value === v) found = opt;
+        });
+        return found ? found.label : String(v);
+      }
+      if (cfg.type === 'color') {
+        return String(v);
+      }
+      return String(v) + (cfg.unit || '');
+    }
+
+    function refreshRowUI(key) {
+      var valueEl = document.getElementById('cz-tweak-value-' + key);
+      if (valueEl) valueEl.textContent = formatValue(key);
+      var fieldEl = document.getElementById('cz-tweak-field-' + key);
+      // 入力中のフィールドへは書き戻さない (書き戻すと数値入力を空にできない・キャレットが飛ぶ)
+      if (fieldEl && document.activeElement !== fieldEl) fieldEl.value = state[key];
+    }
+
+    function syncJson() {
+      jsonArea.value = JSON.stringify(state, null, 2);
+    }
+
+    function notify(message, isError) {
+      feedbackEl.textContent = message;
+      feedbackEl.className = 'cz-tweak-feedback ' + (isError ? 'cz-tweak-feedback--error' : 'cz-tweak-feedback--ok');
+    }
+
+    // 値変更のたびに JSON 欄を更新し applyTweaks を呼ぶ唯一の入口
+    function commit() {
+      syncJson();
+      try {
+        applyTweaks(Object.assign({}, state));
+      } catch (e) {
+        notify('applyTweaks でエラー: ' + e.message, true);
+      }
+    }
+
+    function buildControls() {
+      keys.forEach(function (key) {
+        var cfg = TWEAKS[key];
+
+        var row = document.createElement('div');
+        row.className = 'cz-tweak-row';
+
+        var top = document.createElement('div');
+        top.className = 'cz-tweak-row-top';
+
+        var label = document.createElement('label');
+        label.className = 'cz-tweak-label';
+        label.setAttribute('for', 'cz-tweak-field-' + key);
+        label.textContent = cfg.label || key;
+
+        var valueSpan = document.createElement('span');
+        valueSpan.className = 'cz-tweak-value';
+        valueSpan.id = 'cz-tweak-value-' + key;
+
+        top.appendChild(label);
+        top.appendChild(valueSpan);
+        row.appendChild(top);
+
+        var field;
+        if (cfg.type === 'select') {
+          field = document.createElement('select');
+          field.className = 'cz-tweak-input cz-tweak-select';
+          (cfg.options || []).forEach(function (opt) {
+            var o = document.createElement('option');
+            o.value = opt.value;
+            o.textContent = opt.label;
+            field.appendChild(o);
+          });
+        } else if (cfg.type === 'color') {
+          field = document.createElement('input');
+          field.type = 'color';
+          field.className = 'cz-tweak-input cz-tweak-input-color';
+        } else if (cfg.type === 'number') {
+          field = document.createElement('input');
+          field.type = 'number';
+          field.className = 'cz-tweak-input cz-tweak-input-number';
+          if (cfg.min !== undefined) field.min = cfg.min;
+          if (cfg.max !== undefined) field.max = cfg.max;
+          if (cfg.step !== undefined) field.step = cfg.step;
+        } else {
+          // 既定は range
+          field = document.createElement('input');
+          field.type = 'range';
+          field.className = 'cz-tweak-input cz-tweak-input-range';
+          if (cfg.min !== undefined) field.min = cfg.min;
+          if (cfg.max !== undefined) field.max = cfg.max;
+          if (cfg.step !== undefined) field.step = cfg.step;
+        }
+        field.id = 'cz-tweak-field-' + key;
+        field.value = cfg.value;
+
+        field.addEventListener('input', function () {
+          state[key] = coerce(key, field.value);
+          refreshRowUI(key);
+          commit();
+        });
+        // フォーカスが外れたら min/max で丸められた確定値を表示に反映する
+        field.addEventListener('blur', function () {
+          refreshRowUI(key);
+        });
+
+        row.appendChild(field);
+        controlsEl.appendChild(row);
+        refreshRowUI(key);
+      });
+    }
+
+    function applyImport() {
+      var parsed;
+      try {
+        parsed = JSON.parse(jsonArea.value);
+      } catch (e) {
+        notify('JSON の形式が正しくありません: ' + e.message, true);
+        return;
+      }
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        notify('JSON はオブジェクト形式である必要があります', true);
+        return;
+      }
+
+      var unknown = [];
+      var invalid = [];
+
+      Object.keys(parsed).forEach(function (key) {
+        if (keys.indexOf(key) === -1) {
+          unknown.push(key);
+          return;
+        }
+        var cfg = TWEAKS[key];
+        var value = parsed[key];
+
+        if (cfg.type === 'range' || cfg.type === 'number') {
+          var n = Number(value);
+          if (value === null || value === '' || isNaN(n)) {
+            invalid.push(key);
+            return;
+          }
+          if (cfg.min !== undefined) n = Math.max(cfg.min, n);
+          if (cfg.max !== undefined) n = Math.min(cfg.max, n);
+          state[key] = n;
+        } else if (cfg.type === 'color') {
+          if (typeof value !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(value)) {
+            invalid.push(key);
+            return;
+          }
+          state[key] = value;
+        } else if (cfg.type === 'select') {
+          var isValid = false;
+          (cfg.options || []).forEach(function (opt) {
+            if (opt.value === value) isValid = true;
+          });
+          if (typeof value !== 'string' || !isValid) {
+            invalid.push(key);
+            return;
+          }
+          state[key] = value;
+        }
+        refreshRowUI(key);
+      });
+
+      commit();
+
+      var messages = [];
+      if (unknown.length) messages.push('未知のキーは無視しました: ' + unknown.join(', '));
+      if (invalid.length) messages.push('不正な値は無視しました: ' + invalid.join(', '));
+      if (messages.length) {
+        notify(messages.join(' / '), true);
+      } else {
+        notify('取り込みました', false);
+      }
+    }
+
+    function copyConfig() {
+      var text = JSON.stringify(state, null, 2);
+      try {
+        navigator.clipboard.writeText(text).then(
+          function () {
+            notify('コピーしました', false);
+          },
+          function () {
+            notify('コピーに失敗しました。下の欄からコピーしてください', true);
+          }
+        );
+      } catch (e) {
+        notify('コピーに失敗しました。下の欄からコピーしてください', true);
+      }
+    }
+
+    function setCollapsed(collapsed) {
+      panelEl.classList.toggle('cz-tweak-collapsed', collapsed);
+    }
+
+    buildControls();
+    importBtn.addEventListener('click', applyImport);
+    copyBtn.addEventListener('click', copyConfig);
+    collapseBtn.addEventListener('click', function () {
+      setCollapsed(true);
+      syncTweakToggle();
+    });
+
+    commit(); // 初期表示でも1回 applyTweaks を呼ぶ
+
+    return {
+      enabled: true,
+      refresh: commit,
+      setCollapsed: setCollapsed,
+      isCollapsed: function () { return panelEl.classList.contains('cz-tweak-collapsed'); }
+    };
+  })();
+
+  /* ══ 2. 切替バー (案 / 端末フレーム / 状態) ══ */
+
+  var FRAMES = [
+    { key: 'phone',   w: 390,  h: 844 },
+    { key: 'tablet',  w: 820,  h: 1180 },
+    { key: 'desktop', w: 1280, h: 800 }
+  ];
+  var STATE_ORDER = ['empty', 'one', 'many', 'limit', 'error'];
+  var STATE_LABELS = { empty: '空', one: '1件', many: '多数', limit: '上限', error: 'エラー' };
+
+  var bodyEl = document.body;
+  var stageEl = document.getElementById('cz-stage');
+  var variants = stageEl ? Array.prototype.slice.call(stageEl.querySelectorAll('.cz-variant')) : [];
+  var variantGroupEl = document.getElementById('cz-variant-group');
+  var variantNameEl = document.getElementById('cz-variant-name');
+  var prevBtn = document.getElementById('cz-prev-btn');
+  var nextBtn = document.getElementById('cz-next-btn');
+  var frameBtns = Array.prototype.slice.call(document.querySelectorAll('[data-cz-frame-btn]'));
+  var stateGroupEl = document.getElementById('cz-state-group');
+  var stateSepEl = document.getElementById('cz-sep-state');
+  var tweakGroupEl = document.getElementById('cz-tweak-group');
+  var tweakSepEl = document.getElementById('cz-sep-tweak');
+  var tweakToggleBtn = document.getElementById('cz-tweak-toggle');
+  var metaEl = document.getElementById('cz-bar-meta');
+
+  var currentVariant = null;
+  var currentFrame = FRAMES[0];
+  var currentState = null;
+  var suppressHashChange = false;
+
+  function show(el) { el.style.removeProperty('display'); }
+  function hide(el) { el.style.setProperty('display', 'none', 'important'); }
+
+  function variantId(el) { return el.getAttribute('data-variant') || ''; }
+
+  function findVariant(id) {
+    for (var i = 0; i < variants.length; i++) {
+      if (variantId(variants[i]) === id) return variants[i];
+    }
+    return null;
+  }
+
+  /* ── 状態 ── */
+
+  function statesOf(variantEl) {
+    var found = [];
+    var nodes = variantEl.querySelectorAll('[data-state]');
+    Array.prototype.forEach.call(nodes, function (el) {
+      var key = el.getAttribute('data-state');
+      if (key && found.indexOf(key) === -1) found.push(key);
+    });
+    // 既知のキーは常に同じ順で並べる — 案を行き来しても状態ボタンの位置が動かないようにする
+    var known = STATE_ORDER.filter(function (k) { return found.indexOf(k) !== -1; });
+    var unknown = found.filter(function (k) { return STATE_ORDER.indexOf(k) === -1; });
+    return known.concat(unknown);
+  }
+
+  function applyState(variantEl, key) {
+    var nodes = variantEl.querySelectorAll('[data-state]');
+    Array.prototype.forEach.call(nodes, function (el) {
+      if (el.getAttribute('data-state') === key) show(el);
+      else hide(el);
+    });
+  }
+
+  function buildStateButtons(variantEl) {
+    var keys = statesOf(variantEl);
+    stateGroupEl.textContent = '';
+
+    if (!keys.length) {
+      stateGroupEl.setAttribute('hidden', 'hidden');
+      stateSepEl.setAttribute('hidden', 'hidden');
+      currentState = null;
+      return;
+    }
+    stateGroupEl.removeAttribute('hidden');
+    stateSepEl.removeAttribute('hidden');
+
+    // 直前の状態を引き継ぐ (同じ状態で案を見比べたい)。無ければ many を初期値にし、
+    // それも無ければ先頭へ落とす (空の画面が第一印象になると、モックが壊れて見える)
+    if (keys.indexOf(currentState) === -1) currentState = keys.indexOf('many') !== -1 ? 'many' : keys[0];
+
+    keys.forEach(function (key) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cz-bar-btn';
+      btn.setAttribute('data-cz-state-btn', key);
+      btn.textContent = STATE_LABELS[key] || key;
+      btn.addEventListener('click', function () { setState(key); });
+      stateGroupEl.appendChild(btn);
+    });
+    syncStateButtons();
+  }
+
+  function syncStateButtons() {
+    var btns = stateGroupEl.querySelectorAll('[data-cz-state-btn]');
+    Array.prototype.forEach.call(btns, function (btn) {
+      btn.setAttribute('aria-pressed', btn.getAttribute('data-cz-state-btn') === currentState ? 'true' : 'false');
+    });
+  }
+
+  function setState(key) {
+    if (!currentVariant) return;
+    currentState = key;
+    applyState(currentVariant, key);
+    syncStateButtons();
+    tweak.refresh();
+  }
+
+  /* ── 案 ── */
+
+  function setVariant(id, writeHashFlag) {
+    var target = findVariant(id) || variants[0];
+    if (!target) return;
+    currentVariant = target;
+
+    variants.forEach(function (el) {
+      if (el === target) show(el);
+      else hide(el);
+    });
+
+    variantNameEl.textContent = variantId(target) + ' · ' + (target.getAttribute('data-variant-name') || '');
+    buildStateButtons(target);
+    if (currentState) applyState(target, currentState);
+    updateScale();
+    tweak.refresh();
+    if (writeHashFlag) writeHash(variantId(target));
+  }
+
+  function stepVariant(delta) {
+    if (variants.length < 2 || !currentVariant) return;
+    var i = variants.indexOf(currentVariant);
+    var next = (i + delta + variants.length) % variants.length;
+    setVariant(variantId(variants[next]), true);
+  }
+
+  /* ── 端末フレーム ── */
+
+  function setFrame(key) {
+    var found = null;
+    FRAMES.forEach(function (f) { if (f.key === key) found = f; });
+    currentFrame = found || FRAMES[0];
+    bodyEl.setAttribute('data-cz-frame', currentFrame.key);
+    bodyEl.style.setProperty('--cz-frame-w', currentFrame.w + 'px');
+    bodyEl.style.setProperty('--cz-frame-h', currentFrame.h + 'px');
+    frameBtns.forEach(function (btn) {
+      btn.setAttribute('aria-pressed', btn.getAttribute('data-cz-frame-btn') === currentFrame.key ? 'true' : 'false');
+    });
+    updateScale();
+  }
+
+  // 縮小率は全フレーム共通。1枚が画面幅に収まる率まで下げ、それ以上は下げない
+  // (並べたいだけ縮めると案どうしの密度の比較ができなくなる。横幅が足りなければ折り返す)
+  function updateScale() {
+    // 引くのは .cz-stage の左右パディング 48px + 2px。この 2px は下の Math.round が
+    // 切り上げたときのぶんで、無いと 1px 足りずに最後の1枚だけ折り返すことがある
+    var avail = document.documentElement.clientWidth - 50;
+    var scale = Math.min(1, avail / currentFrame.w);
+    scale = Math.max(0.2, Math.round(scale * 1000) / 1000);
+    bodyEl.style.setProperty('--cz-scale', String(scale));
+    metaEl.textContent = currentFrame.w + ' × ' + currentFrame.h + ' · ' + Math.round(scale * 100) + '%';
+  }
+
+  /* ── URL hash (#variant=B) ── */
+
+  function readHashVariant() {
+    var raw = location.hash.replace(/^#/, '');
+    var out = null;
+    raw.split('&').forEach(function (pair) {
+      var i = pair.indexOf('=');
+      if (i === -1) return;
+      if (decodeURIComponent(pair.slice(0, i)) === 'variant') out = decodeURIComponent(pair.slice(i + 1));
+    });
+    return out;
+  }
+
+  function writeHash(id) {
+    var next = '#variant=' + encodeURIComponent(id);
+    if (location.hash === next) return;
+    suppressHashChange = true;
+    try {
+      history.replaceState(null, '', next);
+      suppressHashChange = false;
+    } catch (e) {
+      // file:// で replaceState が拒否される環境ではハッシュを直接書く (hashchange が後から飛ぶ)
+      location.hash = next;
+      setTimeout(function () { suppressHashChange = false; }, 0);
+    }
+  }
+
+  function onHashChange() {
+    if (suppressHashChange) { suppressHashChange = false; return; }
+    var id = readHashVariant();
+    if (!id) return;
+    // 知らない案を指すハッシュは先頭の案へ落とし、ハッシュ側も直す (壊れたリンクを持ち回らせない)
+    setVariant(id, !findVariant(id));
+  }
+
+  /* ── キーボード ── */
+
+  function isTypingTarget(el) {
+    if (!el) return false;
+    if (el.isContentEditable) return true;
+    var tag = (el.tagName || '').toLowerCase();
+    return tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'option';
+  }
+
+  function onKeydown(e) {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+    // 入力欄では矢印キーを横取りしない — キャレット移動とスライダー操作を壊す
+    if (isTypingTarget(document.activeElement)) return;
+    e.preventDefault();
+    stepVariant(e.key === 'ArrowRight' ? 1 : -1);
+  }
+
+  /* ── 調整パネルの開閉 (バーに集約) ── */
+
+  function syncTweakToggle() {
+    if (!tweak.enabled) return;
+    tweakToggleBtn.setAttribute('aria-pressed', tweak.isCollapsed() ? 'false' : 'true');
+  }
+  /* ── 初期化 ── */
+
+  if (!tweak.enabled) {
+    tweakGroupEl.setAttribute('hidden', 'hidden');
+    tweakSepEl.setAttribute('hidden', 'hidden');
+  } else {
+    tweakToggleBtn.addEventListener('click', function () {
+      tweak.setCollapsed(!tweak.isCollapsed());
+      syncTweakToggle();
+    });
+    syncTweakToggle();
+  }
+
+  if (variants.length < 2) {
+    // 1案のモックでは案の送りボタンを出さない — 押しても何も起きないボタンは操作を疑わせる
+    prevBtn.setAttribute('hidden', 'hidden');
+    nextBtn.setAttribute('hidden', 'hidden');
+  }
+  if (!variants.length) {
+    variantGroupEl.setAttribute('hidden', 'hidden');
+  }
+
+  prevBtn.addEventListener('click', function () { stepVariant(-1); });
+  nextBtn.addEventListener('click', function () { stepVariant(1); });
+  frameBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () { setFrame(btn.getAttribute('data-cz-frame-btn')); });
+  });
+  window.addEventListener('resize', updateScale);
+  window.addEventListener('hashchange', onHashChange);
+  document.addEventListener('keydown', onKeydown);
+
+  setFrame(FRAMES[0].key);
+  if (variants.length) {
+    var initial = readHashVariant();
+    setVariant(initial || variantId(variants[0]), true);
+  }
+  bodyEl.classList.add('cz-ready');
+})();
+</script>
+<!-- CZ-KIT:SCRIPT:END -->
+</body>
+</html>

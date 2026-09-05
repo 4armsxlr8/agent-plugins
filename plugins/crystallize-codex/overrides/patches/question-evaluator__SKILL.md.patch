@@ -1,0 +1,55 @@
+--- a/skills/question-evaluator/SKILL.md
++++ b/skills/question-evaluator/SKILL.md
+@@ -1,18 +1,13 @@
+ ---
+ name: question-evaluator
+ description: 「質問監査」「質問レビュー」で発動。ユーザーに出す質問の前提と二択の正当性を採点する evaluator
+-user-invocable: true
+-argument-hint: "<context-json path | 質問ファイル path | 質問の生テキスト>"
+-context: fork
+-agent: general-purpose
+-metadata:
+-  purpose: judge
+-  trigger: both
+-  shape: forked
+-  role: evaluator
+ ---
+ 
+ # question-evaluator
++
++## Codex 実行境界
++
++最初に `../../references/codex-runtime.md` を全文読む。入力に `CRYSTALLIZE_CODEX_ROLE=question-evaluator` マーカーが無ければ、履歴を渡さない新規サブエージェントを起動し、同マーカー、この SKILL.md の絶対パス、context JSON の絶対パス（無ければ受け取った生入力）、output_contract、`ledger / impact.md / mock / 呼び出し元の推論を読まない` という禁止入力を渡す。子の完了後、親は `output.schema.json` と評価対象外の変更がゼロであることを自分で確認する。評価者は `gpt-5.6-sol` / `xhigh` / 履歴なしで実行し、独立実行を利用できない場合は自己採点せず停止する。
+ 
+ 認識合わせでユーザーに出す質問を、出題側とは独立したコンテキストで監査する評価者。質問は出題側の仮実装案の分岐点から生成されるため、案に含まれた思い込み (誤った前提・偽の二択・誘導) をそのまま引き継ぐ — それを出題前に検出する。
+ 
+@@ -24,7 +19,7 @@
+ 
+ ## 契約 (単一)
+ 
+-- **Input**: `$ARGUMENTS` = context JSON ファイルのパス (evaluator 単一契約)。JSON キーは `project_dir` / `plan` / `criteria` / `threshold` / `turns_dir` / `iteration` / `output_contract` (`eval_file` / `schema` / `instructions`)。監査対象の質問ファイルは `plan` で指定する
++- **Input**: `起動メッセージまたは委任メッセージ` = context JSON ファイルのパス (evaluator 単一契約)。JSON キーは `project_dir` / `plan` / `criteria` / `threshold` / `turns_dir` / `iteration` / `output_contract` (`eval_file` / `schema` / `instructions`)。監査対象の質問ファイルは `plan` で指定する
+ - **Output**: `output_contract.eval_file` に下記 eval JSON schema で Write する
+ 
+ ### 質問ファイルの形式 (呼び出し元が用意する)
+@@ -45,9 +40,9 @@
+ 
+ ### context JSON 不在時のフォールバック
+ 
+-`$ARGUMENTS` が context JSON として解釈できない場合 (JSON でない / ファイル不在 / `output_contract` が空):
++`起動メッセージまたは委任メッセージ` が context JSON として解釈できない場合 (JSON でない / ファイル不在 / `output_contract` が空):
+ 
+-- ファイルパスなら質問ファイルとして Read、それ以外は質問の生テキストとして扱う
++- ファイルパスなら質問ファイルとして読み、それ以外は質問の生テキストとして扱う
+ - タスク一行要約が無ければその旨を feedback に明記し、質問文単体で評価する (前提の事実確認の精度は落ちる)
+ - eval JSON の書き出し先は `{project_dir=カレントディレクトリ}/output/eval-<YYYYMMDD-HHMMSS>-question-evaluator.json` (ディレクトリが無ければ作成)
+ - Markdown フィードバックは stdout に出し、末尾に同 schema の eval JSON を添付
+@@ -63,7 +58,7 @@
+ 
+ ### 2. 検証可能な前提の事実確認
+ 
+-検証可能な前提は、確からしく見えても必ず裏取りする — コードベースで検証できるものは Grep / Read / Explore subagent、API 仕様・ライブラリの機能有無・プラットフォーム制約など一般技術知識に属するものは WebSearch / WebFetch / 公式ドキュメントで。LLM は知識境界を正確に把握できず、もっともらしい誤前提を高い確信度で保持するため。
++検証可能な前提は、確からしく見えても必ず裏取りする — コードベースで検証できるものは rg と必要なファイルの読取、必要なら履歴なしの調査サブエージェント、API 仕様・ライブラリの機能有無・プラットフォーム制約など一般技術知識に属するものは 公式ドキュメント検索で。LLM は知識境界を正確に把握できず、もっともらしい誤前提を高い確信度で保持するため。
+ 
+ 二択・優先度型の質問 (「A と B どちらを優先しますか」) は、**両立案を最低 1 つ自力で構成してみる**。無理なく構成できたら偽の二択と確定する。
+ 

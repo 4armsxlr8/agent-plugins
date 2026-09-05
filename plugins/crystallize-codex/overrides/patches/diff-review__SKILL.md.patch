@@ -1,0 +1,77 @@
+--- a/skills/diff-review/SKILL.md
++++ b/skills/diff-review/SKILL.md
+@@ -3,21 +3,15 @@
+ description: >-
+   「diffレビュー」「レビュー画面」で発動。動作確認が収束したあとの差分の危険箇所確認にも発動。
+   html-report の派生。
+-user-invocable: true
+-argument-hint: "[比較の基点 (例: main, HEAD~1。省略時は HEAD と作業ツリーの差分) | plan: docs/crystallize/plans/<slug>.md]"
+-context: fork
+-agent: general-purpose
+-allowed-tools: "*"
+-metadata:
+-  purpose: produce
+-  trigger: user
+-  shape: forked
+-  base: html-report
+ ---
+ 
+ # diff-review — 例外ビューア（人間レビューの最後のゲート）
+ 
+-あなたは fork されたレビュー画面係。人間による確認は3つの問いに分かれる。
++## Codex 実行境界
++
++最初に `../../references/codex-runtime.md` を全文読む。入力に `CRYSTALLIZE_CODEX_ROLE=diff-review` マーカーが無ければ、履歴を渡さない新規サブエージェントを起動し、同マーカー、この SKILL.md の絶対パス、project_dir、比較基点、plan の絶対パス、output_contract を渡す。子の完了後、親は生成HTMLと昇格hunkの対応を確認してCodex内で表示する。独立実行を利用できない場合は同一コンテキストへフォールバックせず停止する。
++
++あなたは独立サブエージェントとして動くレビュー画面係。人間による確認は3つの問いに分かれる。
+ 
+ 1. **意図どおりか**（挙動確認） — 上流のワークフロー（`plan-implement` の「挙動ゲート」等）が担当。本スキルはこれが収束した後に呼ばれる前提
+ 2. **正しいか**（テスト + AI レビュー） — 人間の関与なし。Step 2 で結果を集計して見せるだけ
+@@ -31,14 +25,14 @@
+ 
+ **動作確認が収束したあとに呼ぶ。** 収束前に呼ぶと次の順序で壊れる: diff 画面を作る → まず UI を触って動作確認する → 「ここ違う」で修正する → diff が古くなる → レビューが飛ばされてコミットされる。この破綻は実績として観測されている。
+ 
+-主経路は `plan-implement` のフェーズ5（例外ゲート）から Skill ツールで `skill: diff-review, args: plan: <plan のパス>` として起動されること（挙動ゲートであるフェーズ4が収束した後にしか呼ばれない契約）。ユーザーが「diffレビュー」「レビュー画面」で直接叩く従来の使い方も変わらず使える。
++主経路は `plan-implement` のフェーズ5（例外ゲート）から `../diff-review/SKILL.md` を指定した履歴なしの独立サブエージェントとして起動されること（挙動ゲートであるフェーズ4が収束した後にしか呼ばれない契約）。ユーザーが「diffレビュー」「レビュー画面」で直接叩く従来の使い方も変わらず使える。
+ 
+-HTML 生成の共通規約（自己完結・CDN 禁止・チャットに本文を貼らない・保存先と `open`・style.css の土台）は派生元である同プラグインの `html-report` スキル本文を Read してそれに従う。本スキルはその上に diff レビュー固有のルールを足す。
++HTML 生成の共通規約（自己完結・CDN 禁止・チャットに本文を貼らない・保存先とCodex内表示・style.css の土台）は派生元である同プラグインの `../html-report/SKILL.md` を読んでそれに従う。本スキルはその上に diff レビュー固有のルールを足す。
+ 
+ ## Input / Output
+ 
+-- **Input**: `$ARGUMENTS` = 比較の基点 (省略時は `git diff HEAD` + 未追跡ファイル)。`plan: docs/crystallize/plans/<slug>.md` があれば意図解説・昇格判定の根拠にする。指定がなくても `docs/crystallize/plans/` 直下に該当しそうな plan があれば Read する。候補が複数あるときは選ばずユーザーに確認する — 分割 plan は `covers:` が違うので、選び間違えると別の plan の受け入れ基準を通過記録として表示することになる。**plan の先頭に `spec: docs/crystallize/specs/<slug>.md` の行があれば spec も Read し (パスはリポジトリルート (`git rev-parse --show-toplevel`) 基準で解決する)、受け入れ基準の表示は spec の「受け入れ基準 (テストケース表)」から取る** — 要件の正本は spec 側にあり、plan は実装手順しか持たないため。`spec:` 行が無い旧形式の plan (受け入れ基準を plan 内に持つ) は従来どおり plan から取る
+-- **Output**: 昇格 hunk が 1 件以上のとき — `<projroot>/docs/crystallize/reports/YYYY-MM-DD-diff-review-<slug>.html` を生成して `open`。最終応答は「昇格件数/全hunk数 + 要注意点の要約 (3 行以内) + ファイルパス」のみ。**昇格 hunk が 0 件のとき — HTML を作らず、最終応答は Step 3 のスキップ規則の 1 行だけ**
++- **Input**: 起動メッセージまたは委任メッセージで比較の基点を受ける (省略時は `git diff HEAD` + 未追跡ファイル)。`plan: docs/crystallize/plans/<slug>.md` があれば意図解説・昇格判定の根拠にする。指定がなくても `docs/crystallize/plans/` 直下に該当しそうな plan があれば読む。候補が複数あるときは選ばずユーザーに確認する — 分割 plan は `covers:` が違うので、選び間違えると別の plan の受け入れ基準を通過記録として表示することになる。**plan の先頭に `spec: docs/crystallize/specs/<slug>.md` の行があれば spec も読み (パスはリポジトリルート (`git rev-parse --show-toplevel`) 基準で解決する)、受け入れ基準の表示は spec の「受け入れ基準 (テストケース表)」から取る** — 要件の正本は spec 側にあり、plan は実装手順しか持たないため。`spec:` 行が無い旧形式の plan (受け入れ基準を plan 内に持つ) は従来どおり plan から取る
++- **Output**: 昇格 hunk が 1 件以上のとき — `<projroot>/docs/crystallize/reports/YYYY-MM-DD-diff-review-<slug>.html` を生成し、親がCodex内で表示する。最終応答は「昇格件数/全hunk数 + 要注意点の要約 (3 行以内) + ファイルパス」のみ。**昇格 hunk が 0 件のとき — HTML を作らず、最終応答は Step 3 のスキップ規則の 1 行だけ**
+ 
+ ## 最重要ルール (理由つき)
+ 
+@@ -58,8 +52,8 @@
+ 
+ - 基点省略時は `git diff HEAD` (staged + unstaged) に加え、未追跡ファイルを「新規ファイル全文の追加」として差分に含める
+ - 総ファイル数・総 hunk 数・総追加/削除行数をここで確定し、検算の分母として控える。**`M` は「除外後の判定対象 hunk 数」**とする — レビュー対象外のファイル (生成済みレポート `docs/crystallize/reports/`、plan `docs/crystallize/plans/`。Gotchas 参照) の hunk は `M` に数えず、その除外数を別に控える (昇格0件のときの1行に出す)
+-- 巨大 diff (数百 hunk) は一括で読まず、ファイル単位で分割して Read する
+-- plan があれば同じタイミングで Read し、実装計画・`## Deviations` 見出し (あれば) を控えておく。plan 先頭に `spec:` 行があればその spec も Read し、要件と受け入れ基準の表を控える。`spec:` 行が無い旧形式の plan は plan 内の確定事項・受け入れ基準を同じ用途で使う (いずれも Step 3 と Step 4 で使う)
++- 巨大 diff (数百 hunk) は一括で読まず、ファイル単位で分割して 読む
++- plan があれば同じタイミングで 読み、実装計画・`## Deviations` 見出し (あれば) を控えておく。plan 先頭に `spec:` 行があればその spec も 読み、要件と受け入れ基準の表を控える。`spec:` 行が無い旧形式の plan は plan 内の確定事項・受け入れ基準を同じ用途で使う (いずれも Step 3 と Step 4 で使う)
+ 
+ ## Step 2: 論理グループ化と解説
+ 
+@@ -71,7 +65,7 @@
+ | タグ | feat / refactor / fix / docs / config / test |
+ | リスク | 低リスク (挙動不変・局所) / 注意 (共通基盤・広範囲に波及) / 要注意 (データ・削除・セキュリティに触る) |
+ | 意図 | なぜこの変更か + 影響範囲を 2〜3 文の平易な完全文で |
+-| 指摘 | diff を読んで気づいた問題点 (あれば)。深掘りは /code-review の仕事なので、目に付いたものだけ |
++| 指摘 | diff を読んで気づいた問題点 (あれば)。深掘りは独立コードレビューの仕事なので、目に付いたものだけ |
+ 
+ この「指摘」欄は Step 3 の昇格判定④の入力になる。plan の実装計画項目に対応しないグループは「未分類」として残す (Step 3 の⑥がこれを昇格させる)。グループ別の hunk 数は **昇格した hunk も含めた総数** で数える (Step 4 のヘッダ表示で「うち昇格 n 件」を添えて使う)。
+ 
+@@ -121,7 +115,7 @@
+ 
+ - 昇格 hunk 数 + 非昇格 hunk 数の合計 = Step 1 で確定した判定対象 hunk 数 `M` を確認する。合わなければ漏れた hunk を「未分類」グループ (⑥) に収容してから公開する
+ - **この検算は昇格 0 件でスキップしたときも同じように行い、結果の数字をスキップ規則の 1 行に載せる** — 画面が無くても「全 hunk が判定を通った」ことの担保は数字だけなので、ここを飛ばすと例外ゲートが空回りする
+-- 保存先・`open`・gitignore 注意は base の Step 4 に従う (昇格 0 件のときはファイルを作らないのでこの手順ごと不要)
++- 保存先・Codex内表示・gitignore 注意は base の Step 4 に従う (昇格 0 件のときはファイルを作らないのでこの手順ごと不要)
+ 
+ ## Gotchas
+ 

@@ -1,0 +1,59 @@
+--- a/skills/plan-evaluator/SKILL.md
++++ b/skills/plan-evaluator/SKILL.md
+@@ -1,36 +1,31 @@
+ ---
+ name: plan-evaluator
+ description: 「plan監査」「planレビュー」で発動。plan スキルが書いた plan の前提と受け入れ基準の網羅を採点する evaluator
+-user-invocable: true
+-argument-hint: "<context-json path | plan path>"
+-context: fork
+-agent: general-purpose
+-metadata:
+-  purpose: judge
+-  trigger: both
+-  shape: forked
+-  role: evaluator
+ ---
+ 
+ # plan-evaluator
+ 
++## Codex 実行境界
++
++最初に `../../references/codex-runtime.md` を全文読む。入力に `CRYSTALLIZE_CODEX_ROLE=plan-evaluator` マーカーが無ければ、履歴を渡さない新規サブエージェントを起動し、同マーカー、この SKILL.md の絶対パス、context JSON の絶対パス（無ければ受け取った生入力）、output_contract、`ledger / impact.md / mock / 呼び出し元の推論を読まない` という禁止入力を渡す。子の完了後、親は `output.schema.json` と評価対象外の変更がゼロであることを自分で確認する。評価者は `gpt-5.6-sol` / `xhigh` / 履歴なしで実行し、独立実行を利用できない場合は自己採点せず停止する。
++
+ `plan` スキルが書き出す plan (`docs/crystallize/plans/<slug>.md`) を、作成側とは独立したコンテキストで監査する評価者。plan は作成側セッションの確信から書かれるため、未検証の前提・spec の受け入れ基準の取りこぼしをそのまま含む — 実装セッションに渡る前に検出する。
+ 
+ - **plan・spec・呼び出し元スキル・評価基準を修正しない (Read のみ)** — 評価をパスする最短経路として基準側を書き換える誘惑を構造的に断つ (評価基準の保護原則)
+-- **spec は読む**。plan 先頭の `spec:` 行が指すファイルを `project_dir` (フォールバック時はカレントディレクトリ) 基準で解決して Read する — plan が spec の受け入れ基準をすべて覆っているかは、spec を読まなければ判定できない。plan に `covers:` 行があれば、`spec:` 行と同じ spec を指す plan を `docs/crystallize/plans/` 直下から探して Read してよい (ファイル名の prefix ではなく `spec:` 行の一致で判定する — slug の prefix は別タスクの plan と衝突する)。読むのは `covers:` の和集合を検算するためだけで、兄弟の内容は採点しない。**`spec:` 行が無い旧形式の plan は、plan 内の受け入れ基準を spec の代わりに使って通常どおり採点する** (`plan-implement` と `diff-review` が同じ互換を約束しているため、evaluator だけが落とすと旧 plan が実装に進めなくなる)。`spec:` 行も plan 内の受け入れ基準も無い場合にだけ `acceptance_coverage` を 0 とし、算定不能の理由を feedback に明記する。`spec:` 行が指すファイルが存在しない場合 (パスの誤り) は `structure_completeness` を減点する
++- **spec は読む**。plan 先頭の `spec:` 行が指すファイルを `project_dir` (フォールバック時はカレントディレクトリ) 基準で解決して読む — plan が spec の受け入れ基準をすべて覆っているかは、spec を読まなければ判定できない。plan に `covers:` 行があれば、`spec:` 行と同じ spec を指す plan を `docs/crystallize/plans/` 直下から探して読む (ファイル名の prefix ではなく `spec:` 行の一致で判定する — slug の prefix は別タスクの plan と衝突する)。読むのは `covers:` の和集合を検算するためだけで、兄弟の内容は採点しない。**`spec:` 行が無い旧形式の plan は、plan 内の受け入れ基準を spec の代わりに使って通常どおり採点する** (`plan-implement` と `diff-review` が同じ互換を約束しているため、evaluator だけが落とすと旧 plan が実装に進めなくなる)。`spec:` 行も plan 内の受け入れ基準も無い場合にだけ `acceptance_coverage` を 0 とし、算定不能の理由を feedback に明記する。`spec:` 行が指すファイルが存在しない場合 (パスの誤り) は `structure_completeness` を減点する
+ - **ledger・impact.md・モックは、渡されても読まない** — 作成側の思考過程を見た監査者は同じバイアスに迎合する。plan + spec だけで監査することが plan の自己完結性の検査を兼ねる。コードベース本体の探索は前提の事実確認のためにむしろ必須
+ - **model は frontmatter で指定しない (= セッションモデルを継承)** — 評価者は作成側と同格以上に保つ。plan の修正は実装前なら安いが、監査の見逃しは実装後の手戻りとして高くつく
+ 
+ ## 契約 (単一)
+ 
+-- **Input**: `$ARGUMENTS` = context JSON ファイルのパス (evaluator 単一契約)。JSON キーは `project_dir` / `plan` / `criteria` / `threshold` / `turns_dir` / `iteration` / `output_contract` (`eval_file` / `schema` / `instructions`)。監査対象の plan ファイルは `plan` で指定する
++- **Input**: `起動メッセージまたは委任メッセージ` = context JSON ファイルのパス (evaluator 単一契約)。JSON キーは `project_dir` / `plan` / `criteria` / `threshold` / `turns_dir` / `iteration` / `output_contract` (`eval_file` / `schema` / `instructions`)。監査対象の plan ファイルは `plan` で指定する
+ - **Output**: `output_contract.eval_file` に下記 eval JSON schema で Write する
+ 
+ ### context JSON 不在時のフォールバック
+ 
+-`$ARGUMENTS` が context JSON として解釈できない場合 (JSON でない / ファイル不在 / `output_contract` が空):
++`起動メッセージまたは委任メッセージ` が context JSON として解釈できない場合 (JSON でない / ファイル不在 / `output_contract` が空):
+ 
+-- ファイルパスなら plan ファイルとして Read、それ以外は plan の生テキストとして扱う
++- ファイルパスなら plan ファイルとして読み、それ以外は plan の生テキストとして扱う
+ - eval JSON の書き出し先は `{project_dir=カレントディレクトリ}/output/eval-<YYYYMMDD-HHMMSS>-plan-evaluator.json` (ディレクトリが無ければ作成)
+ - Markdown フィードバックは stdout に出し、末尾に同 schema の eval JSON を添付
+ 
+@@ -59,9 +54,9 @@
+ 
+ ### 3. 検証可能な前提の事実確認
+ 
+-確からしく見えても必ず裏取りする — コードベースで検証できるものは Grep / Read / Explore subagent、API 仕様・ライブラリの機能有無・プラットフォーム制約など一般技術知識に属するものは WebSearch / WebFetch / 公式ドキュメントで。LLM は知識境界を正確に把握できず、もっともらしい誤前提を高い確信度で保持するため。
++確からしく見えても必ず裏取りする — コードベースで検証できるものは rg と必要なファイルの読取、必要なら履歴なしの調査サブエージェント、API 仕様・ライブラリの機能有無・プラットフォーム制約など一般技術知識に属するものは 公式ドキュメント検索で。LLM は知識境界を正確に把握できず、もっともらしい誤前提を高い確信度で保持するため。
+ 
+-plan の検証コマンドは実行せず、静的に確かめる (package.json / Makefile 等と突き合わせてコマンドが実在するか) — 実行は Read-only 原則に反する。
++plan の検証コマンドは実行せず、静的に確かめる (package.json / Makefile 等と突き合わせてコマンドが実在するか) — 実行は 読取専用 原則に反する。
+ 
+ ### 4. 受け入れ基準の被覆
+ 

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["score", "plan_implementation", "quality", "feedback", "feedback_structured", "rewrite", "passed", "evaluator_skill"],
+  "properties": {
+    "score": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "plan_implementation": {
+      "type": "object",
+      "required": ["overall", "notes"],
+      "properties": {
+        "overall": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "quality": {
+      "type": "object",
+      "required": ["overall", "breakdown"],
+      "properties": {
+        "overall": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "breakdown": {
+          "type": "object",
+          "required": ["premise_grounding", "acceptance_coverage", "structure_completeness", "self_containedness", "volatility_ordering"],
+          "properties": {
+            "premise_grounding": { "type": "integer", "minimum": 0, "maximum": 100 },
+            "acceptance_coverage": { "type": "integer", "minimum": 0, "maximum": 100 },
+            "structure_completeness": { "type": "integer", "minimum": 0, "maximum": 100 },
+            "self_containedness": { "type": "integer", "minimum": 0, "maximum": 100 },
+            "volatility_ordering": { "type": "integer", "minimum": 0, "maximum": 100 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "feedback": { "type": "string" },
+    "feedback_structured": {
+      "type": "object",
+      "required": ["high", "medium", "low"],
+      "properties": {
+        "high": { "$ref": "#/$defs/findings" },
+        "medium": { "$ref": "#/$defs/findings" },
+        "low": { "$ref": "#/$defs/findings" }
+      },
+      "additionalProperties": false
+    },
+    "rewrite": { "type": ["string", "null"] },
+    "passed": { "type": "boolean" },
+    "evaluator_skill": { "const": "plan-evaluator" }
+  },
+  "$defs": {
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["area", "message"],
+        "properties": {
+          "area": { "type": "string" },
+          "message": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

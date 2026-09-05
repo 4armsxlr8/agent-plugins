@@ -1,0 +1,33 @@
+{
+  "name": "crystallize-codex",
+  "version": "0.3.1",
+  "description": "Claude版crystallizeを正本として、spec・plan・実装・検証・コミットまでをCodexのサブエージェントで駆動するplan開発フロー",
+  "author": {
+    "name": "kyouyagenki"
+  },
+  "keywords": [
+    "plan",
+    "tdd",
+    "workflow",
+    "code-review",
+    "github-issue",
+    "codex"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Crystallize for Codex",
+    "shortDescription": "要件をspecに残し、plan実装と3段階の検証を駆動します。",
+    "longDescription": "Claude版crystallizeを正本とし、spec・分割plan・モック/レポートキットをCodexのサブエージェント、承認、ファイル表示の仕組みに合わせて駆動するplan開発プラグインです。",
+    "developerName": "kyouyagenki",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "この実装依頼の認識を合わせてspecを作ってください。",
+      "このplanを実装し、検証ゲートまで進めてください。",
+      "現在の差分から危険な箇所だけをレビュー画面にしてください。"
+    ]
+  }
+}

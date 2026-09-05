@@ -1,0 +1,6 @@
+interface:
+  display_name: "Crystallize Code Generator"
+  short_description: "planスライスを独立コンテキストで実装します"
+  default_prompt: "Use $code-generator only with the scoped payload supplied by plan-implement."
+policy:
+  allow_implicit_invocation: false

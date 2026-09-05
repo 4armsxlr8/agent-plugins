@@ -1,0 +1,6 @@
+interface:
+  display_name: "Crystallize Test Generator"
+  short_description: "specのAC-n行から失敗するテストだけを書きます"
+  default_prompt: "Use $test-generator only with the spec AC-n rows and scoped payload supplied by plan-implement."
+policy:
+  allow_implicit_invocation: false

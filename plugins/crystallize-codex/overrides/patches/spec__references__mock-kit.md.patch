@@ -1,0 +1,20 @@
+--- a/skills/spec/references/mock-kit.md
++++ b/skills/spec/references/mock-kit.md
+@@ -18,7 +18,7 @@
+ 無改変層が本当に無改変かは機械で検算できる (親がモックを受け取ったときに1回走らせる):
+ 
+ ```bash
+-KIT=<spec スキルの Base directory>/assets/mock-kit.html   # 親が Skill 本文の先頭「Base directory for this skill」から組み立てた絶対パス
++KIT=<spec スキルのディレクトリ>/assets/mock-kit.html   # 親がこの SKILL.md の絶対パスから組み立てた絶対パス
+ MOCK=docs/crystallize/specs/<slug>/mock.html
+ for b in STYLE MARKUP SCRIPT; do
+   a=$(sed -n "/CZ-KIT:$b:BEGIN/,/CZ-KIT:$b:END/p" "$KIT"  | shasum | cut -d' ' -f1)
+@@ -149,7 +149,7 @@
+    - `<style id="cz-mock-style">` — モックのスタイル。class には `demo-` のような自前のプレフィックスを付け、`cz-` と混ぜない。素の要素セレクタ (`body {…}`, `button {…}`) を書かない (キットの外枠を壊す)
+    - `<main class="cz-stage">` の中の `.cz-variant` — 案・フレーム・状態
+    - `<script id="cz-mock-script">` — `TWEAKS` を**親から渡されたキー一覧どおりに**定義し (勝手にキーを増減・改名しない。足したい項目があれば親に返して全案へ同時に反映してもらう)、`applyTweaks` を実装する
+-3. **ブラウザで開いて自分で確認する**: `open docs/crystallize/specs/<slug>/mock.html`。案の切替・フレームの切替・状態の切替・パネルの反映が動き、コンソールにエラーが出ないこと
++3. **Codexのブラウザ表示で確認する**: `docs/crystallize/specs/<slug>/mock.html` を表示し、案の切替・フレームの切替・状態の切替・パネルの反映が動き、コンソールにエラーが出ないこと
+ 4. 上の検算コマンドで無改変層が一致することを確かめてから親に返す
+ 
+ ### 変えてよい / 変えてはいけない

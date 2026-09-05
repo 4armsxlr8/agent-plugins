@@ -1,6 +1,6 @@
 # crystallize-codex
 
-Claude Code版 [`../crystallize`](../crystallize) を振る舞いの正本 (SSoT) として、Codex向けに派生させた plan 駆動開発プラグインです。v0.3.1 の spec / plan 分離、分割 plan、モック・レポートキット、昇格 0 件の diff-review を含みます。
+Claude Code版 [`../crystallize`](../crystallize) を振る舞いの正本 (SSoT) として、Codex向けに派生させた plan 駆動開発プラグインです。v0.4.0 のプロジェクト共通用語集、改訂された決裁カード、spec / plan 分離、分割 plan、モック・レポートキット、昇格 0 件の diff-review を含みます。
 
 仕様決め、plan作成、TDD実装、機械検証、ユーザーによる挙動確認、危険箇所だけのリスク決裁、planをコミット履歴へ畳み込むところまでを一続きで扱います。
 
@@ -52,7 +52,7 @@ flowchart TD
 | スキル | 内容 |
 |---|---|
 | `issue-create` | 会話のバグ・思いつき・雑務をGitHub issueとして起票する |
-| `spec` | 質問とモックで要件を決め、要件・非機能要件・受け入れ基準をspecに書く。既存specは改訂する |
+| `spec` | 質問とモックで要件を決め、決まった語をプロジェクト共通の用語集（`docs/crystallize/CONTEXT.md`）に書き足しながら、要件・非機能要件・受け入れ基準をspecに書く。既存specは改訂する |
 | `question-evaluator` | `spec` の質問を任意の独立コンテキストで監査する |
 | `plan` | specから実装計画を作り、必要なら `covers:` / `depends-on:` 付きで分割する |
 | `plan-evaluator` | planがspecの受け入れ基準を全て覆うか監査する |
@@ -69,6 +69,7 @@ flowchart TD
 - `docs/crystallize/specs/` — spec本体と台帳・モック。残る成果物
 - `docs/crystallize/plans/` — plan本体と作業ファイル。コミット時に削除される
 - `docs/crystallize/reports/` — HTMLレポート
+- `docs/crystallize/CONTEXT.md` — プロジェクト共通の用語集。リポジトリ直下に `CONTEXT.md` があり `## 用語` または `## Language` の見出しを持つ場合は、そちらを正本として使う
 
 ## 検証
 

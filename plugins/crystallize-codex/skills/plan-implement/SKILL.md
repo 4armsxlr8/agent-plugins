@@ -30,7 +30,7 @@ description: 「実装開始」「planを実装」で発動。docs/crystallize/p
 - **書込み前preflight**: plan や production code を書く前に、`../test-generator/SKILL.md`、`../code-generator/SKILL.md`、`../diff-review/SKILL.md`、`../plan-commit/SKILL.md` が解決できること、ならびに `CODEX_HOME`（未設定時はCodexの既定home）配下の `skills/.system/review-agent/SKILL.md` を解決できることを確認する。
 - 公式SKILLは存在・読取可能な通常ファイルであることを確認し、`realpath` した絶対パスを `resolved_review_skill` として保持する。フェーズ3はこの値だけを使い、別パスを再解決しない。
 - いずれかの依存、公式SKILLの解決・存在・読取・realpathに失敗したら、汎用レビュープロンプトや同一コンテキストへフォールバックせず、plan / production codeへの一切の書込み前に停止・報告する。
-- plan と先頭の `spec:` 行が指す spec を読む。守るべき既存挙動・実装計画・検証コマンド・Deviations 規約は plan から、要件・非機能要件・受け入れ基準（テストケース表）・用語は spec から取る。spec が無い旧形式の plan は plan 内の確定事項と受け入れ基準を使う。
+- plan と先頭の `spec:` 行が指す spec を読む。あわせて**用語集**（リポジトリ直下に `## 用語` か `## Language` を持つ `CONTEXT.md` があればそれ、無ければ `docs/crystallize/CONTEXT.md`。どちらも無ければ spec の用語節）も読む。守るべき既存挙動・実装計画・検証コマンド・Deviations 規約は plan から、要件・非機能要件・受け入れ基準（テストケース表）・用語は spec から取る。spec が無い旧形式の plan は plan 内の確定事項と受け入れ基準を使う。
 - plan に `covers:` 行があれば、その plan が扱う受け入れ基準は列挙された AC と `実機:` 項目だけに限る。範囲外の AC はテストや挙動ゲートに載せない。`depends-on:` 行があれば先行 plan のファイルを確認し、残っていれば先行 plan を先に実装する。ファイルが無ければ関連するコミット本文に先行 plan のゴールがあるか確認し、見つからなければ停止してユーザーへ戻す。
 - `## 進行状況` が無ければ実装項目と4つのゲート（機械/挙動/例外/確定）のチェックボックスを作る。既存なら最初の未完了項目から再開する。
 - `## Deviations` が無ければ作る。可逆・局所的な逸脱だけを「計画項目 / 実際の選択 / 理由」の1行で記録する。
@@ -41,7 +41,7 @@ description: 「実装開始」「planを実装」で発動。docs/crystallize/p
 
 - 入出力で正解を固定できる挙動変更は TDD。UI・見た目・捨てるプロトタイプ・設定更新は非TDDとして扱う。
 - TDD対象では spec の受け入れ基準表にある seam・境界ケース・テストしない範囲を合意済みの記録として使い、実装セッションで取り直さない。
-- `test-generator` は `gpt-5.6-luna` / `max` の履歴なしの子へ `CRYSTALLIZE_CODEX_ROLE=test-generator`、同 SKILL の絶対パス、project_dir、該当スライス、spec の該当AC行、テストしない範囲、検証コマンドだけを渡す。子の後で production 変更ゼロと RED ログを親が検算する。
+- `test-generator` は `gpt-5.6-luna` / `max` の履歴なしの子へ `CRYSTALLIZE_CODEX_ROLE=test-generator`、同 SKILL の絶対パス、project_dir、該当スライス、spec の該当AC行、テストしない範囲、検証コマンド、用語集のパスと「識別子・表示文言は用語集の語を使い、『使わない語』を新たに導入しない」の規則だけを渡す。子の後で production 変更ゼロと RED ログを親が検算する。
 - `code-generator` は別の `gpt-5.6-luna` / `max` の履歴なしの子へ `CRYSTALLIZE_CODEX_ROLE=code-generator`、同 SKILL の絶対パス、project_dir、同じスコープ、RED テスト一覧または修正指摘だけを渡す。親はテスト・golden・snapshot・fixture の変更ゼロを検算する。
 - 非TDDは code-generator のみ起動する。異なる意図のスライスを同じ委任へ混ぜない。
 - generator の逸脱は親が plan へ転記する。escalate が返ったら停止する。

@@ -29,7 +29,7 @@ plan は使い捨ての文書で、後段の `$crystallize-codex:plan-commit` �
 
 ### 1. spec を読む
 
-spec を Read し、ゴール・要件・受け入れ基準 (テストケース表)・スコープ外・用語を把握する。ledger や mock.html は読まない — 決着した論点の経緯は実装に不要で、読むと plan が経緯の再説明で膨らむ。
+spec を Read し、ゴール・要件・受け入れ基準 (テストケース表)・スコープ外・用語を把握する。あわせて**用語集** (リポジトリ直下に `## 用語` か `## Language` を持つ `CONTEXT.md` があればそれ、無ければ `docs/crystallize/CONTEXT.md`。どちらも無ければ spec の用語節) を Read し、plan 本文の語はそれに従う — plan で語を言い換えると、実装とテストが spec と別の名前を使うことになる。ledger や mock.html は読まない — 決着した論点の経緯は実装に不要で、読むと plan が経緯の再説明で膨らむ。
 
 ### 2. impact — 守るべき既存挙動の裏取り
 
@@ -113,7 +113,7 @@ N. 機械的な作業 (リファクタ・配線・テスト整備) は末尾に�
 並列可と判定したら**並列配置** (どの worktree でどの plan か・交差したものはどの順序か) を小さな表で提示して合意を取る。**合意後の配置は案内で終わらせず、本スキルが自分で実行する** (案内文止まりの接続は実際には実行されない、が過去セッションで繰り返し観測された失敗の型):
 
 1. `git worktree add` で worktree を作成する (git ネイティブ機能 — 特定ツールに依存しない)
-2. `plans/<plan の basename>.md` と `plans/<plan の basename>/` を担当 worktree へ移動する。**spec は追跡状態で扱いを分ける** — `git ls-files --error-unmatch specs/<slug>.md` が通る (追跡済み) なら worktree 側に既に同じファイルがあるので、**移動せず、未コミットの改訂分だけをコピーする** (`mv` すると本流の作業ツリーに spec の削除が残る)。追跡されていない (今回新規に書いた) spec は `specs/<slug>.md` と `specs/<slug>/` ごと移動する — コミットされていないため worktree には現れず、移し忘れると実装セッションが plan 先頭の `spec:` 行を解決できない
+2. `plans/<plan の basename>.md` と `plans/<plan の basename>/` を担当 worktree へ移動する。**spec と用語集は追跡状態で扱いを分ける** — `git ls-files --error-unmatch specs/<slug>.md` が通る (追跡済み) なら worktree 側に既に同じファイルがあるので、**移動せず、未コミットの改訂分だけをコピーする** (`mv` すると本流の作業ツリーに spec の削除が残る)。追跡されていない (今回新規に書いた) spec は `specs/<slug>.md` と `specs/<slug>/` ごと移動する — コミットされていないため worktree には現れず、移し忘れると実装セッションが plan 先頭の `spec:` 行を解決できない。用語集はリポジトリ直下に `## 用語` か `## Language` を持つ `CONTEXT.md` があればそれ、無ければ `docs/crystallize/CONTEXT.md` を同じ規則で扱う。追跡済みなら移動せず未コミットの改訂分だけをコピーし、未追跡なら worktree の同じ相対パスへ移す — spec と generator が同じ正本を読める状態を保つ
 3. 各 worktree でセッションを起動する — Codexのworktree/task機能で担当taskを起動し、起動メッセージに `$crystallize-codex:plan-implement <plan の絶対パス>` を渡す。無い環境では、worktree ごとの雛形プロンプトを提示してユーザーに各ターミナルで開いてもらう (対話セッションが必要なため、起動だけは環境の道具に依存する)。`depends-on:` で繋がった plan 群は先頭の 1 枚だけを送る — 後続は先行の plan-commit が終わってから、同じセッションで次の `$crystallize-codex:plan-implement` を送る
 
 以降の対話 (挙動ゲート・例外ゲート) は各 worktree のセッションが直接ユーザーと行う。本セッションは配置の完了報告 (worktree 一覧と各セッションの状態) で終了し、司令塔として残らない。

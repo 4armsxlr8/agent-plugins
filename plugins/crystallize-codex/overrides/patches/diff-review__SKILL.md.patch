@@ -40,9 +40,9 @@
  ## Input / Output
  
 -- **Input**: `$ARGUMENTS` = 比較の基点 (省略時は `git diff HEAD` + 未追跡ファイル)。`plan: docs/crystallize/plans/<slug>.md` があれば意図解説・昇格判定の根拠にする。指定がなくても `docs/crystallize/plans/` 直下に該当しそうな plan があれば Read する。候補が複数あるときは選ばずユーザーに確認する — 分割 plan は `covers:` が違うので、選び間違えると別の plan の受け入れ基準を通過記録として表示することになる。**plan の先頭に `spec: docs/crystallize/specs/<slug>.md` の行があれば spec も Read し (パスはリポジトリルート (`git rev-parse --show-toplevel`) 基準で解決する)、受け入れ基準の表示は spec の「受け入れ基準 (テストケース表)」から取る** — 要件の正本は spec 側にあり、plan は実装手順しか持たないため。`spec:` 行が無い旧形式の plan (受け入れ基準を plan 内に持つ) は従来どおり plan から取る
--- **Output**: 昇格 hunk が 1 件以上のとき — `<projroot>/docs/crystallize/reports/YYYY-MM-DD-diff-review-<slug>.html` を生成して `open`。最終応答は「昇格件数/全hunk数 + 要注意点の要約 (3 行以内) + ファイルパス」のみ。**昇格 hunk が 0 件のとき — HTML を作らず、最終応答は Step 3 のスキップ規則の 1 行だけ**
-+- **Input**: 起動メッセージまたは委任メッセージで比較の基点を受ける (省略時は `git diff HEAD` + 未追跡ファイル)。`plan: docs/crystallize/plans/<slug>.md` があれば意図解説・昇格判定の根拠にする。指定がなくても `docs/crystallize/plans/` 直下に該当しそうな plan があれば読む。候補が複数あるときは選ばずユーザーに確認する — 分割 plan は `covers:` が違うので、選び間違えると別の plan の受け入れ基準を通過記録として表示することになる。**plan の先頭に `spec: docs/crystallize/specs/<slug>.md` の行があれば spec も読み (パスはリポジトリルート (`git rev-parse --show-toplevel`) 基準で解決する)、受け入れ基準の表示は spec の「受け入れ基準 (テストケース表)」から取る** — 要件の正本は spec 側にあり、plan は実装手順しか持たないため。`spec:` 行が無い旧形式の plan (受け入れ基準を plan 内に持つ) は従来どおり plan から取る
-+- **Output**: 昇格 hunk が 1 件以上のとき — `<projroot>/docs/crystallize/reports/YYYY-MM-DD-diff-review-<slug>.html` を生成し、親がCodex内で表示する。最終応答は「昇格件数/全hunk数 + 要注意点の要約 (3 行以内) + ファイルパス」のみ。**昇格 hunk が 0 件のとき — HTML を作らず、最終応答は Step 3 のスキップ規則の 1 行だけ**
+-- **Output**: 昇格 hunk が 1 件以上のとき — `<projroot>/docs/crystallize/reports/YYYY-MM-DD-diff-review-<slug>.html` を生成して `open`。最終応答は「決裁カード数 (昇格 hunk 数) / 全 hunk 数 + 各カードの見出し文をそのまま (カードが 4 枚を超えるときは、①②のカードの見出しだけを並べ、残りは件数で言う) + ファイルパス」のみ (見出しを要約し直さない — 応答と画面で言葉が変わると、どのカードの話か辿れなくなる)。**昇格 hunk が 0 件のとき — HTML を作らず、最終応答は Step 3 のスキップ規則の 1 行だけ**
++- **Input**: 起動メッセージまたは委任メッセージで比較の基点を受ける。 比較の基点 (省略時は `git diff HEAD` + 未追跡ファイル)。`plan: docs/crystallize/plans/<slug>.md` があれば意図解説・昇格判定の根拠にする。指定がなくても `docs/crystallize/plans/` 直下に該当しそうな plan があれば Read する。候補が複数あるときは選ばずユーザーに確認する — 分割 plan は `covers:` が違うので、選び間違えると別の plan の受け入れ基準を通過記録として表示することになる。**plan の先頭に `spec: docs/crystallize/specs/<slug>.md` の行があれば spec も Read し (パスはリポジトリルート (`git rev-parse --show-toplevel`) 基準で解決する)、受け入れ基準の表示は spec の「受け入れ基準 (テストケース表)」から取る** — 要件の正本は spec 側にあり、plan は実装手順しか持たないため。`spec:` 行が無い旧形式の plan (受け入れ基準を plan 内に持つ) は従来どおり plan から取る
++- **Output**: 昇格 hunk が 1 件以上のとき — `<projroot>/docs/crystallize/reports/YYYY-MM-DD-diff-review-<slug>.html` を生成し、親がCodex内で表示する。最終応答は「決裁カード数 (昇格 hunk 数) / 全 hunk 数 + 各カードの見出し文をそのまま (カードが 4 枚を超えるときは、①②のカードの見出しだけを並べ、残りは件数で言う) + ファイルパス」のみ (見出しを要約し直さない — 応答と画面で言葉が変わると、どのカードの話か辿れなくなる)。**昇格 hunk が 0 件のとき — HTML を作らず、最終応答は Step 3 のスキップ規則の 1 行だけ**
  
  ## 最重要ルール (理由つき)
  
@@ -66,9 +66,9 @@
  
  この「指摘」欄は Step 3 の昇格判定④の入力になる。plan の実装計画項目に対応しないグループは「未分類」として残す (Step 3 の⑥がこれを昇格させる)。グループ別の hunk 数は **昇格した hunk も含めた総数** で数える (Step 4 のヘッダ表示で「うち昇格 n 件」を添えて使う)。
  
-@@ -121,7 +115,7 @@
+@@ -160,7 +154,7 @@
  
- - 昇格 hunk 数 + 非昇格 hunk 数の合計 = Step 1 で確定した判定対象 hunk 数 `M` を確認する。合わなければ漏れた hunk を「未分類」グループ (⑥) に収容してから公開する
+ - 昇格 hunk 数 + 非昇格 hunk 数の合計 = Step 1 で確定した判定対象 hunk 数 `M` を確認する。**さらに Σ(各カードの hunk 数) = 昇格 hunk 数 = Σ(グループ表の「うち昇格 n」) の 3 つが一致することを確かめる** (カードへの重複収容と収容漏れは、この 3 つの食い違いとしてしか現れない)。合わなければ漏れた hunk を「未分類」グループ (⑥) に収容してから公開する
  - **この検算は昇格 0 件でスキップしたときも同じように行い、結果の数字をスキップ規則の 1 行に載せる** — 画面が無くても「全 hunk が判定を通った」ことの担保は数字だけなので、ここを飛ばすと例外ゲートが空回りする
 -- 保存先・`open`・gitignore 注意は base の Step 4 に従う (昇格 0 件のときはファイルを作らないのでこの手順ごと不要)
 +- 保存先・Codex内表示・gitignore 注意は base の Step 4 に従う (昇格 0 件のときはファイルを作らないのでこの手順ごと不要)

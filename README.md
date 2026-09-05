@@ -31,18 +31,18 @@ Packages a full personal development workflow: turn a vague request into a spec 
 Main components:
 
 - **`skills/issue-create`** — turns a chat aside (bug, idea, chore) into a GitHub issue from the repo's issue templates.
-- **`skills/spec`** — pre-implementation alignment: asks the settled frontier of questions in numbered rounds with a recommended answer each, uses mocks only when the open question is structural, and writes requirements, non-functional requirements and acceptance criteria (as a test-case table) into a spec that persists and can be revised later.
+- **`skills/spec`** — pre-implementation alignment: asks the settled frontier of questions in numbered rounds with a recommended answer each, uses mocks only when the open question is structural, and writes requirements, non-functional requirements and acceptance criteria (as a test-case table) into a spec that persists and can be revised later. Terms settled during the interview go straight into the project's single glossary (`docs/crystallize/CONTEXT.md`), which every later skill reads.
 - **`skills/question-evaluator`** — optional audit of `spec`'s questions for false premises and false dilemmas in an isolated context (off by default; `audit: on` turns it on).
 - **`skills/plan`** — derives a throwaway implementation plan from the spec, ordered by how likely each item is to change; a large spec is split into several plans (one commit each) only when the parts touch disjoint modules and can be verified on their own.
 - **`skills/plan-evaluator`** — audits the plan in an isolated context: does it cover every acceptance criterion in the spec, are its premises grounded, is it self-contained.
 - **`skills/plan-implement`** — drives implementation and the mechanical/behavioral/exception gates through to the commit handoff; a user-initiated change at the behavioral gate goes through a spec-revision lane instead of being blocked.
 - **`skills/test-generator`** / **`skills/code-generator`** — the red and green sides of TDD, run as separate subagents so the same agent can't write both a test and the code that games it. RED is written straight from the spec's test-case table, so no seam agreement is re-negotiated at implementation time.
-- **`skills/diff-review`** — an "exception viewer" that shows only escalated hunks as risk-acceptance cards (what could happen, is it reversible, blast radius, AI review verdict) with the code folded away; when nothing escalates it skips the page and asks for go/no-go in one line.
+- **`skills/diff-review`** — an "exception viewer" that shows only escalated changes as risk-acceptance cards — one card per risk, a one-sentence headline in the user's words, four one-line fields (what could happen, is it reversible, blast radius, AI review verdict), no identifiers or ticket numbers, code and rationale folded away; when nothing escalates it skips the page and asks for go/no-go in one line.
 - **`skills/html-report`** — turns long prose reports into a self-contained HTML page with a fixed structure (key points first) and an inline-SVG diagram catalog.
 - **`skills/plan-commit`** — folds the finished plan into the commit message and deletes the plan file; the spec stays.
 - **`skills/tdd`** — a reference for what makes a test worth keeping, forked from [mattpocock/skills](https://github.com/mattpocock/skills) (MIT).
 
-Specs, plans and reports are written to `docs/crystallize/specs/`, `docs/crystallize/plans/` and `docs/crystallize/reports/` in the target repository.
+Specs, plans, reports and the glossary are written to `docs/crystallize/specs/`, `docs/crystallize/plans/`, `docs/crystallize/reports/` and `docs/crystallize/CONTEXT.md` in the target repository.
 
 ### ui-craft — UI/UX design knowledge, translated for an agent that can't see
 

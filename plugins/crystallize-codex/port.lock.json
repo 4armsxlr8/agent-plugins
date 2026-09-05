@@ -2,7 +2,7 @@
   "schema_version": 1,
   "source_version": "0.3.1",
   "source_manifest_sha256": "066faf51a8207a728b8e40d01d6ea96699c74f5e9f0d9df436ad15cce5ba8e3d",
-  "source_skills_sha256": "d1619dfcbb6e5189387aea90a7cd75963dc9cac967ca4872950c222ecd875459",
-  "overrides_sha256": "8e7f806d1c516c5630764695390d4574b1c509fa5bf3fdc840b2083de62495d2",
+  "source_skills_sha256": "f6a399835becf88fd1b8122ca0e14a1f6ccb0d21d8b4b5cd328920ab5ef446d4",
+  "overrides_sha256": "608347075e3b8d830b51c6ba3cd465212f010a3fd1152fd6ef7be57112cda9e4",
   "generated_skills_sha256": "28d70565a7ba7ffaa99c8180a357eacec2866348e454b7814984fb1115e88f3f"
 }

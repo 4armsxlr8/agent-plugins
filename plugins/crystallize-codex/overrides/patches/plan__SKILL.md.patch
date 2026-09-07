@@ -17,7 +17,7 @@
  
 +## Codex 実行境界
 +
-+最初に `../../references/codex-runtime.md` を全文読む。plan は親コンテキストで作成し、コードベース探索は `rg` と必要なファイルの読取、または履歴なしの調査子で行う。plan-evaluator は絶対パスと context JSON を渡した `gpt-5.6-sol` / `xhigh` / 履歴なしの子で実行し、完了報告だけを証拠にしない。worktree と独立 Codex task が使えない場合は、並列配置を実行済みと扱わず、利用できない機能と未完了の工程を報告する。
++最初に `../../references/codex-runtime.md` を全文読む。plan は親コンテキストで作成し、コードベース探索は `rg` と必要なファイルの読取、または履歴なしの調査子で行う。plan-evaluator は絶対パスと context JSON を渡した `gpt-5.6-sol` / `high` / 履歴なしの子で実行し、完了報告だけを証拠にしない。worktree と独立 Codex task が使えない場合は、並列配置を実行済みと扱わず、利用できない機能と未完了の工程を報告する。
 +
  `spec` が確定させた要件 (`docs/crystallize/specs/<slug>.md`) を受け取り、**実装手順** を plan (`docs/crystallize/plans/<slug>.md`) に書き出すスキル。通常は 1 枚。spec が大きく、触るモジュールが重ならず単体で挙動確認できるまとまりに分かれるときだけ複数枚に分ける (手順 3)。1 plan = 1 まとまりのコミット (plan-commit がリファクタと機能変更を分けることはある) なので、分割はコミットの単位を決める判断でもある。
 -plan は使い捨ての文書で、後段の `/plan-commit` がそのままコミットメッセージ本文にして削除する。要件は spec 側に残るので、plan には手順と、手順を安全にするための情報 (守るべき既存挙動・検証コマンド) だけを書く。
@@ -54,7 +54,7 @@
  ### 5. 監査 (必須)
  
 -書き出した plan は、ユーザーに提示する前に `plan-evaluator` (Skill ツール、fork 実行) に監査させる。args = context JSON のパス (次の箇条書き)。誤前提・計画から漏れた受け入れ基準は実装後の手戻りとして跳ね返るため、ここで止める価値がある。
-+書き出した plan は、ユーザーに提示する前に `CRYSTALLIZE_CODEX_ROLE=plan-evaluator`、`gpt-5.6-sol` / `xhigh` / `fork_turns: none` と対象SKILLの絶対パスを指定した履歴なしの独立サブエージェントに監査させる。入力は context JSON の絶対パス (次の箇条書き)。誤前提・計画から漏れた受け入れ基準は実装後の手戻りとして跳ね返るため、ここで止める価値がある。
++書き出した plan は、ユーザーに提示する前に `CRYSTALLIZE_CODEX_ROLE=plan-evaluator`、`gpt-5.6-sol` / `high` / `fork_turns: none` と対象SKILLの絶対パスを指定した履歴なしの独立サブエージェントに監査させる。入力は context JSON の絶対パス (次の箇条書き)。誤前提・計画から漏れた受け入れ基準は実装後の手戻りとして跳ね返るため、ここで止める価値がある。
  
  - 渡すのは context JSON (plan のパスを含む) だけ。impact.md は渡さない — 監査が plan + spec だけで行われることが、plan の自己完結性の検査を兼ねる
 -- 起動時は context JSON を `docs/crystallize/plans/<plan の basename>/eval-context.json` に書いて渡す (`project_dir` / `plan` / `output_contract.eval_file` = `docs/crystallize/plans/<plan の basename>/eval-plan-<稿数>.json`)。パスだけを渡すとフォールバック経路に入り、eval JSON がプロジェクト直下の `output/` に落ちて `plan-commit` の `git add -A` で履歴に紛れ込む。plan と同名のディレクトリに置けば plan-commit が plan ごと消す

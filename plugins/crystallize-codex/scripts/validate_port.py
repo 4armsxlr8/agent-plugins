@@ -199,7 +199,7 @@ def main() -> int:
         "別パスを再解決しない",
         "plan / production codeへの一切の書込み前に停止・報告する",
         'model: "gpt-5.6-sol"',
-        'reasoning_effort: "xhigh"',
+        'reasoning_effort: "high"',
         'fork_turns: "none"',
         "review_target_diff",
         "verification",

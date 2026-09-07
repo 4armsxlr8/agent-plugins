@@ -52,7 +52,7 @@ description: 「実装開始」「planを実装」で発動。docs/crystallize/p
 
 1. 親が影響範囲のテスト・lintを実行する。失敗は code-generator へ直列で差し戻し、12回で収束しなければ停止する。
 2. 緑になったら、フェーズ1 preflightで保持した `resolved_review_skill`（realpath済み絶対パス）だけを使い、Codex公式内部Skillを唯一の正本とする `review-agent` を起動する（defect-first）。フェーズ3で公式SKILLを別パスから再解決しない。
-   - 履歴なしの子を `model: "gpt-5.6-sol"`、`reasoning_effort: "xhigh"`、`fork_turns: "none"` で起動する。reviewer への委任プロンプトに渡すデータは次だけに限定する:
+   - 履歴なしの子を `model: "gpt-5.6-sol"`、`reasoning_effort: "high"`、`fork_turns: "none"` で起動する。reviewer への委任プロンプトに渡すデータは次だけに限定する:
      ```
      CRYSTALLIZE_CODEX_ROLE=code-review
      review_skill: <フェーズ1で保持したresolved_review_skillの絶対パス>
@@ -64,7 +64,7 @@ description: 「実装開始」「planを実装」で発動。docs/crystallize/p
    - reviewer は解決済みの公式 `SKILL.md` を全文読み、その契約（read-only、defect-first、P0-P3、`No findings.` を含む）を実行する。親の推論・ledger・未指定の背景は渡さない。
    - preflight済み公式SKILLの読取、または履歴なし子の起動に失敗したら、汎用レビュープロンプトや同一コンテキストへフォールバックせず、コードレビュー工程を未完了として停止・報告する。
 3. 指摘修正は code-generator へ差し戻し、親が検証結果を更新して再検証する。変更後は同じ公式 review-agent 委任を再実行する。テスト自体の欠陥はユーザー確認後にだけ test-generator へ戻す。解消しない指摘は理由を Deviations へ記録する。
-4. diff-review の昇格条件②対外境界または③依存追加に触れる場合だけ、別の `gpt-5.6-sol` / `xhigh` の履歴なし read-only security reviewer を起動する。該当しなければ「security review対象外」と記録する。
+4. diff-review の昇格条件②対外境界または③依存追加に触れる場合だけ、別の `gpt-5.6-sol` / `high` の履歴なし read-only security reviewer を起動する。該当しなければ「security review対象外」と記録する。
 5. 最後に別の `gpt-5.6-luna` / `max` の履歴なし変更サブエージェントへ、挙動・公開契約・テストを変えず、重複・不要な抽象化・複雑さだけを整理する品質整理タスクを渡す。変更があれば親が再検証する。
 6. 最後のコード変更より後に全量のテスト・lintを親が1回実行する。
 
@@ -82,7 +82,7 @@ description: 「実装開始」「planを実装」で発動。docs/crystallize/p
 
 ## フェーズ5: 例外ゲート
 
-- フェーズ4収束後、`gpt-5.6-sol` / `xhigh` の履歴なしの子へ `CRYSTALLIZE_CODEX_ROLE=diff-review`、`../diff-review/SKILL.md` の絶対パス、project_dir、`plan: <絶対パス>`、比較基点を渡す。
+- フェーズ4収束後、`gpt-5.6-sol` / `high` の履歴なしの子へ `CRYSTALLIZE_CODEX_ROLE=diff-review`、`../diff-review/SKILL.md` の絶対パス、project_dir、`plan: <絶対パス>`、比較基点を渡す。
 - 親は生成HTML、昇格hunk数、全hunk検算を確認してCodex内で表示する。昇格0件なら diff-review のスキップ1行をそのまま示し、HTMLを作らない。別のレビュー手段を明示されてもレビュー自体は省略しない。
 - ユーザーから明示的な go / no-go を得る。no-go は適切なフェーズへ戻す。
 

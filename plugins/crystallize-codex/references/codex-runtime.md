@@ -36,7 +36,7 @@ Claude版のfork設定は、Codexの独立サブエージェントで実現す�
 サブエージェント起動時はグローバル既定値に依存せず、役割ごとにモデルと reasoning effort を明示する。`spawn_agent` が利用できる環境では、次の値を `model` と `reasoning_effort` に渡す。
 
 - 実装・変更系 (`test-generator`、`code-generator`、品質整理、`html-report`): `gpt-5.6-luna` / `max`
-- 評価・レビュー系 (`question-evaluator`、`plan-evaluator`、コードレビュー、security review、`diff-review`): `gpt-5.6-sol` / `xhigh`
+- 評価・レビュー系 (`question-evaluator`、`plan-evaluator`、コードレビュー、security review、`diff-review`): `gpt-5.6-sol` / `high`
 
 明示指定は `fork_turns: "none"` と組み合わせる。環境や上位指示に別の明示指定がある場合はそちらを優先する。
 
@@ -44,7 +44,7 @@ Claude版のfork設定は、Codexの独立サブエージェントで実現す�
 
 `plan-implement` フェーズ3のAIコードレビューは、Codex公式の内部 `review-agent` を唯一の正本とする。公式本文をプラグインへ複製せず、フェーズ1の書込み前preflightで `CODEX_HOME`（未設定時はCodexの既定home）配下の `skills/.system/review-agent/SKILL.md` を解決する。ファイルの存在と読取可否を確認したうえで `realpath` した絶対パスを `resolved_review_skill` としてフェーズ3まで保持し、委任 envelope の `review_skill` に使う。フェーズ3で別パスを再解決しない。
 
-- `CRYSTALLIZE_CODEX_ROLE=code-review` を付け、履歴なしの独立子を `model: "gpt-5.6-sol"` / `reasoning_effort: "xhigh"` / `fork_turns: "none"` で起動する。
+- `CRYSTALLIZE_CODEX_ROLE=code-review` を付け、履歴なしの独立子を `model: "gpt-5.6-sol"` / `reasoning_effort: "high"` / `fork_turns: "none"` で起動する。
 - 委任プロンプトの入力データは `plan`、`review_target_diff`、`verification`、`output_contract` だけに限定する（役割マーカーと解決済み `review_skill` は実行メタデータ）。ledger、親の推論、未指定の背景、汎用レビュー指示は渡さない。
 - 子は解決済みの公式 `SKILL.md` を全文読み、read-only・defect-first・P0-P3・指摘なしの厳密な `No findings.` を含む同スキルの出力契約を実行する。指摘は差分に導入された actionable finding に限り、最後に overall assessment と material test gaps / residual risks を返す。
 - preflight済み公式スキルの読取、または履歴なし子の起動に失敗した場合は、汎用レビュープロンプトや同一コンテキストへフォールバックしない。コードレビュー工程を未完了として停止し、失敗理由を報告する。公式スキルの解決・存在・読取・realpathに失敗した場合は、planやproduction codeへの書込み前に停止する。

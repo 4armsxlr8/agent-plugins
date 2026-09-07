@@ -7,7 +7,7 @@ description: 「plan監査」「planレビュー」で発動。plan スキルが
 
 ## Codex 実行境界
 
-最初に `../../references/codex-runtime.md` を全文読む。入力に `CRYSTALLIZE_CODEX_ROLE=plan-evaluator` マーカーが無ければ、履歴を渡さない新規サブエージェントを起動し、同マーカー、この SKILL.md の絶対パス、context JSON の絶対パス（無ければ受け取った生入力）、output_contract、`ledger / impact.md / mock / 呼び出し元の推論を読まない` という禁止入力を渡す。子の完了後、親は `output.schema.json` と評価対象外の変更がゼロであることを自分で確認する。評価者は `gpt-5.6-sol` / `xhigh` / 履歴なしで実行し、独立実行を利用できない場合は自己採点せず停止する。
+最初に `../../references/codex-runtime.md` を全文読む。入力に `CRYSTALLIZE_CODEX_ROLE=plan-evaluator` マーカーが無ければ、履歴を渡さない新規サブエージェントを起動し、同マーカー、この SKILL.md の絶対パス、context JSON の絶対パス（無ければ受け取った生入力）、output_contract、`ledger / impact.md / mock / 呼び出し元の推論を読まない` という禁止入力を渡す。子の完了後、親は `output.schema.json` と評価対象外の変更がゼロであることを自分で確認する。評価者は `gpt-5.6-sol` / `high` / 履歴なしで実行し、独立実行を利用できない場合は自己採点せず停止する。
 
 `plan` スキルが書き出す plan (`docs/crystallize/plans/<slug>.md`) を、作成側とは独立したコンテキストで監査する評価者。plan は作成側セッションの確信から書かれるため、未検証の前提・spec の受け入れ基準の取りこぼしをそのまま含む — 実装セッションに渡る前に検出する。
 

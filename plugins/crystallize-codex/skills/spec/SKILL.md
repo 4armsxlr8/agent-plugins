@@ -134,7 +134,7 @@ Q<n> <題>
 
 ### 質問監査 (任意)
 
-`起動メッセージ` に `audit: on` が含まれるか、ユーザーが「質問監査」と言ったときだけ、**ラウンド単位で1回** `CRYSTALLIZE_CODEX_ROLE=question-evaluator`、`gpt-5.6-sol` / `xhigh` / `fork_turns: none` を指定した `../question-evaluator/SKILL.md` の履歴なしの独立サブエージェントに監査させる。
+`起動メッセージ` に `audit: on` が含まれるか、ユーザーが「質問監査」と言ったときだけ、**ラウンド単位で1回** `CRYSTALLIZE_CODEX_ROLE=question-evaluator`、`gpt-5.6-sol` / `high` / `fork_turns: none` を指定した `../question-evaluator/SKILL.md` の履歴なしの独立サブエージェントに監査させる。
 
 - ラウンドの全質問を `docs/crystallize/specs/<slug>/question-round-<n>.md` に上記フォーマットのまま書く (先頭にタスク一行要約)。起動時は context JSON を `docs/crystallize/specs/<slug>/eval-context.json` に書いて渡す (`project_dir` / `plan` = 質問ファイルのパス / `output_contract.eval_file` = `docs/crystallize/specs/<slug>/eval-question-round-<n>.json`)。質問ファイルのパスだけを渡すとフォールバック経路に入り、eval JSON がプロジェクト直下の `output/` に落ちて、後段 plan-commit の明示対象固定から外せなくなる。実装案や ledger は含めない — 案を見せると監査側が同じバイアスに迎合する
 - `passed: false` が返ったら、`feedback_structured` で名指しされた質問だけを前提の裏取りからやり直し、そのラウンドを再監査する。名指しされていない質問は書き直さない

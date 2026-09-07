@@ -25,11 +25,11 @@ python3 scripts/sync_from_claude.py --check
 - Claudeの引数展開は起動メッセージ、または親から渡す明示的な input envelope に置き換えます
 - Claudeのスキル呼び出しは、対象SKILLの絶対パスを指定した子、または同一コンテキスト実行に置き換えます
 - 質問はCodexの構造化質問機能を優先し、使えない場合も前提・推奨・各選択肢の得失を含む全文を表示します
-- `plan-implement` はフェーズ1で公式 `review-agent` の解決済みrealpathを保持し、フェーズ3で同じ絶対パスだけを使います。レビュー子は `gpt-5.6-sol` / `xhigh` / 履歴なしで起動します
+- `plan-implement` はフェーズ1で公式 `review-agent` の解決済みrealpathを保持し、フェーズ3で同じ絶対パスだけを使います。レビュー子は `gpt-5.6-sol` / `high` / 履歴なしで起動します
 - evaluatorとgeneratorは独立した履歴なしの子で実行し、利用できない場合は同一コンテキストへ黙ってフォールバックしません
 - HTMLとモックはローカルに生成し、Codex内のファイル表示またはブラウザプレビューで確認します
 
-サブエージェントの起動時は、実装・変更系を `gpt-5.6-luna` / `max`、評価・レビュー系を `gpt-5.6-sol` / `xhigh` として明示します。
+サブエージェントの起動時は、実装・変更系を `gpt-5.6-luna` / `max`、評価・レビュー系を `gpt-5.6-sol` / `high` として明示します。
 
 ## フロー
 

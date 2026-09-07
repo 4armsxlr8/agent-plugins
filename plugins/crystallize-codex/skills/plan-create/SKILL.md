@@ -1,9 +1,9 @@
 ---
-name: plan
-description: 「plan」「実装計画」「planを作って」で発動。docs/crystallize/specs/ 配下の spec パスを渡されたときにも発動する。
+name: plan-create
+description: 「plan-create」「実装計画」「planを作って」で発動。docs/crystallize/specs/ 配下の spec パスを渡されたときにも発動する。
 ---
 
-# plan
+# plan-create
 
 ## Codex 実行境界
 
@@ -114,16 +114,19 @@ N. 機械的な作業 (リファクタ・配線・テスト整備) は末尾に�
 
 1. `git worktree add` で worktree を作成する (git ネイティブ機能 — 特定ツールに依存しない)
 2. `plans/<plan の basename>.md` と `plans/<plan の basename>/` を担当 worktree へ移動する。**spec と用語集は追跡状態で扱いを分ける** — `git ls-files --error-unmatch specs/<slug>.md` が通る (追跡済み) なら worktree 側に既に同じファイルがあるので、**移動せず、未コミットの改訂分だけをコピーする** (`mv` すると本流の作業ツリーに spec の削除が残る)。追跡されていない (今回新規に書いた) spec は `specs/<slug>.md` と `specs/<slug>/` ごと移動する — コミットされていないため worktree には現れず、移し忘れると実装セッションが plan 先頭の `spec:` 行を解決できない。用語集はリポジトリ直下に `## 用語` か `## Language` を持つ `CONTEXT.md` があればそれ、無ければ `docs/crystallize/CONTEXT.md` を同じ規則で扱う。追跡済みなら移動せず未コミットの改訂分だけをコピーし、未追跡なら worktree の同じ相対パスへ移す — spec と generator が同じ正本を読める状態を保つ
-3. 各 worktree でセッションを起動する — Codexのworktree/task機能で担当taskを起動し、起動メッセージに `$crystallize-codex:plan-implement <plan の絶対パス>` を渡す。無い環境では、worktree ごとの雛形プロンプトを提示してユーザーに各ターミナルで開いてもらう (対話セッションが必要なため、起動だけは環境の道具に依存する)。`depends-on:` で繋がった plan 群は先頭の 1 枚だけを送る — 後続は先行の plan-commit が終わってから、同じセッションで次の `$crystallize-codex:plan-implement` を送る
+3. 各 worktree でセッションを起動する — Codexのworktree/task機能で担当taskを起動し、起動メッセージに手順 7 の2リンク形式のプロンプトを渡す。無い環境では、同じ形式で worktree ごとの雛形プロンプトを提示してユーザーに各ターミナルで開いてもらう (対話セッションが必要なため、起動だけは環境の道具に依存する)。plan のリンク先は移動後の担当 worktree の絶対パスにする。`depends-on:` で繋がった plan 群は先頭の 1 枚だけを送る — 後続は先行の plan-commit が終わってから、同じ形式で次の plan を送る
 
 以降の対話 (挙動ゲート・例外ゲート) は各 worktree のセッションが直接ユーザーと行う。本セッションは配置の完了報告 (worktree 一覧と各セッションの状態) で終了し、司令塔として残らない。
 
 ### 7. 案内して終了
 
-**新しいセッションで** `$crystallize-codex:plan-implement` に plan を渡して実装を開始する旨を案内する。分割した場合は `depends-on:` の順に plan を並べ、1 枚ずつ plan-commit まで通してから次に進むよう添える (後続 plan は先行のコミットを前提に書かれている)。実装 → テスト → 動作確認 → diff の例外確認 → plan-commit までは plan-implement が一本で駆動する。案内と一緒に、新しいセッションにそのまま貼れる最初のプロンプトをコードブロックで提示する (絶対パスで書く — 新セッションがどの cwd で開かれても迷わないため):
+**新しいセッションで** `$crystallize-codex:plan-implement` に plan を渡して実装を開始する旨を案内する。分割した場合は `depends-on:` の順に plan を並べ、1 枚ずつ plan-commit まで通してから次に進むよう添える (後続 plan は先行のコミットを前提に書かれている)。実装 → テスト → 動作確認 → diff の例外確認 → plan-commit までは plan-implement が一本で駆動する。案内と一緒に、新しいセッションにそのまま貼れる最初のプロンプトを、**2行のMarkdownリンクを含むコピー用コードブロック**で提示する。1行目はスキル名をラベルにした `plan-implement/SKILL.md` へのリンク、2行目は plan のファイル名 (拡張子を含む) をラベルにした plan へのリンクにする。
 
-```
-$crystallize-codex:plan-implement /path/to/docs/crystallize/plans/<slug>.md
+リンク先はどちらも実在する絶対パスに置き換える。スキルのパスは**現在読んでいるこの `plan-create/SKILL.md` を起点に `../plan-implement/SKILL.md` を解決**し、インストール先・ユーザー名・バージョン番号を固定しない。plan は引き継ぐ実体の絶対パスを使う。空白や括弧を含むリンク先は `<...>` で囲む。次は形式の例で、プレースホルダーをそのまま出力しない:
+
+```markdown
+[$crystallize-codex:plan-implement](<plan-implement/SKILL.mdの絶対パス>)
+[<planのファイル名>](<planの絶対パス>)
 ```
 
 ---

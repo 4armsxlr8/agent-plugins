@@ -18,18 +18,18 @@
 -要件は固定するものではなく育てるもの。認識合わせでどれだけ詰めても、UI は触って初めて分かることが残り、リリース後に利用者の声で変わることも普通にある。忠実性とは『黙って逸れないこと』であって『変えないこと』ではない。
 +## Codex 実行境界
  
--`plan` スキルが作った plan (`docs/crystallize/plans/<slug>.md`) と、その plan が指す spec (`docs/crystallize/specs/<slug>.md`) を受け取り、実装 → 検証 → コミットまでを一続きの契約で駆動する統括役。3つのゲート（機械・挙動・例外）を順に通し、**挙動ゲートが収束するまで diff-review を作らない** — 修正ループの途中で diff を出すと、直すたびに陳腐化して結局読まれずコミットに流れる（過去のセッションで繰り返し観測された失敗パターン）。コードは書かず、実装はすべてサブエージェントに委任する。
+-`plan-create` スキルが作った plan (`docs/crystallize/plans/<slug>.md`) と、その plan が指す spec (`docs/crystallize/specs/<slug>.md`) を受け取り、実装 → 検証 → コミットまでを一続きの契約で駆動する統括役。3つのゲート（機械・挙動・例外）を順に通し、**挙動ゲートが収束するまで diff-review を作らない** — 修正ループの途中で diff を出すと、直すたびに陳腐化して結局読まれずコミットに流れる（過去のセッションで繰り返し観測された失敗パターン）。コードは書かず、実装はすべてサブエージェントに委任する。
 +最初に `../../references/codex-runtime.md` を全文読む。コード変更は履歴なしの独立サブエージェントへ委任し、親は差分と検証結果を自分で確認する。変更系の子を並列起動せず、同じ checkout を使う処理は直列に進める。
 +
 +要件は固定するものではなく育てるもの。UI は触って初めて分かることが残り、リリース後に利用者の声で変わることもある。忠実性とは『黙って逸れないこと』であって『変えないこと』ではない。
 +
-+`plan` スキルが作った plan (`docs/crystallize/plans/<slug>.md`) と、その plan が指す spec (`docs/crystallize/specs/<slug>.md`) を受け取り、実装 → 検証 → コミットまでを一続きで駆動する統括役。3つのゲート（機械・挙動・例外）を順に通し、**挙動ゲートが収束するまで diff-review を作らない**。コードは書かず、実装はすべてサブエージェントに委任する。
++`plan-create` スキルが作った plan (`docs/crystallize/plans/<slug>.md`) と、その plan が指す spec (`docs/crystallize/specs/<slug>.md`) を受け取り、実装 → 検証 → コミットまでを一続きで駆動する統括役。3つのゲート（機械・挙動・例外）を順に通し、**挙動ゲートが収束するまで diff-review を作らない**。コードは書かず、実装はすべてサブエージェントに委任する。
  
  ## Input / Output
  
--- **Input**: `$ARGUMENTS` = `docs/crystallize/plans/<slug>.md` のパス。省略時は `docs/crystallize/plans/` 直下の `.md` が1つならそれを使い一行で確認を取る。複数あれば AskUserQuestion で選んでもらう。該当する `.md` が無ければ実装を始めず、`spec` → `plan` の順で先に plan を作るよう案内して終了する
+-- **Input**: `$ARGUMENTS` = `docs/crystallize/plans/<slug>.md` のパス。省略時は `docs/crystallize/plans/` 直下の `.md` が1つならそれを使い一行で確認を取る。複数あれば AskUserQuestion で選んでもらう。該当する `.md` が無ければ実装を始めず、`spec` → `plan-create` の順で先に plan を作るよう案内して終了する
 -- **Output**: `plan-commit` が作る1コミット。進行中は `docs/crystallize/plans/<slug>.md` 本体に `## 進行状況`（フェーズ別チェックリスト）と `## Deviations`（逸脱ログ）を書き足しながら進め、確定と同時にコミットメッセージへ畳み込まれて消える（補助ファイルは作らない）。spec は消えない — 仕様改訂レーンで書き換えた場合、その差分は同じコミットに入る
-+- **Input**: 起動メッセージに含まれる `docs/crystallize/plans/<slug>.md` のパス。省略時は直下の plan が1つなら確認して使う。複数なら Codex の構造化質問で選び、使えないモードでは候補を最終応答に示して止める。plan が無ければ実装せず `$crystallize-codex:spec` → `$crystallize-codex:plan` の順で先に plan を作るよう案内する。
++- **Input**: 起動メッセージに含まれる `docs/crystallize/plans/<slug>.md` のパス。省略時は直下の plan が1つなら確認して使う。複数なら Codex の構造化質問で選び、使えないモードでは候補を最終応答に示して止める。plan が無ければ実装せず `$crystallize-codex:spec` → `$crystallize-codex:plan-create` の順で先に plan を作るよう案内する。
 +- **Output**: `plan-commit` が作るコミット。進行中は plan 本体の `## 進行状況` と `## Deviations` だけへ記録し、補助進捗ファイルを作らない。spec は残り、仕様改訂があれば同じコミットに入る。
  
  ## 最重要禁則
@@ -48,9 +48,9 @@
  
 -- plan を Read し、先頭の `spec:` 行が指す spec も Read する（`spec:` 行のパスはリポジトリルート（`git rev-parse --show-toplevel`）基準で解決する）。守るべき既存挙動・実装計画・検証コマンド・Deviations 規約は plan から、要件・非機能要件・受け入れ基準（テストケース表）は spec から取る — 寿命が違う情報を混ぜないため、plan は使い捨て、spec は残って改訂される。あわせて**用語集**（リポジトリ直下に `## 用語` か `## Language` を持つ `CONTEXT.md` があればそれ、無ければ `docs/crystallize/CONTEXT.md`。どちらも無ければ spec の用語節）も Read する — 実装で付ける識別子と表示文言はここの語に合わせる
 -- **`spec:` 行がない旧形式の plan は、plan 内の確定事項と受け入れ基準をそのまま情報源にして従来どおり動かす**（以降の「要件」「受け入れ基準」はその場合 plan 内のそれを指す）
--- plan に `covers:` 行があれば（`plan` スキルが spec を分割した場合）、この plan が扱う受け入れ基準は**そこに列挙された AC だけ**。以降の「受け入れ基準」はその範囲を指し、範囲外の AC は他の plan の担当なので、不足として扱わない・テストを書かない・挙動ゲートのチェックリストにも載せない。`depends-on:` 行があれば、そのパス（`spec:` 行と同じくリポジトリルート基準で解決する）の先行 plan が `docs/crystallize/plans/` にまだ残っていないかを確認し、残っていれば実装を始めず、先行 plan を先に `/plan-implement` に渡すよう案内して終了する（後続 plan は先行のコミットを前提に書かれており、先行が無いまま進めると同じ箇所を二重に書く）。ファイルが無いときは `git log --format=%B --grep='<先行 plan のゴール 1 文>'` で先行のコミットが実在することを確かめる — 無ければ「先行 plan が見つからない」として止め、ユーザーに確認する（ファイルが無いことは、コミット済みの証拠にも、移動・書き忘れの証拠にもなる）
+-- plan に `covers:` 行があれば（`plan-create` スキルが spec を分割した場合）、この plan が扱う受け入れ基準は**そこに列挙された AC だけ**。以降の「受け入れ基準」はその範囲を指し、範囲外の AC は他の plan の担当なので、不足として扱わない・テストを書かない・挙動ゲートのチェックリストにも載せない。`depends-on:` 行があれば、そのパス（`spec:` 行と同じくリポジトリルート基準で解決する）の先行 plan が `docs/crystallize/plans/` にまだ残っていないかを確認し、残っていれば実装を始めず、先行 plan を先に `/plan-implement` に渡すよう案内して終了する（後続 plan は先行のコミットを前提に書かれており、先行が無いまま進めると同じ箇所を二重に書く）。ファイルが無いときは `git log --format=%B --grep='<先行 plan のゴール 1 文>'` で先行のコミットが実在することを確かめる — 無ければ「先行 plan が見つからない」として止め、ユーザーに確認する（ファイルが無いことは、コミット済みの証拠にも、移動・書き忘れの証拠にもなる）
 -- `## 進行状況` 見出しが無ければ作る。実装計画の各項目 + 4つのゲート（機械/挙動/例外/確定）をチェックボックスで列挙する。既にあれば最初の未チェック項目から再開する — セッションが切れても plan を読めば再開点がわかる
--- `## Deviations` 見出しが無ければ作る（本文は空でよい）。**古い plan の Deviations 規約が「implementation-notes.md を作る」と書いていても従わない** — 本スキルは別ファイルを作らず、この見出しに直接追記する契約が正（現行の `plan` スキルも同じ規約で plan を書く）
+-- `## Deviations` 見出しが無ければ作る（本文は空でよい）。**古い plan の Deviations 規約が「implementation-notes.md を作る」と書いていても従わない** — 本スキルは別ファイルを作らず、この見出しに直接追記する契約が正（現行の `plan-create` スキルも同じ規約で plan を書く）
 -- 逸脱の扱い: 計画から逸れる必要が出たら保守的な選択を採り、`## Deviations` に一行（計画項目 / 実際の選択 / 理由）を追記して続行する。要件と直接矛盾する逸脱は、矛盾点と spec の該当箇所を並べてユーザーに提示し判断を仰ぐ（作業は止めたまま。禁則3のとおりエージェント発の逸脱に限る）
 -- **完了条件**: plan と spec の読了、`## 進行状況` / `## Deviations` が存在し、次に着手する項目が1つに定まっている
 +- **書込み前preflight**: plan や production code を書く前に、`../test-generator/SKILL.md`、`../code-generator/SKILL.md`、`../diff-review/SKILL.md`、`../plan-commit/SKILL.md` が解決できること、ならびに `CODEX_HOME`（未設定時はCodexの既定home）配下の `skills/.system/review-agent/SKILL.md` を解決できることを確認する。

@@ -39,7 +39,7 @@ class ValidatePortCliTests(unittest.TestCase):
     def test_cli_rejects_legacy_find_unknowns_skill_set(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             fixture_root = self.copy_fixture(temporary_directory)
-            for skill_name in ("spec", "plan"):
+            for skill_name in ("spec", "plan-create"):
                 shutil.rmtree(fixture_root / "skills" / skill_name, ignore_errors=True)
 
             find_unknowns = fixture_root / "skills" / "find-unknowns"

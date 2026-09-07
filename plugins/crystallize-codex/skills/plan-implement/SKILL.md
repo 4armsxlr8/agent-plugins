@@ -11,11 +11,11 @@ description: 「実装開始」「planを実装」で発動。docs/crystallize/p
 
 要件は固定するものではなく育てるもの。UI は触って初めて分かることが残り、リリース後に利用者の声で変わることもある。忠実性とは『黙って逸れないこと』であって『変えないこと』ではない。
 
-`plan` スキルが作った plan (`docs/crystallize/plans/<slug>.md`) と、その plan が指す spec (`docs/crystallize/specs/<slug>.md`) を受け取り、実装 → 検証 → コミットまでを一続きで駆動する統括役。3つのゲート（機械・挙動・例外）を順に通し、**挙動ゲートが収束するまで diff-review を作らない**。コードは書かず、実装はすべてサブエージェントに委任する。
+`plan-create` スキルが作った plan (`docs/crystallize/plans/<slug>.md`) と、その plan が指す spec (`docs/crystallize/specs/<slug>.md`) を受け取り、実装 → 検証 → コミットまでを一続きで駆動する統括役。3つのゲート（機械・挙動・例外）を順に通し、**挙動ゲートが収束するまで diff-review を作らない**。コードは書かず、実装はすべてサブエージェントに委任する。
 
 ## Input / Output
 
-- **Input**: 起動メッセージに含まれる `docs/crystallize/plans/<slug>.md` のパス。省略時は直下の plan が1つなら確認して使う。複数なら Codex の構造化質問で選び、使えないモードでは候補を最終応答に示して止める。plan が無ければ実装せず `$crystallize-codex:spec` → `$crystallize-codex:plan` の順で先に plan を作るよう案内する。
+- **Input**: 起動メッセージに含まれる `docs/crystallize/plans/<slug>.md` のパス。省略時は直下の plan が1つなら確認して使う。複数なら Codex の構造化質問で選び、使えないモードでは候補を最終応答に示して止める。plan が無ければ実装せず `$crystallize-codex:spec` → `$crystallize-codex:plan-create` の順で先に plan を作るよう案内する。
 - **Output**: `plan-commit` が作るコミット。進行中は plan 本体の `## 進行状況` と `## Deviations` だけへ記録し、補助進捗ファイルを作らない。spec は残り、仕様改訂があれば同じコミットに入る。
 
 ## 最重要禁則

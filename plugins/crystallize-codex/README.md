@@ -36,7 +36,7 @@ python3 scripts/sync_from_claude.py --check
 ```mermaid
 flowchart TD
     I[issue-create] --> S[spec<br>質問・モックで要件を決めて残す]
-    S --> PL[plan<br>specから実装手順を作る]
+    S --> PL[plan-create<br>specから実装手順を作る]
     Q[question-evaluator<br>任意の質問監査] -.-> S
     PL --> P[plan-implement<br>実装と3ゲート]
     E[plan-evaluator<br>受け入れ基準の被覆を監査] -.-> PL
@@ -54,7 +54,7 @@ flowchart TD
 | `issue-create` | 会話のバグ・思いつき・雑務をGitHub issueとして起票する |
 | `spec` | 質問とモックで要件を決め、決まった語をプロジェクト共通の用語集（`docs/crystallize/CONTEXT.md`）に書き足しながら、要件・非機能要件・受け入れ基準をspecに書く。既存specは改訂する |
 | `question-evaluator` | `spec` の質問を任意の独立コンテキストで監査する |
-| `plan` | specから実装計画を作り、必要なら `covers:` / `depends-on:` 付きで分割する |
+| `plan-create` | specから実装計画を作り、必要なら `covers:` / `depends-on:` 付きで分割する |
 | `plan-evaluator` | planがspecの受け入れ基準を全て覆うか監査する |
 | `plan-implement` | 実装、機械ゲート、挙動ゲート、例外ゲートを駆動する |
 | `test-generator` | specのテストケース表から失敗するテストだけを書く |
@@ -84,6 +84,6 @@ python3 /path/to/plugin-creator/scripts/validate_plugin.py .
 
 ```text
 $crystallize-codex:spec この実装依頼の認識を合わせてspecを作ってください
-$crystallize-codex:plan docs/crystallize/specs/<slug>.md
+$crystallize-codex:plan-create docs/crystallize/specs/<slug>.md
 $crystallize-codex:plan-implement /absolute/path/to/docs/crystallize/plans/<slug>.md
 ```

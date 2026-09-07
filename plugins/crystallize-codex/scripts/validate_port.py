@@ -17,7 +17,7 @@ EXPECTED_SKILLS = frozenset(
         "diff-review",
         "html-report",
         "issue-create",
-        "plan",
+        "plan-create",
         "plan-commit",
         "plan-evaluator",
         "plan-implement",

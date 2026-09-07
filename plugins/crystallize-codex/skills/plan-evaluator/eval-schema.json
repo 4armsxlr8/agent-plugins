@@ -17,7 +17,7 @@
     "rewrite": "required_when_failed"
   },
   "passing_rule": "no_false_premise AND score >= threshold",
-  "ref": "plan/SKILL.md#4. plan の書き出し",
+  "ref": "plan-create/SKILL.md#4. plan の書き出し",
   "rubric": null,
-  "notes": "基準の正本は plan スキル手順4の構成規則 (分割は手順3)。SKILL.md §採点観点の定義 はその対応表。監査は plan + plan 先頭の spec: 行が指す spec を読み、ledger・impact.md・モックは読まない。検証可能な前提の誤りが確認された plan は score に関わらず passed=false。rewrite は plan 全文ではなく見出し単位の置換案。旧形式 (spec: 行なし) の plan は plan 内の受け入れ基準で acceptance_coverage を採点する"
+  "notes": "基準の正本は plan-create スキル手順4の構成規則 (分割は手順3)。SKILL.md §採点観点の定義 はその対応表。監査は plan + plan 先頭の spec: 行が指す spec を読み、ledger・impact.md・モックは読まない。検証可能な前提の誤りが確認された plan は score に関わらず passed=false。rewrite は plan 全文ではなく見出し単位の置換案。旧形式 (spec: 行なし) の plan は plan 内の受け入れ基準で acceptance_coverage を採点する"
 }

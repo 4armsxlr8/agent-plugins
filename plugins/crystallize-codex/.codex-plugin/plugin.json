@@ -1,6 +1,6 @@
 {
   "name": "crystallize-codex",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Claude版crystallizeを正本として、spec・plan・実装・検証・コミットまでをCodexのサブエージェントで駆動するplan開発フロー",
   "author": {
     "name": "kyouyagenki"

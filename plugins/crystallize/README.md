@@ -19,7 +19,7 @@ flowchart TD
     I[issue-create<br>会話中のバグ・思いつきを issue に起票] --> S
     S[spec<br>grilling ラウンドとモックで要件を決め<br>spec を書く・育てる] --> PL
     Q[question-evaluator<br>任意: 質問を独立コンテキストで監査] -.-> S
-    PL[plan<br>spec から使い捨ての実装手順を作る] --> P
+    PL[plan-create<br>spec から使い捨ての実装手順を作る] --> P
     PE[plan-evaluator<br>plan が spec の受け入れ基準を覆うか監査] -.-> PL
     subgraph P[plan-implement — plan を一続きの契約で駆動]
         direction TB
@@ -39,8 +39,8 @@ flowchart TD
 | `issue-create` | 会話で出たバグ・思いつき・雑務を GitHub issue として起票する。リポジトリ既存のテンプレ・ラベル運用に従い、何も設置しない |
 | `spec` | 実装に入る前の認識合わせ。前提が解決済みの質問をラウンド一括で出し（推奨回答つき）、見て反応できる成果物（モック、または API レスポンス例などの代替物）で確定を取り、要件・非機能要件・受け入れ基準（テストケース表）を spec に書く。決まった語はその場でプロジェクト共通の用語集（`docs/crystallize/CONTEXT.md`）に書き足して育てる。既存 spec を渡せば改訂モードで育てる |
 | `question-evaluator` | `spec` がユーザーに出す質問の前提・二択の正当性を、出題側とは別コンテキストで監査する。既定では呼ばれず、`audit: on` かユーザーの指示で任意に使う |
-| `plan` | spec を受けて既存挙動への影響を裏取りし、変わりやすい順の実装計画を plan に書く。spec が大きければ、触るモジュールが重ならず単体で挙動確認できる単位で複数の plan に分ける（1 plan = 1 まとまりのコミット） |
-| `plan-evaluator` | `plan` が書き出した plan が spec の受け入れ基準を全て覆っているか・前提が裏取りされているかを、作成側とは別コンテキストで監査する |
+| `plan-create` | spec を受けて既存挙動への影響を裏取りし、変わりやすい順の実装計画を plan に書く。spec が大きければ、触るモジュールが重ならず単体で挙動確認できる単位で複数の plan に分ける（1 plan = 1 まとまりのコミット） |
+| `plan-evaluator` | `plan-create` が書き出した plan が spec の受け入れ基準を全て覆っているか・前提が裏取りされているかを、作成側とは別コンテキストで監査する |
 | `plan-implement` | plan と spec を受け取り、実装 → 機械ゲート → 挙動ゲート → 例外ゲート → コミットまでを一続きで駆動する。挙動ゲートでの「やっぱり違う」は spec の改訂として処理する |
 | `test-generator` | spec のテストケース表から、実装前に失敗するテスト（RED）だけを書く |
 | `code-generator` | スライスを実装して GREEN にする。レビュー指摘の修正でも使う |

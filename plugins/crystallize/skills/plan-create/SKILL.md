@@ -1,6 +1,6 @@
 ---
-name: plan
-description: 「plan」「実装計画」「planを作って」で発動。docs/crystallize/specs/<slug>.md のパスを渡されたときにも発動する。
+name: plan-create
+description: 「plan-create」「実装計画」「planを作って」で発動。docs/crystallize/specs/<slug>.md のパスを渡されたときにも発動する。
 user-invocable: true
 argument-hint: "[docs/crystallize/specs/<slug>.md のパス]"
 metadata:
@@ -9,7 +9,7 @@ metadata:
   shape: orchestrated
 ---
 
-# plan
+# plan-create
 
 `spec` が確定させた要件 (`docs/crystallize/specs/<slug>.md`) を受け取り、**実装手順** を plan (`docs/crystallize/plans/<slug>.md`) に書き出すスキル。通常は 1 枚。spec が大きく、触るモジュールが重ならず単体で挙動確認できるまとまりに分かれるときだけ複数枚に分ける (手順 3)。1 plan = 1 まとまりのコミット (plan-commit がリファクタと機能変更を分けることはある) なので、分割はコミットの単位を決める判断でもある。
 plan は使い捨ての文書で、後段の `/plan-commit` がそのままコミットメッセージ本文にして削除する。要件は spec 側に残るので、plan には手順と、手順を安全にするための情報 (守るべき既存挙動・検証コマンド) だけを書く。

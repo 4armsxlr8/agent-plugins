@@ -107,9 +107,11 @@ type で変わるのは**この節の部品だけ**。他の節は共通。
 ```bash
 PROJROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 mkdir -p "$PROJROOT/docs/crystallize/reports"
-# YYYY-MM-DD-<slug>.html を Write したあと:
+# YYYY-MM-DD-<slug>.html を Write し、検算と見直しを全部終えたあとに 1 回だけ:
 open "$PROJROOT/docs/crystallize/reports/<file>.html"
 ```
+
+**`open` は最後に 1 回だけ。** 外部参照の検算・引用の逐語確認・文言の見直しは、すべて `open` の前に済ませる。`open` のあとにファイルを直しても**再度 `open` しない** — 同じファイルのタブがもう 1 枚開くだけで、読者は開いているタブを再読み込みすれば更新を見られる。open 後に直した事実は最終応答に 1 行添える (実測: open → 自己レビュー → 修正 → 再 open の順で毎回タブが 2 枚開いていた)。
 
 `docs/crystallize/reports/` がそのプロジェクトの .gitignore に無い場合は、最終応答に「gitignore 未設定」と一言添える(勝手に .gitignore を編集しない — 整形係が対象リポジトリを変更すると作業diffが汚れる)。
 
@@ -126,6 +128,7 @@ open "$PROJROOT/docs/crystallize/reports/<file>.html"
 - 素材パスは絶対パスで受ける前提。相対パスで見失ったら、推測で探し回らず「不足」として返す — fork の cwd は呼び出し元と一致する保証がない
 - 巨大 diff(数千行)を全部埋め込むと HTML が数MBになる — ファイル別タブ+ブロック単位の `<details>` で畳む(省略はしない)
 - `open` は macOS 専用。失敗しても致命ではない — パスさえ返せば呼び出し元が対処できる
+- `open` が `-600 (procNotFound)` で失敗するのは Bash サンドボックスが Apple Events を遮っているため。失敗した `open` はタブを開いていない (実測) ので、サンドボックス外で 1 回だけ再実行してよい — 二重にはならない。恒久的には利用者側の settings で `sandbox.allowAppleEvents` を `true` にすると再実行の往復が消える
 
 ## Additional resources
 

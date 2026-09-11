@@ -10,7 +10,8 @@
 
   このファイルをそのままモックの出発点にする:
     cp <このファイル> docs/crystallize/specs/<slug>/mock.html
-  そのうえで「スロット」と書かれた3ブロック (モック専用スタイル / 案 (variant) / TWEAKS と applyTweaks)
+  そのうえで「スロット」と書かれた3ブロック
+  (モック専用スタイル / 案 (variant) / TWEAKS・applyTweaks・ROUND・QUESTIONS)
   だけを書き換える。CZ-KIT:*:BEGIN 〜 CZ-KIT:*:END で囲まれたブロックは一字も変えない。
   契約と規則は references/mock-kit.md を読むこと。
 -->
@@ -33,6 +34,31 @@
     --cz-frame-h: 844px;
     --cz-scale: 1;
     --cz-frame-gap: 24px;
+    /* 回答パネル (画面右端に張り付くサイドパネル) の幅と、開いている間にステージへ譲る幅 (幅 + 余白16px)。
+       updateScale は --cz-answer-width を読んで同じ 16px を足す (calc の変数は JS から数値に読めない) */
+    --cz-answer-width: 480px;
+    --cz-answer-reserve: calc(var(--cz-answer-width) + 16px);
+  }
+
+  /* 回答パネルを開いている間はステージを右から寄せる — パネルが絵を覆うと見ながら答えられない。
+     バーと調整パネルも同じぶん左へ逃がす (右端の指定席がパネルの下に隠れる) */
+  .cz-stage {
+    transition: padding-right 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  body.cz-page.cz-answer-open .cz-stage {
+    padding-right: var(--cz-answer-reserve);
+  }
+  body.cz-page.cz-answer-open .cz-bar {
+    left: calc(50% - var(--cz-answer-reserve) / 2);
+    /* 残った幅に収まらないぶんは折り返す (flex-wrap)。狭い窓でバーが左の画面外へ出ないため */
+    max-width: calc(100vw - var(--cz-answer-reserve) - 32px);
+  }
+  body.cz-page.cz-answer-open .cz-tweak-panel {
+    right: calc(var(--cz-answer-reserve) + 16px) !important;
+  }
+  .cz-bar,
+  .cz-tweak-panel {
+    transition: left 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), right 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   /* JS が初期化を終えるまでステージを隠す — 全案・全状態が一瞬同時に見えるのを防ぐ */
@@ -183,7 +209,8 @@
   }
   .cz-bar-btn[hidden],
   .cz-bar-group[hidden],
-  .cz-bar-sep[hidden] { display: none; }
+  .cz-bar-sep[hidden],
+  .cz-bar-meta[hidden] { display: none; }
   .cz-bar-name {
     display: inline-block;
     min-width: 128px;
@@ -193,6 +220,11 @@
     font-weight: 700;
     text-align: center;
     white-space: nowrap;
+  }
+  /* 前のラウンドで落とした案 (.cz-variant[data-rejected]) は隠さず印を付けて見せる */
+  .cz-bar-name--rejected {
+    text-decoration: line-through;
+    opacity: 0.7;
   }
   .cz-bar-meta {
     display: inline-block;
@@ -424,6 +456,331 @@
   }
   .cz-tweak-feedback--error {
     color: #ff9c92 !important;
+  }
+
+  /* ─── 回答パネル ─── */
+  .cz-answer-panel,
+  .cz-answer-panel *,
+  .cz-answer-panel *::before,
+  .cz-answer-panel *::after {
+    box-sizing: border-box !important;
+  }
+  .cz-answer-panel,
+  .cz-answer-panel * {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Sans", "Noto Sans JP", sans-serif !important;
+    font-size: 14px;
+    line-height: 1.55;
+    color: #e6e6ea;
+    text-align: left;
+    background: none;
+    letter-spacing: normal;
+    text-shadow: none;
+    box-shadow: none;
+  }
+  /* 画面右端に張り付くサイドパネル。畳んでいる間は右の画面外へ退き、開くとスライドして入る。
+     調整パネルとバーは開いている間だけ左へ逃げる (上の body.cz-answer-open の規則) */
+  .cz-answer-panel {
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: var(--cz-answer-width);
+    max-width: calc(100vw - 32px);
+    z-index: 100000 !important;
+    transform: translateX(0);
+    visibility: visible;
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s;
+  }
+  .cz-answer-panel.cz-answer-collapsed {
+    transform: translateX(100%);
+    visibility: hidden;
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s 0.28s;
+  }
+  /* 左端のつまみ。ドラッグで幅を変える (幅は --cz-answer-width に書き戻すので、ステージ・バー・調整パネルも追随する) */
+  .cz-answer-resizer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -3px;
+    width: 8px;
+    cursor: col-resize;
+    z-index: 1;
+    touch-action: none;
+  }
+  .cz-answer-resizer::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 3px;
+    width: 2px;
+    background: transparent;
+    transition: background 0.15s;
+  }
+  .cz-answer-resizer:hover::after,
+  body.cz-page.cz-answer-resizing .cz-answer-resizer::after {
+    background: #8a94a6;
+  }
+  .cz-answer-panel.cz-answer-inline .cz-answer-resizer {
+    display: none;
+  }
+  /* ドラッグ中はスライドや余白のアニメーションを止める — 追随が遅れると絵とパネルが重なって見える */
+  body.cz-page.cz-answer-resizing,
+  body.cz-page.cz-answer-resizing * {
+    user-select: none;
+  }
+  body.cz-page.cz-answer-resizing .cz-answer-panel,
+  body.cz-page.cz-answer-resizing .cz-stage,
+  body.cz-page.cz-answer-resizing .cz-bar,
+  body.cz-page.cz-answer-resizing .cz-tweak-panel {
+    transition: none !important;
+  }
+  /* 案が0個のラウンドはステージが空。固定の引き出しではなくステージの位置にインラインで出す */
+  .cz-answer-panel.cz-answer-inline {
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 720px;
+    max-width: 100%;
+    margin: 0 auto !important;
+    transform: none;
+    visibility: visible;
+    transition: none;
+  }
+  .cz-answer-inner {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    background: #24262b !important;
+    border-left: 1px solid #3a3d44 !important;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.35) !important;
+    overflow: hidden;
+  }
+  .cz-answer-panel.cz-answer-inline .cz-answer-inner {
+    height: auto;
+    border: 1px solid #3a3d44 !important;
+    border-radius: 10px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+  }
+  .cz-answer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #2b2e34 !important;
+    border-bottom: 1px solid #3a3d44 !important;
+    flex: 0 0 auto;
+  }
+  .cz-answer-title {
+    font-weight: 700 !important;
+    color: #f1f1f4 !important;
+  }
+  .cz-answer-collapse-btn {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #35383f !important;
+    border: 1px solid #454951 !important;
+    border-radius: 6px !important;
+    color: #e6e6ea !important;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .cz-answer-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 14px 16px 16px;
+  }
+  .cz-answer-body {
+    /* 画面下のバーは中央寄せで、開いている間は左へ逃げるので重ならないが、狭い窓では届きうる。末尾に逃げ場を残す */
+    padding-bottom: 72px;
+  }
+  .cz-answer-questions {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .cz-answer-q {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .cz-answer-q-title {
+    font-size: 15px;
+    font-weight: 700 !important;
+    color: #f1f1f4 !important;
+  }
+  /* 挙動としての問い本文。title (見出し) より読ませたいのはこちら */
+  .cz-answer-q-question {
+    color: #dfe1e6 !important;
+  }
+  .cz-answer-q-premise {
+    font-size: 12.5px;
+    color: #9aa0a9 !important;
+  }
+  /* 推奨の理由。バッジだけでは「なぜ推すのか」が伝わらない */
+  .cz-answer-reason {
+    font-size: 12.5px;
+    color: #a3aab5 !important;
+  }
+  .cz-answer-options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .cz-answer-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #1f2126 !important;
+    border: 1px solid #3a3d44 !important;
+    border-radius: 6px !important;
+    cursor: pointer;
+  }
+  .cz-answer-option:hover {
+    border-color: #4a4e56 !important;
+  }
+  /* 前のラウンドで落とした選択肢。選べないが「前に落とした案」として見えている */
+  .cz-answer-option--rejected,
+  .cz-answer-option--rejected:hover {
+    border-color: #3a3d44 !important;
+    opacity: 0.65;
+    cursor: default;
+  }
+  .cz-answer-option--rejected .cz-answer-option-label {
+    text-decoration: line-through;
+  }
+  .cz-answer-option--rejected .cz-answer-radio {
+    cursor: default;
+  }
+  .cz-answer-radio {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    margin-top: 3px;
+    accent-color: #b4b8c0;
+    cursor: pointer;
+  }
+  .cz-answer-option-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .cz-answer-option-label {
+    font-weight: 600 !important;
+    color: #f1f1f4 !important;
+  }
+  .cz-answer-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 0 6px;
+    background: #3f4650 !important;
+    border-radius: 999px !important;
+    color: #cdd2da !important;
+    font-size: 11.5px;
+    font-weight: 600 !important;
+  }
+  .cz-answer-gain,
+  .cz-answer-loss {
+    font-size: 13px;
+  }
+  .cz-answer-gain {
+    color: #8bc98f !important;
+  }
+  .cz-answer-loss {
+    color: #d5a49d !important;
+  }
+  /* リンクに見せるが a ではなく button — href="#" はハッシュ (#variant=B) を壊す */
+  .cz-answer-clear-btn {
+    align-self: flex-start;
+    background: none !important;
+    border: 0 !important;
+    color: #93a9c6 !important;
+    font-size: 12.5px;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .cz-answer-label {
+    font-size: 12.5px;
+    color: #b7bac2 !important;
+  }
+  .cz-answer-textarea {
+    width: 100%;
+    display: block;
+    resize: vertical;
+    padding: 7px 10px;
+    background: #1a1c20 !important;
+    border: 1px solid #454951 !important;
+    border-radius: 6px !important;
+    color: #e6e6ea !important;
+    font-size: 13.5px;
+  }
+  .cz-answer-comment-block,
+  .cz-answer-output-block {
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px solid #3a3d44 !important;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  /* 問いが0のラウンドでは区切り線が本文の頭に浮くので消す */
+  .cz-answer-questions:empty + .cz-answer-comment-block {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0 !important;
+  }
+  .cz-answer-action-btn {
+    width: 100%;
+    height: 36px;
+    background: #35383f !important;
+    border: 1px solid #4a4e56 !important;
+    border-radius: 6px !important;
+    color: #f1f1f4 !important;
+    font-weight: 600 !important;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .cz-answer-action-btn:hover {
+    background: #40444c !important;
+  }
+  .cz-answer-action-btn:active {
+    background: #2c2f34 !important;
+  }
+  .cz-answer-feedback {
+    min-height: 16px;
+    font-size: 12.5px;
+  }
+  .cz-answer-feedback--ok {
+    color: #8bc98f !important;
+  }
+  .cz-answer-feedback--error {
+    color: #ff9c92 !important;
+  }
+  .cz-answer-output-area {
+    width: 100%;
+    min-height: 120px;
+    resize: vertical;
+    padding: 6px 8px;
+    background: #1a1c20 !important;
+    border: 1px solid #454951 !important;
+    border-radius: 6px !important;
+    color: #e6e6ea !important;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+    font-size: 12.5px;
+    white-space: pre;
   }
 </style>
 <!-- CZ-KIT:STYLE:END -->
@@ -679,6 +1036,10 @@
   <div class="cz-bar-group" id="cz-tweak-group">
     <button type="button" class="cz-bar-btn" id="cz-tweak-toggle" aria-pressed="false">調整</button>
   </div>
+  <span class="cz-bar-sep" id="cz-answer-sep"></span>
+  <div class="cz-bar-group" id="cz-answer-group">
+    <button type="button" class="cz-bar-btn" id="cz-answer-toggle" aria-pressed="false">回答</button>
+  </div>
   <span class="cz-bar-meta" id="cz-bar-meta"></span>
 </div>
 
@@ -702,9 +1063,31 @@
     </div>
   </div>
 </div>
+
+<div id="cz-answer-panel" class="cz-answer-panel cz-answer-collapsed">
+  <div id="cz-answer-resizer" class="cz-answer-resizer" title="ドラッグで幅を変える (ダブルクリックで既定の幅に戻す)"></div>
+  <div class="cz-answer-inner">
+    <div class="cz-answer-header">
+      <span class="cz-answer-title">回答</span>
+      <button type="button" id="cz-answer-collapse-btn" class="cz-answer-collapse-btn" aria-label="折りたたむ">&#9472;</button>
+    </div>
+    <div class="cz-answer-body">
+      <div class="cz-answer-questions" id="cz-answer-questions"></div>
+      <div class="cz-answer-comment-block">
+        <label class="cz-answer-label" for="cz-answer-comment">全体へのコメント</label>
+        <textarea id="cz-answer-comment" class="cz-answer-textarea" spellcheck="false" rows="3"></textarea>
+      </div>
+      <div class="cz-answer-output-block">
+        <button type="button" id="cz-answer-build-btn" class="cz-answer-action-btn">貼り付ける文章を作る</button>
+        <div id="cz-answer-feedback" class="cz-answer-feedback"></div>
+        <textarea id="cz-answer-output" class="cz-answer-output-area" spellcheck="false" rows="8" readonly></textarea>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- CZ-KIT:MARKUP:END -->
 
-<!-- スロット: TWEAKS と applyTweaks ここから (この見本のデモ用。丸ごと差し替える) -->
+<!-- スロット: TWEAKS / applyTweaks / ROUND / QUESTIONS ここから (この見本のデモ用。丸ごと差し替える) -->
 <script id="cz-mock-script">
   // (a) TWEAKS — 親から渡されたキー一覧どおりに書く。type は range / number / color / select の4種。
   const TWEAKS = {
@@ -765,30 +1148,105 @@
     root.setAttribute('data-demo-density', values.density);
     renderDemoRows(values.itemCount);
   }
+
+  // (c) ROUND — 回答テキストの1行目と下書きキーに使う。label は spec の slug、round はラウンド番号。
+  // ラウンドを進めるたびに round を上げる (上げないと前のラウンドの下書きが復元される)。
+  const ROUND = { label: 'saved-articles', round: 1 };
+
+  // (d) QUESTIONS — 回答パネルはこの配列だけから自動生成される。markup は手書きしない。
+  // title = 見出し、question = 挙動としての問い1行、premise = 前提、reason = 推奨の理由1文。
+  // variant を書いた選択肢は、選んだ瞬間にステージがその案へ切り替わる (選ぶときに絵が見えている状態を作る)。
+  // loss は「選ぶと失われる挙動」を否定形で書く。
+  const QUESTIONS = [
+    {
+      id: 'q1',
+      title: '一覧の構造',
+      question: '保存した記事の一覧を開いたとき、1画面に何がどう並んでいてほしいか',
+      premise: '保存した記事は20〜200件たまり、探すより「上から順に消化する」が主な使い方',
+      recommended: 'A',
+      reason: '主な使い方が消化なら、1件あたりの情報より上から辿れる並びのほうが速い',
+      options: [
+        {
+          id: 'A',
+          label: '縦リスト',
+          gain: '1行に保存日と読了時間が並び、上から順に消化できる',
+          loss: '記事を絵で思い出す手がかりが無くなる',
+          variant: 'A'
+        },
+        {
+          id: 'B',
+          label: 'カードグリッド + 詳細',
+          gain: '一覧と本文を並べたまま次の記事へ移れる',
+          loss: '1画面に入る件数が減り、古い記事まで指が届かなくなる',
+          variant: 'B'
+        }
+      ]
+    },
+    {
+      id: 'q2',
+      title: '上限到達時の扱い',
+      question: '200件たまった状態でもう1件保存したとき、その操作は成功して何かが消えるか、失敗して何も消えないか',
+      premise: '保存できるのは200件まで。上限に達したあとの保存操作をどう扱うか',
+      recommended: 'A',
+      reason: '上限に達するのは長く使った人だけで、その人に保存を止めさせるより古いものを手放すほうが軽い',
+      options: [
+        {
+          id: 'A',
+          label: '古い順に自動で消す',
+          gain: '保存操作がいつでも成功し、上限を意識せずに使える',
+          loss: '消えたことに気づけず、残したかった記事を取り戻せなくなる'
+        },
+        {
+          id: 'B',
+          label: '保存を拒否して知らせる',
+          gain: '勝手に消える記事が無く、何を捨てるかは本人が決められる',
+          loss: '整理を済ませるまで、新しい記事をひとつも保存できなくなる'
+        }
+      ]
+    }
+  ];
 </script>
-<!-- スロット: TWEAKS と applyTweaks ここまで -->
+<!-- スロット: TWEAKS / applyTweaks / ROUND / QUESTIONS ここまで -->
 
 <!-- CZ-KIT:SCRIPT:BEGIN 無改変層 — 一字も変えない -->
 <script id="cz-kit-script">
 (function () {
   'use strict';
 
+  /* ══ 0. スロット層の読み取り ══
+     宣言が無いときだけでなく、スロット層の JS が途中で落ちて宣言が TDZ に残っているときも
+     ReferenceError になる。そこで kit が白画面にならないよう、読み取りは必ずここを通す。 */
+  function readSlot(read) {
+    try {
+      return read();
+    } catch (e) {
+      return undefined;
+    }
+  }
+
   /* ══ 1. 調整パネル ══
      TWEAKS 宣言だけからコントロールを生成し、値が変わるたびに applyTweaks を呼ぶ。 */
   var tweak = (function () {
     var panelEl = document.getElementById('cz-tweak-panel');
+    var config = readSlot(function () { return TWEAKS; });
+    var apply = readSlot(function () { return applyTweaks; });
     var hasConfig =
       !!panelEl &&
-      typeof TWEAKS !== 'undefined' &&
-      TWEAKS !== null &&
-      typeof TWEAKS === 'object' &&
-      Object.keys(TWEAKS).length > 0 &&
-      typeof applyTweaks === 'function';
+      !!config &&
+      typeof config === 'object' &&
+      Object.keys(config).length > 0 &&
+      typeof apply === 'function';
 
     if (!hasConfig) {
       // 調整項目のないモックではパネルごと出さない — 空のパネルは操作を探させるだけ
       if (panelEl) panelEl.style.setProperty('display', 'none', 'important');
-      return { enabled: false, refresh: function () {}, setCollapsed: function () {}, isCollapsed: function () { return true; } };
+      return {
+        enabled: false,
+        refresh: function () {},
+        setCollapsed: function () {},
+        isCollapsed: function () { return true; },
+        getState: function () { return null; }
+      };
     }
 
     var controlsEl = document.getElementById('cz-tweak-controls');
@@ -798,15 +1256,15 @@
     var feedbackEl = document.getElementById('cz-tweak-feedback');
     var collapseBtn = document.getElementById('cz-tweak-collapse-btn');
 
-    var keys = Object.keys(TWEAKS);
+    var keys = Object.keys(config);
     var state = {};
     keys.forEach(function (key) {
-      state[key] = TWEAKS[key].value;
+      state[key] = config[key].value;
     });
 
     // 数値系(type: range/number)は数値へ丸めて min/max を尊重、それ以外(color/select)は文字列のまま返す
     function coerce(key, raw) {
-      var cfg = TWEAKS[key];
+      var cfg = config[key];
       if (cfg.type === 'range' || cfg.type === 'number') {
         var n = parseFloat(raw);
         if (isNaN(n)) return state[key];
@@ -819,7 +1277,7 @@
 
     // ラベル横の「現在値 + unit」表示を組み立てる
     function formatValue(key) {
-      var cfg = TWEAKS[key];
+      var cfg = config[key];
       var v = state[key];
       if (cfg.type === 'select') {
         var found = null;
@@ -855,7 +1313,7 @@
     function commit() {
       syncJson();
       try {
-        applyTweaks(Object.assign({}, state));
+        apply(Object.assign({}, state));
       } catch (e) {
         notify('applyTweaks でエラー: ' + e.message, true);
       }
@@ -863,7 +1321,7 @@
 
     function buildControls() {
       keys.forEach(function (key) {
-        var cfg = TWEAKS[key];
+        var cfg = config[key];
 
         var row = document.createElement('div');
         row.className = 'cz-tweak-row';
@@ -954,7 +1412,7 @@
           unknown.push(key);
           return;
         }
-        var cfg = TWEAKS[key];
+        var cfg = config[key];
         var value = parsed[key];
 
         if (cfg.type === 'range' || cfg.type === 'number') {
@@ -1032,7 +1490,9 @@
       enabled: true,
       refresh: commit,
       setCollapsed: setCollapsed,
-      isCollapsed: function () { return panelEl.classList.contains('cz-tweak-collapsed'); }
+      isCollapsed: function () { return panelEl.classList.contains('cz-tweak-collapsed'); },
+      // 回答テキストに載せる「調整パネルの最終値」。state そのものは渡さない (外から書き換えられる)
+      getState: function () { return Object.assign({}, state); }
     };
   })();
 
@@ -1054,11 +1514,16 @@
   var prevBtn = document.getElementById('cz-prev-btn');
   var nextBtn = document.getElementById('cz-next-btn');
   var frameBtns = Array.prototype.slice.call(document.querySelectorAll('[data-cz-frame-btn]'));
+  var frameGroupEl = document.getElementById('cz-frame-group');
+  var frameSepEl = document.getElementById('cz-sep-frame');
   var stateGroupEl = document.getElementById('cz-state-group');
   var stateSepEl = document.getElementById('cz-sep-state');
   var tweakGroupEl = document.getElementById('cz-tweak-group');
   var tweakSepEl = document.getElementById('cz-sep-tweak');
   var tweakToggleBtn = document.getElementById('cz-tweak-toggle');
+  var answerGroupEl = document.getElementById('cz-answer-group');
+  var answerSepEl = document.getElementById('cz-answer-sep');
+  var answerToggleBtn = document.getElementById('cz-answer-toggle');
   var metaEl = document.getElementById('cz-bar-meta');
 
   var currentVariant = null;
@@ -1158,6 +1623,8 @@
     });
 
     variantNameEl.textContent = variantId(target) + ' · ' + (target.getAttribute('data-variant-name') || '');
+    // 前のラウンドで落とした案は隠さず取り消し線で見せる —「これは前に落とした案か」を記憶に頼らせない
+    variantNameEl.className = target.hasAttribute('data-rejected') ? 'cz-bar-name cz-bar-name--rejected' : 'cz-bar-name';
     buildStateButtons(target);
     if (currentState) applyState(target, currentState);
     updateScale();
@@ -1189,10 +1656,20 @@
 
   // 縮小率は全フレーム共通。1枚が画面幅に収まる率まで下げ、それ以上は下げない
   // (並べたいだけ縮めると案どうしの密度の比較ができなくなる。横幅が足りなければ折り返す)
+  // 回答パネルが開いている間にステージから譲っている幅。CSS の --cz-answer-reserve が唯一の値で、
+  // 畳んでいるとき・インライン表示のとき (body に cz-answer-open が付かない) は 0
+  function answerReservePx() {
+    if (!bodyEl.classList.contains('cz-answer-open')) return 0;
+    // --cz-answer-reserve は calc() なので getComputedStyle では式のまま返り数値にできない。
+    // 幅の変数 (px の単値) を読んで、CSS 側と同じ余白 16px を足す
+    var raw = parseFloat(getComputedStyle(bodyEl).getPropertyValue('--cz-answer-width'));
+    return isNaN(raw) ? 0 : raw + 16;
+  }
+
   function updateScale() {
     // 引くのは .cz-stage の左右パディング 48px + 2px。この 2px は下の Math.round が
     // 切り上げたときのぶんで、無いと 1px 足りずに最後の1枚だけ折り返すことがある
-    var avail = document.documentElement.clientWidth - 50;
+    var avail = document.documentElement.clientWidth - 50 - answerReservePx();
     var scale = Math.min(1, avail / currentFrame.w);
     scale = Math.max(0.2, Math.round(scale * 1000) / 1000);
     bodyEl.style.setProperty('--cz-scale', String(scale));
@@ -1258,6 +1735,432 @@
     if (!tweak.enabled) return;
     tweakToggleBtn.setAttribute('aria-pressed', tweak.isCollapsed() ? 'false' : 'true');
   }
+
+  function syncAnswerToggle() {
+    if (!answer.enabled) return;
+    answerToggleBtn.setAttribute('aria-pressed', answer.isCollapsed() ? 'false' : 'true');
+  }
+
+  /* ══ 3. 回答パネル ══
+     ROUND / QUESTIONS 宣言から問いを生成し、[貼り付ける文章を作る] で reply-format の固定形を
+     組み立てる。絵と同じ画面で答えさせるための部品 — 選ぶ瞬間にステージが見えている状態を保つ。
+     問いが0でもパネルは出す (見ていた案・調整パネル・全体へのコメントは問いの有無に関わらず要る)。 */
+  var answer = (function () {
+    var panelEl = document.getElementById('cz-answer-panel');
+    var roundCfg = readSlot(function () { return ROUND; });
+    // 消すのは ROUND が無いときだけ。ROUND が無ければ貼り戻しの1行目が作れず、
+    // 届いた回答がどのラウンドのものか読む側が判定できない
+    var hasRound = !!panelEl && !!roundCfg && typeof roundCfg === 'object';
+
+    if (!hasRound) {
+      if (panelEl) panelEl.style.setProperty('display', 'none', 'important');
+      return { enabled: false, count: 0, setCollapsed: function () {}, isCollapsed: function () { return true; } };
+    }
+
+    var questionsEl = document.getElementById('cz-answer-questions');
+    var commentEl = document.getElementById('cz-answer-comment');
+    var buildBtn = document.getElementById('cz-answer-build-btn');
+    var outputEl = document.getElementById('cz-answer-output');
+    var feedbackEl = document.getElementById('cz-answer-feedback');
+    var collapseBtn = document.getElementById('cz-answer-collapse-btn');
+
+    var roundLabel = roundCfg.label || 'mock';
+    var roundNo = roundCfg.round || 1;
+    // 下書きキーはラウンドごとに分ける — 分けないと前のラウンドの回答が復元される
+    var storageKey = 'cz-answer-' + roundLabel + '-r' + roundNo;
+
+    // 出題側の誤りはユーザーに見せる (黙って直すと、次のラウンドでも同じ誤りが出る)
+    var setupWarnings = [];
+    var buildWarnings = [];
+
+    // 同じ id の問いは radio の name がぶつかり、1グループに融合して片方しか答えられない。
+    // 2つ目以降は描画しない
+    var declared = readSlot(function () { return QUESTIONS; });
+    var questions = [];
+    if (Array.isArray(declared)) {
+      var seenIds = [];
+      declared.forEach(function (q) {
+        if (!q || typeof q !== 'object' || !q.id) return;
+        if (seenIds.indexOf(q.id) !== -1) {
+          setupWarnings.push('id が重複した問い「' + q.id + '」は表示していません (出題側の誤り)');
+          return;
+        }
+        seenIds.push(q.id);
+        questions.push(q);
+      });
+    }
+
+    /* ── 下書き (localStorage が使えるときだけの便利機能。無くても回答は作れる) ── */
+
+    function loadDraft() {
+      try {
+        var raw = window.localStorage.getItem(storageKey);
+        if (!raw) return null;
+        var parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+        return parsed;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function saveDraft() {
+      var data = { answers: {}, notes: {}, comment: commentEl.value };
+      questions.forEach(function (q) {
+        // 未選択は null で明示的に残す — キーが無い状態 (= 推奨を採る) と区別するため
+        data.answers[q.id] = pickedId(q);
+        var noteEl = document.getElementById('cz-answer-note-' + q.id);
+        data.notes[q.id] = noteEl ? noteEl.value : '';
+      });
+      try {
+        window.localStorage.setItem(storageKey, JSON.stringify(data));
+      } catch (e) {
+        // 保存できない環境では下書きを諦める。回答そのものは動く
+      }
+    }
+
+    /* ── 問いの組み立て ── */
+
+    function pickedId(q) {
+      var checked = questionsEl.querySelector('.cz-answer-radio[name="cz-q-' + q.id + '"]:checked');
+      return checked ? checked.value : null;
+    }
+
+    function findOption(q, id) {
+      var found = null;
+      (q.options || []).forEach(function (opt) {
+        if (opt && opt.id === id) found = opt;
+      });
+      return found;
+    }
+
+    // 推奨が不採用の選択肢を指していたら、それは推奨として使えない (選べないものは確定できない)
+    function recommendedIdOf(q) {
+      if (!q.recommended) return null;
+      var opt = findOption(q, q.recommended);
+      return (opt && opt.rejected) ? null : q.recommended;
+    }
+
+    function buildOption(q, opt, initialId) {
+      var row = document.createElement('label');
+      row.className = 'cz-answer-option' + (opt.rejected ? ' cz-answer-option--rejected' : '');
+      row.setAttribute('for', 'cz-answer-opt-' + q.id + '-' + opt.id);
+
+      var radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.className = 'cz-answer-radio';
+      radio.name = 'cz-q-' + q.id;
+      radio.id = 'cz-answer-opt-' + q.id + '-' + opt.id;
+      radio.value = opt.id;
+      // 前のラウンドで落とした選択肢は選べない。見えてはいる (何を落としたかを記憶に頼らせない)
+      if (opt.rejected) radio.disabled = true;
+      else if (opt.id === initialId) radio.checked = true;
+      radio.addEventListener('change', function () {
+        // variant 指定のある選択肢は、選んだ瞬間にステージをその案へ切り替える。
+        // 知らない案は無視する — setVariant は未知の id を先頭の案へ落とすので、綴り間違いで A へ飛ぶ
+        if (opt.variant && findVariant(opt.variant)) setVariant(opt.variant, true);
+        saveDraft();
+      });
+      row.appendChild(radio);
+
+      var text = document.createElement('span');
+      text.className = 'cz-answer-option-text';
+
+      var head = document.createElement('span');
+      head.className = 'cz-answer-option-label';
+      head.textContent = opt.id + ' — ' + (opt.label || '');
+      if (q.recommended && opt.id === q.recommended) {
+        var badge = document.createElement('span');
+        badge.className = 'cz-answer-badge';
+        badge.textContent = '推奨';
+        head.appendChild(badge);
+      }
+      text.appendChild(head);
+
+      // 推奨の理由はバッジの直下に置く — バッジだけでは何を根拠に推しているか分からない
+      if (q.reason && q.recommended && opt.id === q.recommended) {
+        var reason = document.createElement('span');
+        reason.className = 'cz-answer-reason';
+        reason.textContent = '推奨 — ' + q.reason;
+        text.appendChild(reason);
+      }
+
+      if (opt.gain) {
+        var gain = document.createElement('span');
+        gain.className = 'cz-answer-gain';
+        gain.textContent = '得られる: ' + opt.gain;
+        text.appendChild(gain);
+      }
+      if (opt.loss) {
+        var loss = document.createElement('span');
+        loss.className = 'cz-answer-loss';
+        loss.textContent = '失われる: ' + opt.loss;
+        text.appendChild(loss);
+      }
+
+      row.appendChild(text);
+      return row;
+    }
+
+    function buildQuestions(draft) {
+      var draftAnswers = (draft && draft.answers && typeof draft.answers === 'object') ? draft.answers : null;
+      var draftNotes = (draft && draft.notes && typeof draft.notes === 'object') ? draft.notes : null;
+
+      questions.forEach(function (q, index) {
+        var block = document.createElement('div');
+        block.className = 'cz-answer-q';
+
+        var title = document.createElement('div');
+        title.className = 'cz-answer-q-title';
+        title.textContent = 'Q' + (index + 1) + '. ' + (q.title || q.id);
+        block.appendChild(title);
+
+        // 挙動としての問い。無ければ行ごと出さない
+        if (q.question) {
+          var question = document.createElement('div');
+          question.className = 'cz-answer-q-question';
+          question.textContent = q.question;
+          block.appendChild(question);
+        }
+
+        if (q.premise) {
+          var premise = document.createElement('div');
+          premise.className = 'cz-answer-q-premise';
+          premise.textContent = '前提: ' + q.premise;
+          block.appendChild(premise);
+        }
+
+        // 下書きがあれば下書きが勝つ。無ければ推奨を初期選択にする (未回答でも進める形)
+        var hasDraft = !!draftAnswers && Object.prototype.hasOwnProperty.call(draftAnswers, q.id);
+        var initialId = hasDraft ? draftAnswers[q.id] : recommendedIdOf(q);
+
+        var optionsEl = document.createElement('div');
+        optionsEl.className = 'cz-answer-options';
+        (q.options || []).forEach(function (opt) {
+          if (opt && opt.id) optionsEl.appendChild(buildOption(q, opt, initialId));
+        });
+        block.appendChild(optionsEl);
+
+        var clearBtn = document.createElement('button');
+        clearBtn.type = 'button';
+        clearBtn.className = 'cz-answer-clear-btn';
+        clearBtn.textContent = '選ばない (お任せに戻す)';
+        clearBtn.addEventListener('click', function () {
+          var radios = optionsEl.querySelectorAll('.cz-answer-radio');
+          Array.prototype.forEach.call(radios, function (r) { r.checked = false; });
+          saveDraft();
+        });
+        block.appendChild(clearBtn);
+
+        var note = document.createElement('textarea');
+        note.className = 'cz-answer-textarea';
+        note.id = 'cz-answer-note-' + q.id;
+        note.rows = 1;
+        note.spellcheck = false;
+        note.setAttribute('placeholder', '補足 (任意・1行)');
+        if (draftNotes && typeof draftNotes[q.id] === 'string') note.value = draftNotes[q.id];
+        note.addEventListener('input', saveDraft);
+        block.appendChild(note);
+
+        questionsEl.appendChild(block);
+      });
+    }
+
+    /* ── 貼り戻すテキスト (reply-format.md の固定形) ── */
+
+    // 補足は1行で戻す約束なので、改行と連続空白を空白1つに畳む
+    function oneLine(text) {
+      return String(text == null ? '' : text).replace(/\s+/g, ' ').replace(/^ +| +$/g, '');
+    }
+
+    function buildAnswerText() {
+      var lines = [];
+      buildWarnings = setupWarnings.slice();
+      lines.push('【回答】' + roundLabel + ' ラウンド ' + roundNo);
+
+      questions.forEach(function (q, index) {
+        var line = 'Q' + (index + 1) + '. ' + (q.title || q.id) + ': ';
+        var picked = pickedId(q);
+        var recommended = recommendedIdOf(q);
+        if (q.recommended && !recommended) {
+          buildWarnings.push('推奨 ' + q.recommended + ' は不採用の選択肢です (出題側の誤り)');
+        }
+        if (picked === null) {
+          line += recommended ? '(未選択 = お任せ = 推奨 ' + recommended + ')' : '(未選択 = お任せ)';
+        } else {
+          var opt = findOption(q, picked);
+          var label = (opt && opt.label) ? opt.label : '';
+          line += picked + (label ? ' — ' + label : '');
+        }
+        var noteEl = document.getElementById('cz-answer-note-' + q.id);
+        var note = noteEl ? oneLine(noteEl.value) : '';
+        // 空の項目は行ごと (この行では区切りごと) 出さない
+        if (note) line += ' / 補足: ' + note;
+        lines.push(line);
+      });
+
+      // 案が0個のシートはステージに絵が無いので「見ていた案」の行ごと出さない
+      if (variants.length) {
+        var seen = [];
+        if (currentVariant) {
+          seen.push('見ていた案: ' + variantId(currentVariant) + ' · ' + (currentVariant.getAttribute('data-variant-name') || ''));
+        }
+        if (currentState) seen.push('状態: ' + currentState);
+        seen.push('端末: ' + currentFrame.key);
+        lines.push(seen.join(' / '));
+      }
+
+      if (tweak.enabled) {
+        var tweakState = tweak.getState();
+        // 1行の flat な JSON。ここに出た値が「モック確定」の値の正本になる
+        if (tweakState) lines.push('調整パネル: ' + JSON.stringify(tweakState));
+      }
+
+      var comment = String(commentEl.value || '').replace(/^\s+|\s+$/g, '');
+      lines.push('全体へのコメント: ' + (comment || '(なし)'));
+
+      lines.push('---');
+      lines.push('上の回答を反映して次のラウンドへ進んでください。お任せの項目は推奨案で確定してください。');
+      return lines.join('\n');
+    }
+
+    function notify(message, isError) {
+      feedbackEl.textContent = message;
+      feedbackEl.className = 'cz-answer-feedback ' + (isError ? 'cz-answer-feedback--error' : 'cz-answer-feedback--ok');
+    }
+
+    function buildAndCopy() {
+      var text = buildAnswerText();
+      // clipboard が使えない環境のフォールバック。テキストは常にこの欄にも出す
+      outputEl.value = text;
+      // 出題側の誤りはコピーの成否より先に見せる (テキスト自体は作れているのでコピーは止めない)
+      function report(message, isError) {
+        if (buildWarnings.length) notify(buildWarnings.join(' / ') + ' / ' + message, true);
+        else notify(message, isError);
+      }
+      try {
+        navigator.clipboard.writeText(text).then(
+          function () {
+            report('コピーしました — ターミナルに貼って Enter', false);
+          },
+          function () {
+            report('下の欄を選択してコピーしてください', true);
+          }
+        );
+      } catch (e) {
+        report('下の欄を選択してコピーしてください', true);
+      }
+    }
+
+    function setCollapsed(collapsed) {
+      panelEl.classList.toggle('cz-answer-collapsed', collapsed);
+      // 開いている間はステージを左へ寄せ、縮小率もパネルを除いた幅で決め直す。
+      // インライン表示 (案が0個) はステージの一部なので場所を譲る相手がいない
+      if (!inline) {
+        bodyEl.classList.toggle('cz-answer-open', !collapsed);
+        updateScale();
+      }
+    }
+
+    // 案が0個 (見た目の無いラウンド) ではステージが空。固定の引き出しではなくステージの位置に
+    // インラインで、既定で開いた状態で出す — 畳んだままだと画面に何も無くなる
+    var inline = !variants.length;
+    if (inline && stageEl) {
+      panelEl.classList.add('cz-answer-inline');
+      stageEl.appendChild(panelEl);
+    }
+
+    /* ── 幅のつまみ (ドラッグで --cz-answer-width を書き換える。ダブルクリックで既定に戻す) ── */
+
+    var resizerEl = document.getElementById('cz-answer-resizer');
+    var WIDTH_KEY = 'cz-answer-width';
+    var MIN_WIDTH = 320;
+    var defaultWidth = parseFloat(getComputedStyle(bodyEl).getPropertyValue('--cz-answer-width')) || 480;
+
+    function clampWidth(w) {
+      // 右端に張り付くので、最大は「ステージに絵が 1 枚残る幅」までに留める
+      var max = Math.max(MIN_WIDTH, document.documentElement.clientWidth - 240);
+      return Math.min(max, Math.max(MIN_WIDTH, Math.round(w)));
+    }
+
+    function applyWidth(w, persist) {
+      var next = clampWidth(w);
+      bodyEl.style.setProperty('--cz-answer-width', next + 'px');
+      if (!inline) updateScale();
+      if (persist) {
+        try { window.localStorage.setItem(WIDTH_KEY, String(next)); } catch (e) { /* 保存できなくても幅は効く */ }
+      }
+    }
+
+    function restoreWidth() {
+      var saved = null;
+      try { saved = parseFloat(window.localStorage.getItem(WIDTH_KEY)); } catch (e) { saved = null; }
+      if (saved && !isNaN(saved)) applyWidth(saved, false);
+    }
+
+    if (resizerEl && !inline) {
+      var dragging = false;
+      var pending = null;
+      resizerEl.addEventListener('pointerdown', function (e) {
+        if (e.button !== 0) return;
+        dragging = true;
+        bodyEl.classList.add('cz-answer-resizing');
+        try { resizerEl.setPointerCapture(e.pointerId); } catch (err) { /* 取れなくても document の move で追う */ }
+        e.preventDefault();
+      });
+      document.addEventListener('pointermove', function (e) {
+        if (!dragging) return;
+        // 右端に張り付いているので、幅 = 画面右端からポインタまでの距離
+        pending = document.documentElement.clientWidth - e.clientX;
+        if (pending !== null && !resizerEl.__raf) {
+          resizerEl.__raf = requestAnimationFrame(function () {
+            resizerEl.__raf = null;
+            if (pending !== null) applyWidth(pending, false);
+          });
+        }
+      });
+      function endDrag(e) {
+        if (!dragging) return;
+        dragging = false;
+        bodyEl.classList.remove('cz-answer-resizing');
+        try { resizerEl.releasePointerCapture(e.pointerId); } catch (err) { /* 未取得なら無視 */ }
+        var w = parseFloat(bodyEl.style.getPropertyValue('--cz-answer-width')) || defaultWidth;
+        applyWidth(w, true);
+      }
+      document.addEventListener('pointerup', endDrag);
+      document.addEventListener('pointercancel', endDrag);
+      resizerEl.addEventListener('dblclick', function () {
+        applyWidth(defaultWidth, true);
+      });
+      window.addEventListener('resize', function () {
+        // 窓が狭くなったら幅も詰める (保存値は触らない)
+        var w = parseFloat(bodyEl.style.getPropertyValue('--cz-answer-width'));
+        if (w && clampWidth(w) !== w) applyWidth(w, false);
+      });
+      restoreWidth();
+    }
+
+    var draft = loadDraft();
+    buildQuestions(draft);
+    if (draft && typeof draft.comment === 'string') commentEl.value = draft.comment;
+
+    commentEl.addEventListener('input', saveDraft);
+    buildBtn.addEventListener('click', buildAndCopy);
+    collapseBtn.addEventListener('click', function () {
+      setCollapsed(true);
+      syncAnswerToggle();
+    });
+    setCollapsed(!inline);
+    if (setupWarnings.length) notify(setupWarnings.join(' / '), true);
+
+    return {
+      enabled: true,
+      count: questions.length,
+      setCollapsed: setCollapsed,
+      isCollapsed: function () { return panelEl.classList.contains('cz-answer-collapsed'); }
+    };
+  })();
+
   /* ── 初期化 ── */
 
   if (!tweak.enabled) {
@@ -1271,13 +2174,31 @@
     syncTweakToggle();
   }
 
+  if (!answer.enabled) {
+    answerGroupEl.setAttribute('hidden', 'hidden');
+    answerSepEl.setAttribute('hidden', 'hidden');
+  } else {
+    // 問いが0のラウンド (モックへの反応だけを求める) では問数を出さない
+    answerToggleBtn.textContent = answer.count ? '回答 (' + answer.count + ' 問)' : '回答';
+    answerToggleBtn.addEventListener('click', function () {
+      answer.setCollapsed(!answer.isCollapsed());
+      syncAnswerToggle();
+    });
+    syncAnswerToggle();
+  }
+
   if (variants.length < 2) {
     // 1案のモックでは案の送りボタンを出さない — 押しても何も起きないボタンは操作を疑わせる
     prevBtn.setAttribute('hidden', 'hidden');
     nextBtn.setAttribute('hidden', 'hidden');
   }
   if (!variants.length) {
+    // 絵の無いラウンドでは案・端末フレーム・寸法の表示をまとめて畳む —
+    // 切り替える絵が無いのに端末と縮小率だけ出ていると、読み込みに失敗したように見える
     variantGroupEl.setAttribute('hidden', 'hidden');
+    frameGroupEl.setAttribute('hidden', 'hidden');
+    frameSepEl.setAttribute('hidden', 'hidden');
+    metaEl.setAttribute('hidden', 'hidden');
   }
 
   prevBtn.addEventListener('click', function () { stepVariant(-1); });

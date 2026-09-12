@@ -1,6 +1,6 @@
 {
   "name": "crystallize",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "対話から要件を spec に析出させて育て、spec から plan を作り、機械・挙動・例外の3つのゲートを通してコミットへ結晶化させる plan 駆動開発フロー",
   "author": {
     "name": "kyouyagenki"

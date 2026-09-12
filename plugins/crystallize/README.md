@@ -46,6 +46,7 @@ flowchart TD
 | `code-generator` | スライスを実装して GREEN にする。レビュー指摘の修正でも使う |
 | `diff-review` | 動作確認が収束したあとの差分から、危険な箇所だけを決裁カード（何が起きうるか・戻せるか・影響範囲・AI レビューの判定）で人間に見せる。昇格 0 件なら画面を作らず 1 行で go を取る |
 | `html-report` | 30行を超える散文の報告を、要点先行・インライン SVG 図解の自己完結 HTML レポートに整形して開く（`diff-review` の派生元） |
+| `report-index` | `html-report` / `diff-review` が生成したレポートを、登録済みプロジェクトを横断してローカルサーバー（127.0.0.1 のみ、標準ライブラリのみ）の 1 画面に一覧する。題名・要約・種別・プロジェクトで絞り込める |
 | `plan-commit` | plan の内容をそのままコミットメッセージにしてコミットし、plan ファイルを削除する。spec の改訂行があれば転記する |
 | `tdd` | red → green のループから残す価値のあるテストを書くためのリファレンス |
 
@@ -73,7 +74,7 @@ flowchart TD
 
 - `docs/crystallize/specs/` — `spec` が作る spec と作業ファイル（論点台帳・モック）。残る文書で、改訂履歴とともに育てます
 - `docs/crystallize/plans/` — `plan` が作る plan と作業ファイル。`plan-commit` でコミットメッセージに畳み込まれると同時に削除されるため、リポジトリには一時的にしか存在しません
-- `docs/crystallize/reports/` — `html-report` / `diff-review` が生成する HTML レポート
+- `docs/crystallize/reports/` — `html-report` / `diff-review` が生成する HTML レポート。`report-index` がプロジェクト横断で一覧します（プロジェクトの登録は `~/.crystallize/roots/`、書けない環境では `/tmp/claude/crystallize/roots/` に置かれます）
 - `docs/crystallize/CONTEXT.md` — プロジェクト共通の用語集。`spec` が最初の語を決めた時点で作られ、以降は語が決まるたびに書き足されます。リポジトリ直下に `CONTEXT.md` があって `## 用語` または `## Language` の見出しを持つ場合は、そちらを正本として使い、この位置には作りません（既に同じ役割のファイルを置いている運用と用語集を二重化させないため）
 
 ## インストール

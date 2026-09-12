@@ -109,7 +109,11 @@ PROJROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 mkdir -p "$PROJROOT/docs/crystallize/reports"
 # YYYY-MM-DD-<slug>.html を Write し、検算と見直しを全部終えたあとに 1 回だけ:
 open "$PROJROOT/docs/crystallize/reports/<file>.html"
+# レポート一覧 (report-index) の走査対象にこのプロジェクトを登録する (失敗しても致命ではない)
+python3 "<skill-dir>/../report-index/scripts/report_server.py" register --root "$PROJROOT" || true
 ```
+
+登録は registry ファイルへの書き込みだけで、サーバーの起動も HTTP 接続もしない (sandbox 内でも通る)。一覧を開くのは `report-index` スキルの仕事で、ここでは開かない — 保存のたびに一覧のタブまで開くと、レポート 1 通につきタブが 2 枚増える。
 
 **`open` は最後に 1 回だけ。** 外部参照の検算・引用の逐語確認・文言の見直しは、すべて `open` の前に済ませる。`open` のあとにファイルを直しても**再度 `open` しない** — 同じファイルのタブがもう 1 枚開くだけで、読者は開いているタブを再読み込みすれば更新を見られる。open 後に直した事実は最終応答に「開いているタブを再読み込みしてください」の 1 行で添える (実測: open → 自己レビュー → 修正 → 再 open の順で毎回タブが 2 枚開いていた)。**呼び出し元 (plan-implement・spec・plan-create など) は、この最終応答を受けてファイルを開き直さない** — fork が既に開いている。「直したので開き直す」は同じ失敗を親側で再生産する (実測: fork が規則どおり 1 回で止めた直後に、親が「開き直しました」と 2 枚目を開いた)。ユーザーには開いているタブの再読み込みを案内する。
 

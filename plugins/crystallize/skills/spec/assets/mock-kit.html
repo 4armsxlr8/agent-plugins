@@ -34,31 +34,36 @@
     --cz-frame-h: 844px;
     --cz-scale: 1;
     --cz-frame-gap: 24px;
-    /* 回答パネル (画面右端に張り付くサイドパネル) の幅と、開いている間にステージへ譲る幅 (幅 + 余白16px)。
-       updateScale は --cz-answer-width を読んで同じ 16px を足す (calc の変数は JS から数値に読めない) */
+    /* 左右のサイドパネルの幅と、開いている間にステージへ譲る幅 (幅 + 余白16px)。
+       調整パネルは画面左端、回答パネルは画面右端に張り付く。
+       updateScale は --cz-tweak-width / --cz-answer-width を読んで同じ 16px を足す (calc の変数は JS から数値に読めない) */
+    --cz-tweak-width: 280px;
+    --cz-tweak-reserve: calc(var(--cz-tweak-width) + 16px);
     --cz-answer-width: 480px;
     --cz-answer-reserve: calc(var(--cz-answer-width) + 16px);
+    /* 実際に譲っている幅。開いている側だけ reserve になり、畳んでいる側は 0 のまま */
+    --cz-tweak-active: 0px;
+    --cz-answer-active: 0px;
   }
+  body.cz-page.cz-tweak-open { --cz-tweak-active: var(--cz-tweak-reserve); }
+  body.cz-page.cz-answer-open { --cz-answer-active: var(--cz-answer-reserve); }
 
-  /* 回答パネルを開いている間はステージを右から寄せる — パネルが絵を覆うと見ながら答えられない。
-     バーと調整パネルも同じぶん左へ逃がす (右端の指定席がパネルの下に隠れる) */
+  /* パネルを開いている間はステージをその側から寄せる — パネルが絵を覆うと見ながら決められない。
+     バーは残った幅の中央に置き直す (左右どちらか一方でも両方でも同じ式で決まる) */
   .cz-stage {
-    transition: padding-right 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: padding-left 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), padding-right 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  body.cz-page.cz-tweak-open .cz-stage {
+    padding-left: var(--cz-tweak-reserve);
   }
   body.cz-page.cz-answer-open .cz-stage {
     padding-right: var(--cz-answer-reserve);
   }
-  body.cz-page.cz-answer-open .cz-bar {
-    left: calc(50% - var(--cz-answer-reserve) / 2);
-    /* 残った幅に収まらないぶんは折り返す (flex-wrap)。狭い窓でバーが左の画面外へ出ないため */
-    max-width: calc(100vw - var(--cz-answer-reserve) - 32px);
-  }
-  body.cz-page.cz-answer-open .cz-tweak-panel {
-    right: calc(var(--cz-answer-reserve) + 16px) !important;
-  }
-  .cz-bar,
-  .cz-tweak-panel {
-    transition: left 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), right 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  .cz-bar {
+    left: calc(50% + (var(--cz-tweak-active) - var(--cz-answer-active)) / 2);
+    /* 残った幅に収まらないぶんは折り返す (flex-wrap)。狭い窓でバーがパネルの下や画面外へ出ないため */
+    max-width: calc(100vw - var(--cz-tweak-active) - var(--cz-answer-active) - 32px);
+    transition: left 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   /* JS が初期化を終えるまでステージを隠す — 全案・全状態が一瞬同時に見えるのを防ぐ */
@@ -155,8 +160,8 @@
     box-shadow: none;
   }
   .cz-bar {
+    /* left と max-width はステージの規則の並び (上の .cz-bar) にある — パネルの開閉で変わるため */
     position: fixed;
-    left: 50%;
     bottom: 16px;
     transform: translateX(-50%);
     z-index: 99998;
@@ -166,7 +171,6 @@
     justify-content: center;
     gap: 8px;
     width: max-content;
-    max-width: calc(100vw - 32px);
     padding: 8px 12px;
     background: #24262b;
     border: 1px solid #3a3d44;
@@ -257,25 +261,58 @@
     text-shadow: none;
     box-shadow: none;
   }
+  /* 画面左端に張り付くサイドバー。畳んでいる間は左の画面外へ退き、開くとスライドして入る。
+     開いている間はステージとバーが幅ぶん右へ寄る (上の body.cz-tweak-open の規則) */
   .cz-tweak-panel {
     position: fixed !important;
-    right: 16px !important;
-    bottom: 76px !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: var(--cz-tweak-width);
+    max-width: calc(100vw - 32px);
     z-index: 99999 !important;
+    transform: translateX(0);
+    visibility: visible;
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s;
   }
-  .cz-tweak-panel.cz-tweak-collapsed .cz-tweak-inner {
-    display: none;
+  .cz-tweak-panel.cz-tweak-collapsed {
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s 0.28s;
+  }
+  /* 右端のつまみ。ドラッグで幅を変える (幅は --cz-tweak-width に書き戻すので、ステージとバーも追随する) */
+  .cz-tweak-resizer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: -3px;
+    width: 8px;
+    cursor: col-resize;
+    z-index: 1;
+    touch-action: none;
+  }
+  .cz-tweak-resizer::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 3px;
+    width: 2px;
+    background: transparent;
+    transition: background 0.15s;
+  }
+  .cz-tweak-resizer:hover::after,
+  body.cz-page.cz-tweak-resizing .cz-tweak-resizer::after {
+    background: #8a94a6;
   }
   .cz-tweak-inner {
     display: flex;
     flex-direction: column;
-    width: 264px;
-    max-width: calc(100vw - 32px);
-    max-height: 62vh;
+    width: 100%;
+    height: 100%;
     background: #24262b !important;
-    border: 1px solid #3a3d44 !important;
-    border-radius: 10px !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+    border-right: 1px solid #3a3d44 !important;
+    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.35) !important;
     overflow: hidden;
   }
   .cz-tweak-header {
@@ -481,7 +518,7 @@
     box-shadow: none;
   }
   /* 画面右端に張り付くサイドパネル。畳んでいる間は右の画面外へ退き、開くとスライドして入る。
-     調整パネルとバーは開いている間だけ左へ逃げる (上の body.cz-answer-open の規則) */
+     開いている間はステージとバーが幅ぶん左へ寄る (上の body.cz-answer-open の規則) */
   .cz-answer-panel {
     position: fixed !important;
     top: 0 !important;
@@ -499,7 +536,7 @@
     visibility: hidden;
     transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s 0.28s;
   }
-  /* 左端のつまみ。ドラッグで幅を変える (幅は --cz-answer-width に書き戻すので、ステージ・バー・調整パネルも追随する) */
+  /* 左端のつまみ。ドラッグで幅を変える (幅は --cz-answer-width に書き戻すので、ステージとバーも追随する) */
   .cz-answer-resizer {
     position: absolute;
     top: 0;
@@ -529,13 +566,19 @@
   }
   /* ドラッグ中はスライドや余白のアニメーションを止める — 追随が遅れると絵とパネルが重なって見える */
   body.cz-page.cz-answer-resizing,
-  body.cz-page.cz-answer-resizing * {
+  body.cz-page.cz-answer-resizing *,
+  body.cz-page.cz-tweak-resizing,
+  body.cz-page.cz-tweak-resizing * {
     user-select: none;
   }
   body.cz-page.cz-answer-resizing .cz-answer-panel,
   body.cz-page.cz-answer-resizing .cz-stage,
   body.cz-page.cz-answer-resizing .cz-bar,
-  body.cz-page.cz-answer-resizing .cz-tweak-panel {
+  body.cz-page.cz-answer-resizing .cz-tweak-panel,
+  body.cz-page.cz-tweak-resizing .cz-answer-panel,
+  body.cz-page.cz-tweak-resizing .cz-stage,
+  body.cz-page.cz-tweak-resizing .cz-bar,
+  body.cz-page.cz-tweak-resizing .cz-tweak-panel {
     transition: none !important;
   }
   /* 案が0個のラウンドはステージが空。固定の引き出しではなくステージの位置にインラインで出す */
@@ -1044,6 +1087,7 @@
 </div>
 
 <div id="cz-tweak-panel" class="cz-tweak-panel cz-tweak-collapsed">
+  <div id="cz-tweak-resizer" class="cz-tweak-resizer" title="ドラッグで幅を変える (ダブルクリックで既定の幅に戻す)"></div>
   <div class="cz-tweak-inner">
     <div class="cz-tweak-header">
       <span class="cz-tweak-title">調整パネル</span>
@@ -1474,6 +1518,9 @@
 
     function setCollapsed(collapsed) {
       panelEl.classList.toggle('cz-tweak-collapsed', collapsed);
+      // 開いている間はステージを右へ寄せ、縮小率もパネルを除いた幅で決め直す
+      bodyEl.classList.toggle('cz-tweak-open', !collapsed);
+      updateScale();
     }
 
     buildControls();
@@ -1656,20 +1703,25 @@
 
   // 縮小率は全フレーム共通。1枚が画面幅に収まる率まで下げ、それ以上は下げない
   // (並べたいだけ縮めると案どうしの密度の比較ができなくなる。横幅が足りなければ折り返す)
-  // 回答パネルが開いている間にステージから譲っている幅。CSS の --cz-answer-reserve が唯一の値で、
-  // 畳んでいるとき・インライン表示のとき (body に cz-answer-open が付かない) は 0
-  function answerReservePx() {
-    if (!bodyEl.classList.contains('cz-answer-open')) return 0;
-    // --cz-answer-reserve は calc() なので getComputedStyle では式のまま返り数値にできない。
+  // 左右のパネルが開いている間にステージから譲っている幅の合計。CSS の --cz-tweak-reserve / --cz-answer-reserve が
+  // 唯一の値で、畳んでいるとき・インライン表示のとき (body に cz-*-open が付かない) はその側は 0
+  function panelReservePx() {
+    // --cz-*-reserve は calc() なので getComputedStyle では式のまま返り数値にできない。
     // 幅の変数 (px の単値) を読んで、CSS 側と同じ余白 16px を足す
-    var raw = parseFloat(getComputedStyle(bodyEl).getPropertyValue('--cz-answer-width'));
-    return isNaN(raw) ? 0 : raw + 16;
+    var style = getComputedStyle(bodyEl);
+    var total = 0;
+    [['cz-tweak-open', '--cz-tweak-width'], ['cz-answer-open', '--cz-answer-width']].forEach(function (pair) {
+      if (!bodyEl.classList.contains(pair[0])) return;
+      var raw = parseFloat(style.getPropertyValue(pair[1]));
+      if (!isNaN(raw)) total += raw + 16;
+    });
+    return total;
   }
 
   function updateScale() {
     // 引くのは .cz-stage の左右パディング 48px + 2px。この 2px は下の Math.round が
     // 切り上げたときのぶんで、無いと 1px 足りずに最後の1枚だけ折り返すことがある
-    var avail = document.documentElement.clientWidth - 50 - answerReservePx();
+    var avail = document.documentElement.clientWidth - 50 - panelReservePx();
     var scale = Math.min(1, avail / currentFrame.w);
     scale = Math.max(0.2, Math.round(scale * 1000) / 1000);
     bodyEl.style.setProperty('--cz-scale', String(scale));
@@ -2173,6 +2225,77 @@
     });
     syncTweakToggle();
   }
+
+  /* ── 調整パネルの幅つまみ (ドラッグで --cz-tweak-width を書き換える。ダブルクリックで既定に戻す)。
+        回答パネルのつまみと同じ作り。調整パネルの IIFE は bodyEl や updateScale より先に走るので、配線はここで行う ── */
+  (function () {
+    var resizerEl = document.getElementById('cz-tweak-resizer');
+    if (!tweak.enabled || !resizerEl) return;
+    var WIDTH_KEY = 'cz-tweak-width';
+    var MIN_WIDTH = 220;
+    var defaultWidth = parseFloat(getComputedStyle(bodyEl).getPropertyValue('--cz-tweak-width')) || 280;
+
+    function clampWidth(w) {
+      // 左端に張り付くので、最大は「ステージに絵が 1 枚残る幅」までに留める
+      var max = Math.max(MIN_WIDTH, document.documentElement.clientWidth - 240);
+      return Math.min(max, Math.max(MIN_WIDTH, Math.round(w)));
+    }
+
+    function applyWidth(w, persist) {
+      var next = clampWidth(w);
+      bodyEl.style.setProperty('--cz-tweak-width', next + 'px');
+      updateScale();
+      if (persist) {
+        try { window.localStorage.setItem(WIDTH_KEY, String(next)); } catch (e) { /* 保存できなくても幅は効く */ }
+      }
+    }
+
+    function restoreWidth() {
+      var saved = null;
+      try { saved = parseFloat(window.localStorage.getItem(WIDTH_KEY)); } catch (e) { saved = null; }
+      if (saved && !isNaN(saved)) applyWidth(saved, false);
+    }
+
+    var dragging = false;
+    var pending = null;
+    resizerEl.addEventListener('pointerdown', function (e) {
+      if (e.button !== 0) return;
+      dragging = true;
+      bodyEl.classList.add('cz-tweak-resizing');
+      try { resizerEl.setPointerCapture(e.pointerId); } catch (err) { /* 取れなくても document の move で追う */ }
+      e.preventDefault();
+    });
+    document.addEventListener('pointermove', function (e) {
+      if (!dragging) return;
+      // 左端に張り付いているので、幅 = 画面左端からポインタまでの距離
+      pending = e.clientX;
+      if (pending !== null && !resizerEl.__raf) {
+        resizerEl.__raf = requestAnimationFrame(function () {
+          resizerEl.__raf = null;
+          if (pending !== null) applyWidth(pending, false);
+        });
+      }
+    });
+    function endDrag(e) {
+      if (!dragging) return;
+      dragging = false;
+      bodyEl.classList.remove('cz-tweak-resizing');
+      try { resizerEl.releasePointerCapture(e.pointerId); } catch (err) { /* 未取得なら無視 */ }
+      var w = parseFloat(bodyEl.style.getPropertyValue('--cz-tweak-width')) || defaultWidth;
+      applyWidth(w, true);
+    }
+    document.addEventListener('pointerup', endDrag);
+    document.addEventListener('pointercancel', endDrag);
+    resizerEl.addEventListener('dblclick', function () {
+      applyWidth(defaultWidth, true);
+    });
+    window.addEventListener('resize', function () {
+      // 窓が狭くなったら幅も詰める (保存値は触らない)
+      var w = parseFloat(bodyEl.style.getPropertyValue('--cz-tweak-width'));
+      if (w && clampWidth(w) !== w) applyWidth(w, false);
+    });
+    restoreWidth();
+  })();
 
   if (!answer.enabled) {
     answerGroupEl.setAttribute('hidden', 'hidden');

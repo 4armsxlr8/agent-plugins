@@ -13,18 +13,18 @@ metadata:
 
 # report-index — レポート一覧をローカルサーバーで開く
 
-`docs/crystallize/reports/` に溜まった HTML レポートを、登録済みプロジェクトを横断して 1 画面に並べる。一覧はリクエスト時に生成されるので、レポートが増えても作り直しは要らない。fork しない — やることは 1 コマンドの実行と結果の中継だけ。
+`docs/crystallize/reports/` に保存された HTML レポートを、登録済みプロジェクトを横断して 1 つの画面に一覧表示する。一覧はリクエスト時に生成されるため、レポートが増えても再作成する必要はない。サブエージェントは fork せず、1 つのコマンドを実行して結果を中継するのみとする。
 
 ## Input / Output
 
 - **Input**: `$ARGUMENTS` = 任意で `--port <番号>`。省略時は `$CRYSTALLIZE_REPORT_PORT`、それも無ければ 47311
-- **Output**: ブラウザで `http://127.0.0.1:<port>/` を開く。最終応答は `ensure` が stdout に出す URL と `projects=<登録プロジェクト数>` の 2 行を写すだけ
+- **Output**: ブラウザで `http://127.0.0.1:<port>/` を開く。最終応答は `ensure` が stdout に出力する URL と `projects=<登録プロジェクト数>` の 2 行をそのまま返す
 
 ## 仕組み (1 行ずつ)
 
-- サーバーは `<skill-dir>/scripts/report_server.py` (Python 標準ライブラリのみ、127.0.0.1 にしか bind しない)
-- 走査対象のプロジェクトは registry ファイルで登録する。html-report と diff-review が保存時に自分のプロジェクトを登録するので、一覧は使うほど勝手に育つ
-- registry と state の置き場は `~/.crystallize/` を第一候補に、書けなければ `/tmp/claude/crystallize/`、それも駄目なら `$TMPDIR/crystallize/` へ落ちる。読むときは全部を合算する
+- サーバーは `<skill-dir>/scripts/report_server.py` である (Python 標準ライブラリのみを使用し、127.0.0.1 のみに bind する)
+- 走査対象のプロジェクトは registry ファイルで登録する。html-report と diff-review が保存時に自身のプロジェクトを登録するため、一覧には対象プロジェクトが自動的に追加される
+- registry と state の保存先は `~/.crystallize/` を第一候補とし、書き込めない場合は `/tmp/claude/crystallize/`、それも使用できない場合は `$TMPDIR/crystallize/` を使用する。読み込む際はすべての保存先の内容を合算する
 
 ## Step 1: 起動して開く
 
@@ -39,11 +39,11 @@ python3 "<skill-dir>/scripts/report_server.py" ensure --root "$PROJROOT" --open 
 
 | exit | 意味 | 次にすること |
 |---|---|---|
-| 0 | 起動済み (または今起動した)。stdout に URL と `projects=N` が出る | Step 2 へ |
-| 3 | 起動した子プロセスがポートの bind を sandbox に拒否された (ログの末尾で判定済み) | **同じコマンドを sandbox を無効にして 1 回だけ再実行する** (サーバーの起動だけが sandbox の外を必要とする。2 回目以降の呼び出しは sandbox 内で済む) |
-| 2 | ポートが別プロセスに使われている・`--root` が無い・登録先に書けない等。stderr に理由が出る | ポート使用中なら `--port <別の番号>` を付けて再実行する。それ以外は理由をそのまま伝えて終了する |
+| 0 | 起動済み (または今回起動した)。stdout に URL と `projects=N` が出力される | Step 2 へ |
+| 3 | 起動した子プロセスがポートの bind を sandbox に拒否された (ログの末尾で判定済み) | **同じコマンドを sandbox を無効にして 1 回だけ再実行する** (サーバーの起動のみ sandbox の外で行う必要がある。2 回目以降の呼び出しは sandbox 内で実行できる) |
+| 2 | ポートが別のプロセスに使用されている、`--root` が指定されていない、登録先に書き込めない等。stderr に理由が出力される | ポートが使用中なら `--port <別の番号>` を付けて再実行する。それ以外は理由をそのまま伝えて終了する |
 
-sandbox を外した再実行も断られたら、ユーザーに次を案内して終了する (`!` 接頭辞はユーザー自身のシェルで実行される。`nohup … &` で切り離さないとシェルがサーバーに占有される):
+sandbox を無効にした再実行も拒否された場合は、ユーザーに次のコマンドを案内して終了する (`!` 接頭辞はユーザー自身のシェルで実行される。`nohup … &` でバックグラウンド実行しないとシェルがサーバープロセスに占有される):
 
 ```
 ! nohup python3 <skill-dir>/scripts/report_server.py serve >/dev/null 2>&1 &
@@ -51,16 +51,16 @@ sandbox を外した再実行も断られたら、ユーザーに次を案内し
 
 ## Step 2: 最終応答
 
-`ensure` の stdout (URL の行と `projects=N` の行) をそのまま返す。一覧の中身をチャットに書き写さない — 画面のほうが検索も絞り込みも速い。
+`ensure` の stdout (URL の行と `projects=N` の行) をそのまま返す。一覧の内容をチャットに転記しない。ブラウザ画面で確認したほうが検索や絞り込みを迅速に行えるためである。
 
 ## Gotchas
 
-- **sandbox 内では bind・loopback 接続・ホームへの書き込みがすべて拒否される** (実測)。だから起動確認は HTTP ではなく、サーバーが握っている `server-<port>.lock` の flock を読み取り fd で試すことで行い (pid の再利用や SIGKILL 後の残骸に騙されない。読み取りで開けば sandbox 内でも試せる)、登録は HTTP ではなくファイルで行う。この設計を「healthz を curl する」形に戻すと sandbox 内で毎回失敗する
-- プラグインを更新すると起動中のサーバーは古いコードのまま。`ensure` は state の version と自分の version を比べ、違えば止めて起動し直す。sandbox 内から止められなかったときは stderr にその旨が出るので、`stop` を sandbox の外で実行する
-- ポートが別のプロセスに使われていると `serve` は exit 2 で止まる。`--port` か `CRYSTALLIZE_REPORT_PORT` で逃がす。state と lock はポートごと (`server-<port>.json` / `.lock`) なので、別ポートを指定すれば 2 台目が立つ。`status` / `stop` は全ポート分を扱う
-- `/tmp/claude/` に落ちた registry は OS の一時ファイル掃除で消えることがある。消えても次に html-report を走らせたプロジェクトから再登録されるので、恒久的な登録が要るときは sandbox の外で `register --root` を 1 回実行する (サーバー自身も起動時に読めた登録を `~/.crystallize/roots/` へ写す)
-- 一覧の見た目は html-report の `assets/style.css` をそのまま読み込み、一覧行の CSS だけをスクリプト内に持つ。style.css 側を直しても component-samples.html の貼り直しは不要 (一覧行の CSS は正本の外に置く判断をした — 一覧はレポートではなく、LLM が毎回生成するものでもないため)
+- **sandbox 内では bind・loopback 接続・ホームへの書き込みがすべて拒否される** (実測)。そのため起動確認は HTTP ではなく、サーバープロセスが保持している `server-<port>.lock` の flock を読み取り用ファイルディスクリプタで試行することで行い (PID の再利用や SIGKILL による終了後の残存ファイルによる誤判定を防ぐため。読み取り専用で開けば sandbox 内でも検証できる)、登録は HTTP ではなくファイルで行う。この設計を「healthz を curl する」方式に変更すると、sandbox 内で毎回失敗する
+- プラグインを更新しても起動中のサーバーは古いコードのまま稼働する。`ensure` は state の version と自身の version を比較し、一致しなければサーバーを停止して再起動する。sandbox 内から停止できなかった場合は stderr にその旨が出力されるため、sandbox の外で `stop` を実行する
+- ポートが別のプロセスに使用されていると `serve` は exit 2 で終了する。`--port` または `CRYSTALLIZE_REPORT_PORT` で別のポート番号を指定する。state と lock はポートごと (`server-<port>.json` / `.lock`) に管理されるため、別ポートを指定すれば 2 つ目のサーバープロセスが起動する。`status` / `stop` は全ポート分を対象に処理する
+- `/tmp/claude/` に保存された registry は OS の一時ファイル削除によって消去されることがある。消去された場合でも次に html-report を実行したプロジェクトから再登録されるため、恒久的な登録が必要な場合は sandbox の外で `register --root` を 1 回実行する (サーバー自身も起動時に読み取れた登録情報を `~/.crystallize/roots/` へコピーする)
+- 一覧のスタイルは html-report の `assets/style.css` をそのまま読み込み、一覧行の CSS だけをスクリプト内に保持する。style.css 側を修正しても component-samples.html の更新は不要である (一覧行の CSS は共通スタイル定義の外に置く設計としている。一覧はレポートそのものではなく、LLM が毎回生成する対象でもないためである)
 
 ## Additional resources
 
-- `scripts/report_server.py` — サーバー本体。`serve` / `register` / `status` / `ensure` / `stop` の 5 サブコマンド。`python3 scripts/report_server.py -h`
+- `scripts/report_server.py` — サーバー本体。`serve` / `register` / `status` / `ensure` / `stop` の 5 つのサブコマンドがある。`python3 scripts/report_server.py -h`

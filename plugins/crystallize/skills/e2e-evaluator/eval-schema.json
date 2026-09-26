@@ -1,0 +1,22 @@
+{
+  "version": "1",
+  "skill": "e2e-evaluator",
+  "score_field": "quality.overall",
+  "breakdown_keys": [
+    {"key": "ac_pass_rate", "label": "判定対象の受け入れ基準行のうち、操作結果が期待結果と一致した割合", "threshold": 15, "weight": 80},
+    {"key": "evidence_grounding", "label": "各 verdict に操作と観測の記録が付いているか", "threshold": 15, "weight": 20}
+  ],
+  "extras": {
+    "plan_implementation": "supplemental",
+    "results": "required",
+    "side_effects": "required",
+    "feedback": "required",
+    "undecidable": "required",
+    "passed": "required",
+    "evaluator_skill": "required"
+  },
+  "passing_rule": "no_fail AND NOT undecidable (score と threshold は合否に使わない。pending は合否に影響しない)",
+  "ref": "spec/SKILL.md 受け入れ基準 (テストケース表)",
+  "rubric": null,
+  "notes": "spec の受け入れ基準表と起動済みの対象だけを見て採点する。plan・実装コード・テストコード・generator 報告・ledger・mock.html は読まない。対象外 (unit/human/unsafe/precondition) は不合格ではない。判定対象 0 件または駆動手段なしは undecidable。"
+}

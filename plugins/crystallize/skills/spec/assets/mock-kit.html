@@ -1613,14 +1613,19 @@
     });
   }
 
+  var barHasStates = variants.some(function (el) { return statesOf(el).length > 0; });
+
   function buildStateButtons(variantEl) {
     var keys = statesOf(variantEl);
     stateGroupEl.textContent = '';
 
     if (!keys.length) {
-      stateGroupEl.setAttribute('hidden', 'hidden');
-      stateSepEl.setAttribute('hidden', 'hidden');
       currentState = null;
+      // 状態を持つ案が1つでもあれば、状態のない案でも群と区切りを隠さない (隠すとバーの幅が変わり、ほかのボタンが動く)
+      if (!barHasStates) {
+        stateGroupEl.setAttribute('hidden', 'hidden');
+        stateSepEl.setAttribute('hidden', 'hidden');
+      }
       return;
     }
     stateGroupEl.removeAttribute('hidden');
@@ -2335,6 +2340,17 @@
 
   setFrame(FRAMES[0].key);
   if (variants.length) {
+    // バーの中で中身が変わる部品 (案名・状態ボタン群・寸法表示) の幅を、取りうる最大に固定する —
+    // バーは中央寄せの max-content なので、案や端末を切り替えるたびに幅が変わると ◀ ▶ やほかのボタンが動き、マウスで追いかけることになるため
+    function maxWidth(el, fill, items) {
+      return Math.ceil(Math.max.apply(null, items.map(function (item) { fill(item); return el.getBoundingClientRect().width; }))) + 'px';
+    }
+    variantNameEl.style.minWidth = maxWidth(variantNameEl, function (el) {
+      variantNameEl.textContent = variantId(el) + ' · ' + (el.getAttribute('data-variant-name') || '');
+    }, variants);
+    stateGroupEl.style.minWidth = maxWidth(stateGroupEl, buildStateButtons, variants);
+    currentState = null;
+    metaEl.style.minWidth = maxWidth(metaEl, function (f) { metaEl.textContent = f.w + ' × ' + f.h + ' · 100%'; }, FRAMES);
     var initial = readHashVariant();
     setVariant(initial || variantId(variants[0]), true);
   }

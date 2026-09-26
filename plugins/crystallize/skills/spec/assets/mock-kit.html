@@ -1556,6 +1556,10 @@
   var bodyEl = document.body;
   var stageEl = document.getElementById('cz-stage');
   var variants = stageEl ? Array.prototype.slice.call(stageEl.querySelectorAll('.cz-variant')) : [];
+  // 並びは data-variant の ID 順に固定する — ラウンドを重ねて案を途中に差し込んだり確定案を先頭へ動かしたりしても、バーの循環が A→B→D→C のように崩れないため
+  variants.sort(function (a, b) { return (a.getAttribute('data-variant') || '').localeCompare(b.getAttribute('data-variant') || '', undefined, { numeric: true }); });
+  // ハッシュなしで開いたときの初期表示は「(確定)」の案。無ければ ID 順の先頭
+  var defaultVariant = variants.filter(function (el) { return /^\(確定\)/.test(el.getAttribute('data-variant-name') || ''); })[0] || variants[0];
   var variantGroupEl = document.getElementById('cz-variant-group');
   var variantNameEl = document.getElementById('cz-variant-name');
   var prevBtn = document.getElementById('cz-prev-btn');
@@ -1665,7 +1669,7 @@
   /* ── 案 ── */
 
   function setVariant(id, writeHashFlag) {
-    var target = findVariant(id) || variants[0];
+    var target = findVariant(id) || defaultVariant;
     if (!target) return;
     currentVariant = target;
 
@@ -2352,7 +2356,7 @@
     currentState = null;
     metaEl.style.minWidth = maxWidth(metaEl, function (f) { metaEl.textContent = f.w + ' × ' + f.h + ' · 100%'; }, FRAMES);
     var initial = readHashVariant();
-    setVariant(initial || variantId(variants[0]), true);
+    setVariant(initial || variantId(defaultVariant), true);
   }
   bodyEl.classList.add('cz-ready');
 })();

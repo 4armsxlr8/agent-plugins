@@ -67,8 +67,8 @@ grep -c 'const ROUND' "$MOCK"; grep -c 'const QUESTIONS' "$MOCK"  # どちらも
 </section>
 ```
 
-- `data-variant` は A / B / C。`data-variant-name` は構造を表す短い名前 (「縦リスト」「カードグリッド + 詳細」)。バーにそのまま出る
-- 切替は3系統がキット側で動く: 画面下中央のバー (◀ 案名 ▶) / 矢印キー ← → で循環 / URL hash `#variant=B`。hash はリロードしても復元し、そのままユーザーに送れる (ローカルファイルなので search param ではなく hash)
+- `data-variant` は A / B / C。後のラウンドで足す案は D, E … と続け、一度振った ID は使い回さない。バーの並びと ◀ ▶ の循環は HTML 上の位置ではなく ID 順にキットが揃えるので、`<section>` をどこに差し込んでも並びは崩れない。`data-variant-name` は構造を表す短い名前 (「縦リスト」「カードグリッド + 詳細」)。バーにそのまま出る
+- 切替は3系統がキット側で動く: 画面下中央のバー (◀ 案名 ▶) / 矢印キー ← → で循環 / URL hash `#variant=B`。hash はリロードしても復元し、そのままユーザーに送れる (ローカルファイルなので search param ではなく hash)。hash なしで開いたときは `data-variant-name` が「(確定)」で始まる案、無ければ ID 順の先頭が出る
 - 矢印キーは input・textarea・select・contenteditable にフォーカスがあるときと修飾キー併用時は横取りしない — 数値入力とスライダー操作を壊さないため
 - 案が1つのときはバーの送りボタンが自動で消える
 - **案ごとの CSS は `.cz-variant[data-variant="B"] …` の配下に閉じる** — 漏れると案どうしが似てしまい、構造を分けた意味が消える

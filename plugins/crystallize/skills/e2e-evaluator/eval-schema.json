@@ -18,5 +18,5 @@
   "passing_rule": "no_fail AND NOT undecidable (score と threshold は合否に使わない。pending は合否に影響しない)",
   "ref": "spec/SKILL.md 受け入れ基準 (テストケース表)",
   "rubric": null,
-  "notes": "spec の受け入れ基準表と起動済みの対象だけを見て採点する。plan・実装コード・テストコード・generator 報告・ledger・mock.html は読まない。対象外 (unit/human/unsafe/precondition) は不合格ではない。判定対象 0 件または駆動手段なしは undecidable。"
+  "notes": "spec の受け入れ基準表と起動済みの対象だけを見て採点する。plan・実装コード・テストコード・generator 報告・ledger・mock.html・sheet.html は読まない。対象外 (unit/human/unsafe/precondition) は不合格ではない。判定対象 0 件または駆動手段なしは undecidable。"
 }

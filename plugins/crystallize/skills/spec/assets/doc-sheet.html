@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>文書シート — 見本</title>
+
+<!--
+  文書シート — 画面のないタスク (データモデル・API・CLI・バッチ・状態機械・閾値・権限・外部連携) のラウンドシート。
+  正本: plugins/crystallize/skills/spec/assets/doc-sheet.html。契約と規則は references/doc-sheet.md を読むこと。
+
+  このファイルをそのままシートの出発点にする:
+    cp <このファイル> docs/crystallize/specs/<slug>/sheet.html
+  そのうえで「スロット」と書かれた 1 ブロック (<script id="cz-doc-data"> の中身) だけを書き換える。
+  CZ-DOC:*:BEGIN 〜 CZ-DOC:*:END で囲まれた 3 ブロック (STYLE / MARKUP / SCRIPT) は一字も変えない。
+-->
+<!-- CZ-DOC:STYLE:BEGIN 無改変層 — 一字も変えない -->
+<style id="cz-doc-style">
+/* 落ち着いた配色: 色は「選んでいる」印の 1 つだけ。帯の色線・色つきタグ・右側の色地は持たない。
+   問いの文章が最初に目に入るように、問いを最大の文字にし、見るものは一段小さく薄くする。 */
+:root{
+  --bg:#f7f7f5; --card:#fff; --ink:#1d1d1b; --sub:#6b6b64; --faint:#9a9a92; --line:#dcdcd6;
+  --sel:#1d1d1b; --sel-soft:#efefeb; --flash:#e9e9e3;
+  --gain:#2e7d4f; --loss:#b0433a; --radio:#2f6fe0;
+}
+@media (prefers-color-scheme: dark){ :root{
+  --bg:#171716; --card:#1f1f1d; --ink:#ececE8; --sub:#a3a39b; --faint:#77776f; --line:#3a3a36;
+  --sel:#ececE8; --sel-soft:#2c2c29; --flash:#3a3a34;
+  --gain:#7fc99b; --loss:#e39a93; --radio:#6ea0ff;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.65 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+header,main,#reply{max-width:1280px;margin:0 auto;padding:0 16px}
+header{padding-top:24px}
+h1{font-size:17px;margin:0 0 4px;font-weight:700}
+.lead{color:var(--sub);margin:0 0 8px;font-size:13px}
+/* 帯: 1 論点 = 1 行。左が問い、右がその問いで見るもの。色線は無く、区切りは罫線だけ */
+.band{display:grid;grid-template-columns:minmax(300px,5fr) 7fr;gap:0;margin:0;padding:22px 0;border-top:1px solid var(--line)}
+.band:first-child{border-top:0}
+.band.done{opacity:.7}
+.band.noex{grid-template-columns:1fr}
+.band.noex>.l{max-width:720px;padding:0}
+/* 左右の境界は縦線ではなく間隔 (列の gap) で示す */
+.band{column-gap:56px}
+.band>.l{padding:0}
+.band>.r{padding:0;min-width:0;color:var(--sub)}
+/* 番号 (Q1 / 前提 / 値) は見出しと同じ大きさ・同じ色。小さく薄くすると見出しとの隙間だけが目立つ */
+.tag{display:inline-block;font-weight:700;font-size:inherit;color:inherit;margin:0 .6em 0 0}
+.band>.r .bt .tag{color:var(--sub)}
+/* 問いの文章が主役 */
+.band h2{font-size:17px;line-height:1.5;margin:0 0 10px;font-weight:700}
+.premise{font-size:13px;color:var(--sub);margin:0 0 12px}
+.premise b{color:var(--sub);font-weight:600}
+.opt{display:grid;grid-template-columns:auto 1fr;column-gap:8px;align-items:start;width:100%;text-align:left;border:1px solid var(--line);background:var(--card);color:inherit;border-radius:6px;padding:9px 12px;margin:6px 0;font:inherit;cursor:pointer}
+.opt input[type=radio]{grid-row:1/4;width:15px;height:15px;margin:3px 0 0;accent-color:var(--radio);pointer-events:none}
+.opt input[type=radio]:focus-visible{outline:2px solid var(--radio);outline-offset:2px}
+.opt .g,.opt .x{grid-column:2}
+.opt .ol{font-weight:700}
+.opt .g,.opt .x{font-size:13px;margin:2px 0 0;color:var(--sub)}
+.opt .g::before{content:"得る: ";font-weight:700;color:var(--gain)}
+.opt .x::before{content:"失う: ";font-weight:700;color:var(--loss)}
+.opt.dis{cursor:default}
+.opt.rej{opacity:.45} .opt.rej .ol{text-decoration:line-through}
+.pill{font-size:11px;border:1px solid var(--faint);color:var(--sub);border-radius:10px;padding:0 6px;margin-left:6px;font-weight:400}
+.rec{font-size:13px;margin:8px 0;color:var(--sub)}
+.mini{font-size:12px;color:var(--sub)}
+.linkbtn{background:none;border:0;color:var(--sub);cursor:pointer;font:inherit;font-size:12px;padding:0;text-decoration:underline}
+input[type=text],textarea{width:100%;font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+/* 見るもの: 一段小さく薄く。選んでいる案の列だけ枠が濃くなる */
+.cols{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:12px}
+.col{border:1px solid var(--line);background:var(--card);border-radius:6px;padding:10px;min-width:0;cursor:pointer}
+.col.on{border:2px solid var(--sel);padding:9px}
+.col.off{opacity:.55}
+.col.rej{opacity:.35;cursor:default} .col.rej .ch{text-decoration:line-through}
+.col:not(.pickable){cursor:default}
+.ch{font-weight:700;font-size:13px;margin-bottom:6px;color:var(--ink)}
+.ch .st{font-weight:400;color:var(--sub);margin-left:6px;font-size:12px}
+.blk{margin:0 0 12px} .blk:last-child{margin-bottom:0}
+.bt{font-size:12px;font-weight:700;margin:0 0 3px;color:var(--ink)}
+.uses{font-size:11px;color:var(--faint);margin:0 0 4px}
+.uses span{border:1px solid var(--line);color:var(--faint);border-radius:10px;padding:0 6px;margin-right:4px}
+table{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums;color:var(--sub)}
+th,td{border-bottom:1px solid var(--line);padding:3px 6px;text-align:left;white-space:nowrap}
+th{color:var(--faint);font-weight:600}
+tr.hl td{color:var(--ink);font-weight:700;background:var(--sel-soft)}
+.scroll{overflow-x:auto}
+pre{margin:0;font:12px/1.5 ui-monospace,Menlo,monospace;white-space:pre;overflow-x:auto;background:var(--bg);padding:6px 8px;border-radius:4px;color:var(--sub)}
+.note{font-size:12px;color:var(--sub);margin:6px 0 0}
+.chg{animation:chg 1.2s ease-out}
+@keyframes chg{from{background:var(--flash)}to{background:transparent}}
+/* 値 */
+.tw{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;margin:0 0 12px}
+.tw label{font-weight:700;font-size:13px}
+.tw input[type=number]{width:80px;font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:3px 6px}
+.tw input[type=range]{grid-column:1/3;width:100%;accent-color:var(--sel)}
+.tw .mini{grid-column:1/3}
+.tw a{color:var(--sub)}
+/* 前提 */
+.pl{margin:0;padding:0;list-style:none;font-size:13px;color:var(--sub)}
+.pl li{padding:4px 0}
+.pl details{display:inline}
+.pl summary{display:inline;cursor:pointer;color:var(--faint);font-size:12px;margin-left:6px}
+.pl input{margin-top:4px}
+.pl .has{font-weight:700;color:var(--ink)}
+details.hist>summary{cursor:pointer;font-weight:700;margin:14px 0 0;color:var(--sub)}
+/* 回答 */
+#reply{padding-bottom:48px}
+#reply .box{border-top:1px solid var(--line);padding:22px 0 0;margin:0}
+#bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0 0}
+#bar button{font:inherit;font-weight:700;background:var(--sel);color:var(--card);border:0;border-radius:6px;padding:8px 16px;cursor:pointer}
+@media (max-width:860px){
+  .band{grid-template-columns:1fr}
+  .band>.l{padding:0 0 16px}
+  .band>.r{padding:0}
+  .cols{grid-template-columns:1fr}
+}
+</style>
+<!-- CZ-DOC:STYLE:END -->
+</head>
+<body>
+<!-- CZ-DOC:MARKUP:BEGIN 無改変層 — 一字も変えない -->
+<header id="head"></header>
+<main id="sheet"></main>
+<section id="reply"></section>
+<!-- CZ-DOC:MARKUP:END -->
+
+<!-- スロット: ROUND / PREMISES / TWEAKS / サンプル / MODEL / QUESTIONS / DECIDED / VALUE_EXHIBITS ここから (この見本のデモ用。丸ごと差し替える) -->
+<script id="cz-doc-data">
+'use strict';
+
+const ROUND = {
+  label: 'goal-attempt-storage',   // spec の slug
+  round: 1,
+  final: false,
+  title: '1 つのゴールの試行記録と次の期日の保存形',
+  lead: '左の問いに答えると、同じ帯の右側の例がその答えで描き直されます。推奨は最初から選ばれています。変えたい問いだけ触ってください。数値は「値」の帯で動かすと、関係する例がすべて計算し直されます。'
+};
+
+/* 質問にしていない判断。異議は各行の「異議」から書く (全体へのコメントに載る) */
+const PREMISES = [
+  { id: 'P1', text: '判定は 3 段階 (思い出せた / おおむね思い出せた / もう一度) で、試行ごとに 1 つ記録する' },
+  { id: 'P2', text: '「おおむね思い出せた」でも間隔は「思い出せた」と同じく 2 倍に延ばす (Q2 は提案の条件だけを決める)' },
+  { id: 'P3', text: '「もう一度」のあとは、次の期日を初回の間隔で置き、提案までの回数も 0 に戻す' },
+  { id: 'P4', text: '期日は日単位で持ち、時刻は持たない。例は「毎回期日の当日に復習した」として計算している' },
+  { id: 'P5', text: '試行記録は消さない (ゴールを消したときだけ一緒に消える)' }
+];
+
+/* 数値・程度の論点。質問にはしない。最終値が 調整パネル: 行の flat JSON になる */
+const TWEAKS = [
+  { key: 'firstInterval', label: '初回の間隔', unit: '日', min: 1, max: 14, step: 1, value: 2 },
+  { key: 'maxInterval',   label: '間隔の上限', unit: '日', min: 7, max: 180, step: 1, value: 60 },
+  { key: 'proposeAfter',  label: '提案までの回数', unit: '回', min: 1, max: 5, step: 1, value: 1 }
+];
+
+/* 例に使う試行の並び (固定)。規則の違いが見える並びにしてある */
+const TRIALS = ['おおむね思い出せた', 'もう一度', 'おおむね思い出せた', '思い出せた', '思い出せた', '思い出せた', '思い出せた', '思い出せた', '思い出せた', '思い出せた'];
+const START = '2026-10-01';
+const SNAP = 4; // Q1 の保存例は 4 回目の試行のあとの姿を見せる
+
+function addDays(iso, n) {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+}
+const md = iso => iso.slice(5).replace('-', '/');
+
+function simulate(v, countAlmost) {
+  let step = 0, count = 0, date = START, proposedAt = -1;
+  const first = Math.min(v.firstInterval, v.maxInterval);
+  const rows = TRIALS.map((judge, i) => {
+    let interval;
+    if (judge === 'もう一度') { step = 0; count = 0; interval = first; }
+    else {
+      step++;
+      interval = Math.min(first * 2 ** (step - 1), v.maxInterval);
+      if (judge === '思い出せた' || countAlmost) count++;
+      if (proposedAt < 0 && count >= v.proposeAfter) proposedAt = i;
+    }
+    const due = addDays(date, interval);
+    const row = { n: i + 1, date, judge, interval, capped: interval === v.maxInterval && judge !== 'もう一度', due, count };
+    date = due;
+    return row;
+  });
+  return { rows, proposedAt };
+}
+
+/* 純関数。values と pick(問いID) から、見るもの全部が使うデータを作る */
+function MODEL(v, pick) {
+  return {
+    sim: simulate(v, pick('almost') === 'A'),
+    withAlmost: simulate(v, true),
+    withoutAlmost: simulate(v, false)
+  };
+}
+
+function proposalView(sim, v) {
+  return {
+    type: 'table', title: '試行ごとの「提案までの回数」', uses: ['proposeAfter'],
+    columns: ['#', '試行日', '判定', '回数'],
+    rows: sim.rows.slice(0, 6).map((r, i) => [r.n, md(r.date), r.judge, (i === sim.proposedAt ? '→ 提案 ' : '') + r.count + ' / ' + v.proposeAfter]),
+    hl: [sim.proposedAt],
+    note: sim.proposedAt < 0 ? '最初の 6 回では提案が出ない' : `${sim.proposedAt + 1} 回目の試行 (${md(sim.rows[sim.proposedAt].date)}) のあとに次のゴールを提案する`
+  };
+}
+
+const QUESTIONS = [
+  {
+    id: 'storage',
+    title: '試行記録の置き場所',
+    premise: '試行記録そのものは残す (学習履歴の表示に使うため)。記録を持たず期日と間隔だけを持つ案は、履歴が出せなくなるので外した',
+    question: '1 つのゴールの試行記録を、別の表に 1 試行 1 行で持つか、ゴールの行の中に配列で埋め込むか',
+    recommended: 'A',
+    reason: '「今週もう一度になった語句」のような、ゴールをまたぐ集計が後から必ず欲しくなるため',
+    options: [
+      { id: 'A', label: '別の表に 1 試行 1 行',
+        gain: 'ゴールをまたいで試行を日付や判定で集計・絞り込みできる',
+        loss: '1 回の復習で 2 つの表に書くので、片方だけ書けた状態を防ぐ手当てが要る',
+        exhibit: (m, v) => {
+          const rs = m.sim.rows.slice(0, SNAP), last = rs[SNAP - 1];
+          return [
+            { type: 'table', title: 'goals (ゴール)', uses: ['firstInterval', 'maxInterval'],
+              columns: ['id', 'phrase', 'next_due', 'interval_days'],
+              rows: [[1, '弘法にも筆の誤り', last.due, last.interval]] },
+            { type: 'table', title: 'attempts (試行)',
+              columns: ['id', 'goal_id', 'tried_on', 'result', 'interval_days'],
+              rows: rs.map(r => [r.n, 1, r.date, r.judge, r.interval]) }
+          ];
+        } },
+      { id: 'B', label: 'ゴールの行に配列で埋め込む',
+        gain: 'ゴールを 1 行読めば履歴まで揃い、書き込みも 1 行で済む',
+        loss: 'ゴールをまたぐ集計ができない (全ゴールの配列を読んで数えることになる)',
+        exhibit: (m, v) => {
+          const rs = m.sim.rows.slice(0, SNAP), last = rs[SNAP - 1];
+          const J = x => JSON.stringify(x);
+          const text = '{\n  "id": 1,\n  "phrase": "弘法にも筆の誤り",\n  "next_due": ' + J(last.due) + ',\n  "interval_days": ' + last.interval + ',\n  "attempts": [\n' +
+            rs.map(r => '    { "on": ' + J(r.date) + ', "result": ' + J(r.judge) + ', "interval_days": ' + r.interval + ' }').join(',\n') + '\n  ]\n}';
+          return [{ type: 'text', title: 'goals (ゴール) の 1 行', uses: ['firstInterval', 'maxInterval'], text }];
+        } }
+    ],
+    note: `どちらも ${SNAP} 回目の試行のあとの姿`
+  },
+  {
+    id: 'almost',
+    title: '提案に数える「思い出せた」の範囲',
+    premise: '次のゴールの提案は、このゴールで「思い出せた」が「提案までの回数」に達したときに出す。提案のあともこのゴールの復習は続く',
+    question: '「おおむね思い出せた」も「思い出せた」として回数に数えるか',
+    recommended: 'A',
+    reason: '完全に思い出せるまで待つと提案が遅れ、同じ語句ばかり続いて飽きやすいため',
+    options: [
+      { id: 'A', label: '含める',
+        gain: 'あいまいでも思い出せた時点で次のゴールが提案され、先へ進める',
+        loss: 'うろ覚えのまま次へ進むことを止めない',
+        exhibit: (m, v) => proposalView(m.withAlmost, v) },
+      { id: 'B', label: '含めない',
+        gain: 'はっきり思い出せたときだけ提案され、うろ覚えのまま先へ進まない',
+        loss: '「おおむね」が続くあいだは提案が出ない',
+        exhibit: (m, v) => proposalView(m.withoutAlmost, v) }
+    ]
+  },
+  {
+    id: 'dup',
+    title: '同じ語句をもう一度承認しようとしたときの扱い',
+    premise: '語句の一致は表記の完全一致で判定する (揺れの吸収は別の論点)。見るものは無く、文章だけで決める',
+    question: '既にゴールになっている語句を再び承認したとき、既存のゴールに戻すか、承認を拒んで知らせるか',
+    recommended: 'A',
+    reason: '本人は「また覚えたい」と思って承認しており、拒まれるより既存の記録に戻されるほうが目的に合う',
+    options: [
+      { id: 'A', label: '既存のゴールに戻す',
+        gain: '承認の操作がいつでも成功し、これまでの記録と期日がそのまま使われる',
+        loss: '「新しく覚え直す」ために記録を白紙にすることはできない' },
+      { id: 'B', label: '拒んで知らせる',
+        gain: '重複に気づけ、続けるか消して作り直すかを本人が選べる',
+        loss: '承認の操作が失敗する場合が生まれ、その場でひと手間増える' }
+    ]
+  }
+];
+
+/* 前のラウンドで決まった問い。QUESTIONS から移し、decided と round を付ける */
+const DECIDED = [];
+
+/* 値の帯の右側に出す例 */
+const VALUE_EXHIBITS = (m, v) => [{
+  type: 'table', title: '復習の予定 (毎回期日当日に復習した場合)', uses: ['firstInterval', 'maxInterval'],
+  columns: ['#', '試行日', '判定', '次の間隔', '次の期日'],
+  rows: m.sim.rows.map(r => [r.n, md(r.date), r.judge, r.interval + '日' + (r.capped ? ' (上限)' : ''), md(r.due)]),
+  hl: m.sim.rows.map((r, i) => r.judge === 'もう一度' ? i : -1).filter(i => i >= 0),
+  note: '思い出すたびに間隔は 2 倍、上限で止まる。「もう一度」で初回の間隔に戻る (太字の行)'
+}];
+
+</script>
+<!-- スロット: ここまで -->
+
+<!-- CZ-DOC:SCRIPT:BEGIN 無改変層 — 一字も変えない -->
+<script id="cz-doc-script">
+'use strict';
+/* 固定層。スロット (cz-doc-data) の宣言 ROUND / PREMISES / TWEAKS / MODEL / QUESTIONS / DECIDED / VALUE_EXHIBITS だけを読む。
+   - 全体を関数で包む: スロット側が同じ名前 (esc, pick, S など) を宣言しても衝突しない
+   - 宣言は 1 つずつ try で読む: スロットが途中で例外を投げて後ろの const が未初期化 (TDZ) でも白紙にならない
+   - 見るものの描画と MODEL は try で包み、失敗した箇所だけを注記にして残りを出す */
+(function () {
+  const read = (fn, fallback) => { try { const v = fn(); return v === undefined ? fallback : v; } catch (e) { return fallback; } };
+  const warnings = [];
+  const ROUND_ = read(() => ROUND, null) || (warnings.push('ROUND が読めません (スロットの記述を確認)'), { label: 'sheet', round: 1, final: false, title: '(ROUND が未定義)', lead: '' });
+  const PREMISES_ = read(() => PREMISES, []);
+  const TWEAKS_ = read(() => TWEAKS, []);
+  const QUESTIONS_ = read(() => QUESTIONS, null) || (warnings.push('QUESTIONS が読めません (スロットの記述を確認)'), []);
+  const MODEL_ = read(() => MODEL, null) || (() => ({}));
+  const VALUE_EXHIBITS_ = read(() => VALUE_EXHIBITS, null) || (() => []);
+  // 問い直す問いは DECIDED に移さず QUESTIONS に残す規則。両方にある id は QUESTIONS を生かす (要素 id と pick の衝突を避ける)
+  const qIds = new Set(QUESTIONS_.map(q => q.id));
+  const DECIDED_ = read(() => DECIDED, []).filter(q => { if (qIds.has(q.id)) { warnings.push(`DECIDED の '${q.id}' は QUESTIONS にも存在するため無視しました`); return false; } return true; });
+  const FINAL = !!ROUND_.final;
+  document.title = ROUND_.label + ' — ' + (FINAL ? '決定の記録' : 'ラウンド ' + ROUND_.round);
+
+  const esc = s => (s === undefined || s === null) ? '' : String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const oneLine = s => (s === undefined || s === null ? '' : String(s)).replace(/\s+/g, ' ').trim();
+  const byId = id => document.getElementById(id);
+  const tweakOf = k => TWEAKS_.find(t => t.key === k);
+  const asList = x => (x ? (Array.isArray(x) ? x : [x]) : []);
+  const qTitle = q => q.title || q.id;
+
+  /* 推奨が無い・不採用の選択肢を指している問いは、推奨なし (お任せ = 未選択) として扱う */
+  const recommendedOf = q => {
+    const o = (q.options || []).find(o => o.id === q.recommended);
+    if (!q.recommended) return null;
+    if (!o || o.rejected) { warnings.push(`${qTitle(q)}: 推奨 '${q.recommended}' は存在しないか不採用の選択肢なので、推奨なしとして扱います`); return null; }
+    return q.recommended;
+  };
+  const REC = {}; QUESTIONS_.forEach(q => { REC[q.id] = recommendedOf(q); });
+
+  const S = { ans: {}, vals: {}, pnote: {}, comment: '' };
+  QUESTIONS_.forEach(q => { S.ans[q.id] = { choice: null, note: '' }; });
+  TWEAKS_.forEach(t => { S.vals[t.key] = t.value; });
+  const STORE = 'cz-sheet:' + ROUND_.label + ':' + ROUND_.round;
+  // 下書きは決定の記録では復元も保存もしない (焼き込んだ値と選択が正本)
+  if (!FINAL) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORE) || 'null');
+      if (saved) {
+        QUESTIONS_.forEach(q => {
+          const a = saved.ans && saved.ans[q.id]; if (!a) return;
+          const ok = (q.options || []).some(o => o.id === a.choice && !o.rejected);
+          S.ans[q.id] = { choice: ok ? a.choice : null, note: typeof a.note === 'string' ? a.note : '' };
+        });
+        TWEAKS_.forEach(t => { const v = saved.vals && saved.vals[t.key]; if (typeof v === 'number' && Number.isFinite(v)) S.vals[t.key] = Math.min(t.max, Math.max(t.min, v)); });
+        S.pnote = (saved.pnote && typeof saved.pnote === 'object') ? saved.pnote : {};
+        S.comment = typeof saved.comment === 'string' ? saved.comment : '';
+      }
+    } catch (e) { /* localStorage なしでも動く */ }
+  }
+  const save = () => { if (FINAL) return; try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} };
+
+  const pick = id => {
+    const d = DECIDED_.find(q => q.id === id);
+    if (d) return d.decided;
+    const q = QUESTIONS_.find(q => q.id === id);
+    return q ? (S.ans[id].choice || REC[id] || undefined) : undefined;
+  };
+
+  /* 見るもの: type は table と text の 2 つだけ。描画に失敗したブロックは注記で残す */
+  function renderBlock(b) {
+    if (!b || typeof b !== 'object') return '';
+    const uses = asList(b.uses).map(k => { const t = tweakOf(k); return t ? `<span>${esc(t.label)} ${esc(S.vals[k])}${esc(t.unit)}</span>` : ''; }).join('');
+    let body = '';
+    if (b.type === 'table') {
+      const hl = asList(b.hl);
+      body = `<div class="scroll"><table><thead><tr>${asList(b.columns).map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>` +
+        asList(b.rows).map((r, i) => `<tr${hl.includes(i) ? ' class="hl"' : ''}>${asList(r).map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('') + '</tbody></table></div>';
+    } else {
+      body = `<pre>${esc(b.text)}</pre>`;
+    }
+    return `<div class="blk">${b.title ? `<p class="bt">${esc(b.title)}</p>` : ''}${uses ? `<p class="uses">使う値: ${uses}</p>` : ''}${body}${b.note ? `<p class="note">${esc(b.note)}</p>` : ''}</div>`;
+  }
+  const safeBlocks = (fn, where) => {
+    try { return asList(fn()).map(renderBlock).join(''); }
+    catch (e) { return `<p class="note">${esc(where)} の見るものを描けませんでした: ${esc(e && e.message ? e.message : e)}</p>`; }
+  };
+  const warn = w => { if (!warnings.includes(w)) warnings.push(w); };  // refresh のたびに呼ばれても同じ注意を積まない
+  const model = () => { try { return MODEL_(S.vals, pick) || {}; } catch (e) { warn('MODEL が例外を投げました: ' + (e && e.message ? e.message : e)); return {}; } };
+
+  const hasExhibit = q => !!(q.exhibit || asList(q.options).some(o => o.exhibit) || q.note);
+
+  function exhibitsHTML(q, m, done) {
+    const chosen = done ? q.decided : pick(q.id);
+    let html = '';
+    if (q.exhibit) html += safeBlocks(() => q.exhibit(m, S.vals, pick), qTitle(q));
+    const withEx = asList(q.options).filter(o => o.exhibit);
+    if (withEx.length) {
+      html += `<div class="cols" style="--n:${withEx.length}">` + withEx.map(o => {
+        const rej = o.rejected || (done && o.id !== chosen);
+        const on = !rej && o.id === chosen;
+        const st = rej ? '不採用' : on ? (done ? '採用' : '選択中') : '';
+        const cls = ['col', on ? 'on' : rej ? 'rej' : 'off', (!done && !rej) ? 'pickable' : ''].join(' ');
+        return `<div class="${cls}" data-q="${esc(q.id)}" data-o="${esc(o.id)}"><div class="ch">${esc(o.id)} ${esc(o.label)}${st ? `<span class="st">${st}</span>` : ''}</div>` +
+          safeBlocks(() => o.exhibit(m, S.vals, pick), `${qTitle(q)} 案 ${o.id}`) + '</div>';
+      }).join('') + '</div>';
+    }
+    if (q.note) html += `<p class="note">${esc(q.note)}</p>`;
+    return html;
+  }
+
+  function optionsHTML(q, done) {
+    const a = S.ans[q.id] || { choice: null, note: '' };
+    const chosen = done ? q.decided : pick(q.id);
+    return asList(q.options).map(o => {
+      const rej = o.rejected || (done && o.id !== chosen);
+      const on = !rej && o.id === chosen;
+      const pills = (o.id === REC[q.id] && !done ? '<span class="pill">推奨</span>' : '') +
+        (on && !done && !a.choice ? '<span class="pill">お任せ</span>' : '') + (rej ? '<span class="pill">不採用</span>' : '') + (on && done ? '<span class="pill">採用</span>' : '');
+      const dis = done || rej;
+      return `<label class="opt${on ? ' on' : ''}${rej ? ' rej' : ''}${dis ? ' dis' : ''}" data-q="${esc(q.id)}" data-o="${esc(o.id)}"${dis ? ' data-dis="1"' : ''}>` +
+        `<input type="radio" name="opt-${esc(q.id)}" value="${esc(o.id)}"${on ? ' checked' : ''}${dis ? ' disabled' : ''}>` +
+        `<span class="ol">${esc(o.id)} — ${esc(o.label)}${pills}</span><p class="g">${esc(o.gain)}</p><p class="x">${esc(o.loss)}</p></label>`;
+    }).join('');
+  }
+
+  function questionBand(q, n, done) {
+    const tag = done ? `決定 R${esc(q.round)}` : 'Q' + n;
+    const a = S.ans[q.id] || { choice: null, note: '' };
+    const left = `<h2><span class="tag">${tag}</span>${esc(qTitle(q))}</h2>` +
+      (q.premise ? `<p class="premise"><b>前提:</b> ${esc(q.premise)}</p>` : '') + (q.question ? `<p><b>${esc(q.question)}</b></p>` : '') +
+      `<div id="opts-${esc(q.id)}">${optionsHTML(q, done)}</div>` +
+      (REC[q.id] || done ? `<p class="rec"><b>推奨 ${esc(q.recommended)}:</b> ${esc(q.reason)}</p>` : '') +
+      (done ? '' : `<p class="mini" id="reset-${esc(q.id)}"></p><input type="text" data-note="${esc(q.id)}" placeholder="補足 (任意・1 行)" value="${esc(a.note)}">`);
+    // 見るものが無い問い (文章だけで決める論点) は右の欄を持たず、問いを 1 列で出す
+    const hasEx = hasExhibit(q);
+    return `<section class="band q${done ? ' done' : ''}${hasEx ? '' : ' noex'}" id="band-${esc(q.id)}"><div class="l">${left}</div>` +
+      (hasEx ? `<div class="r"><p class="bt"><span class="tag">${tag}</span>で見るもの</p><div id="ex-${esc(q.id)}"></div></div>` : '') + `</section>`;
+  }
+
+  function bandTag(id) {
+    const i = QUESTIONS_.findIndex(q => q.id === id);
+    if (i >= 0) return 'Q' + (i + 1);
+    const d = DECIDED_.find(q => q.id === id);
+    return d ? '決定 R' + d.round : id;
+  }
+
+  /* どの値がどの帯の例に効くかを、例の uses から集める */
+  function usesMap() {
+    const m = model(), map = {};
+    const add = (fn, band) => { let blocks; try { blocks = asList(fn()); } catch (e) { return; } blocks.forEach(b => asList(b && b.uses).forEach(k => { (map[k] = map[k] || []).includes(band) || map[k].push(band); })); };
+    [...DECIDED_, ...QUESTIONS_].forEach(q => {
+      if (q.exhibit) add(() => q.exhibit(m, S.vals, pick), q.id);
+      asList(q.options).forEach(o => o.exhibit && add(() => o.exhibit(m, S.vals, pick), q.id));
+    });
+    add(() => VALUE_EXHIBITS_(m, S.vals), 'V');
+    return map;
+  }
+
+  function build() {
+    byId('head').innerHTML = `<h1>${FINAL ? '決定の記録' : 'ラウンド ' + esc(ROUND_.round)}: ${esc(ROUND_.title)}</h1>` +
+      `<p class="lead">${FINAL ? 'このシートは最終の決定を残したものです。採用した案と、落とした案 (取り消し線) と、確定した値を読めます。' : esc(ROUND_.lead)}</p>` +
+      `<p class="note" id="cz-warn"></p>`;
+
+    let html = '';
+    // 前提
+    if (PREMISES_.length) {
+      html += `<section class="band p"><div class="l"><h2><span class="tag">前提</span>質問にしていない判断</h2>` +
+        `<p class="mini">${FINAL ? 'この前提のもとで決めました。' : '違っていたら「異議」から書いてください。全体へのコメントの先頭に載ります。'}</p></div>` +
+        `<div class="r"><ul class="pl">` + PREMISES_.map(p => `<li><b>${esc(p.id)}</b> ${esc(p.text)}` +
+          (FINAL ? '' : `<details${S.pnote[p.id] ? ' open' : ''}><summary>異議</summary><input type="text" data-pnote="${esc(p.id)}" value="${esc(S.pnote[p.id] || '')}" placeholder="この前提への異議"></details>`) + '</li>').join('') +
+        '</ul></div></section>';
+    }
+    // 決定済み
+    if (DECIDED_.length) {
+      html += `<details class="hist"${FINAL ? ' open' : ''}><summary>これまでの決定 (${DECIDED_.length})</summary>` +
+        DECIDED_.map(q => questionBand(q, 0, true)).join('') + '</details>';
+    }
+    // 問い
+    html += QUESTIONS_.map((q, i) => questionBand(q, i + 1, false)).join('');
+    // 値
+    if (TWEAKS_.length) {
+      const effects = usesMap();
+      html += `<section class="band v" id="band-V"><div class="l"><h2><span class="tag">値</span>数値の論点${FINAL ? ' (確定値)' : ''}</h2>` +
+        `<p class="mini">${FINAL ? '確定した値です。' : '質問にはしません。動かすと、下の「使う値」の印がある例がすべて計算し直されます。'}</p>` +
+        TWEAKS_.map(t => `<div class="tw"><label for="tw-${esc(t.key)}">${esc(t.label)} (${esc(t.unit)})</label>` +
+          `<input type="number" id="tw-${esc(t.key)}" data-tw="${esc(t.key)}" min="${esc(t.min)}" max="${esc(t.max)}" step="${esc(t.step)}" value="${esc(S.vals[t.key])}"${FINAL ? ' disabled' : ''}>` +
+          `<input type="range" data-tw="${esc(t.key)}" min="${esc(t.min)}" max="${esc(t.max)}" step="${esc(t.step)}" value="${esc(S.vals[t.key])}" aria-label="${esc(t.label)}"${FINAL ? ' disabled' : ''}>` +
+          `<span class="mini">${FINAL ? '確定' : '既定'} ${esc(t.value)}${esc(t.unit)} ・ 効く例: ${(effects[t.key] || []).map(b => `<a href="#band-${esc(b)}">${b === 'V' ? '値' : esc(bandTag(b))}</a>`).join(' ')}</span></div>`).join('') +
+        `</div><div class="r"><p class="bt"><span class="tag">値</span>で見るもの</p><div id="ex-V"></div></div></section>`;
+    }
+    byId('sheet').innerHTML = html;
+
+    // 決定の記録 (final) には答える場所を出さない — 貼り戻す相手のラウンドが無い
+    byId('reply').innerHTML = FINAL ? '' : `<div class="box"><h2 style="font-size:15px;margin:0 0 8px">全体へのコメント (任意)</h2>` +
+      `<textarea id="comment" rows="3" placeholder="問いの外で気になること、別案の提案など">${esc(S.comment)}</textarea>` +
+      `<div id="bar"><button type="button" id="make">貼り付ける文章を作る</button><span class="mini" id="status"></span></div>` +
+      `<p class="mini" style="margin:10px 0 4px">ターミナルに貼る文章 (ボタンで作るとクリップボードにも入ります)</p><textarea id="out" rows="9" readonly></textarea></div>`;
+    refresh();
+  }
+
+  const prevCells = {};
+  function paint(id, html) {
+    const el = byId(id); if (!el) return;
+    el.innerHTML = html;
+    const cells = [...el.querySelectorAll('td,pre')].map(c => c.textContent);
+    const prev = prevCells[id];
+    if (prev) el.querySelectorAll('td,pre').forEach((c, i) => { if (prev[i] !== undefined && prev[i] !== cells[i]) c.classList.add('chg'); });
+    prevCells[id] = cells;
+  }
+
+  function refresh() {
+    const m = model();
+    // 選択肢を描き直すとフォーカス中の radio が消える (矢印キーで選んだ直後)。同じ radio に戻す
+    const ae = document.activeElement, focus = ae && ae.type === 'radio' ? { name: ae.name, value: ae.value } : null;
+    DECIDED_.forEach(q => paint('ex-' + q.id, exhibitsHTML(q, m, true)));
+    QUESTIONS_.forEach(q => {
+      paint('ex-' + q.id, exhibitsHTML(q, m, false));
+      byId('opts-' + q.id).innerHTML = optionsHTML(q, false);
+      if (focus && focus.name === 'opt-' + q.id) { const r = [...byId('opts-' + q.id).querySelectorAll('input[type=radio]')].find(x => x.value === focus.value); if (r) r.focus(); }
+      const r = byId('reset-' + q.id);
+      if (r) r.innerHTML = S.ans[q.id].choice ? `明示的に選んでいます。 <button type="button" class="linkbtn" data-reset="${esc(q.id)}">お任せに戻す</button>` : (REC[q.id] ? '未選択 (推奨のまま = お任せ)' : '未選択 (推奨なし)');
+    });
+    if (TWEAKS_.length) paint('ex-V', safeBlocks(() => VALUE_EXHIBITS_(m, S.vals), '値'));
+    const touched = QUESTIONS_.filter(q => S.ans[q.id].choice).length;
+    if (byId('status')) byId('status').textContent = QUESTIONS_.length ? `問い ${QUESTIONS_.length} 件のうち ${touched} 件を明示的に選択` : '問いはありません';
+    if (byId('cz-warn')) byId('cz-warn').textContent = warnings.length ? '注意: ' + warnings.join(' / ') : '';
+    save();
+  }
+
+  function choose(qid, oid) {
+    const q = QUESTIONS_.find(q => q.id === qid); if (!q) return;
+    const o = asList(q.options).find(o => o.id === oid); if (!o || o.rejected) return;
+    if (S.ans[qid].choice === oid) return; // label の click が radio へ再送されて 2 回呼ばれるため
+    S.ans[qid].choice = oid; refresh();
+  }
+
+  function buildReply() {
+    const L = [`【回答】${ROUND_.label} ラウンド ${ROUND_.round}`];
+    QUESTIONS_.forEach((q, i) => {
+      const a = S.ans[q.id];
+      const o = a.choice ? asList(q.options).find(o => o.id === a.choice) : null;
+      let s = `Q${i + 1}. ${oneLine(qTitle(q))}: `;
+      if (o) s += `${o.id} — ${oneLine(o.label)}`;
+      else s += REC[q.id] ? `(未選択 = お任せ = 推奨 ${REC[q.id]})` : '(未選択 = お任せ)';
+      const n = oneLine(a.note); if (n) s += ` / 補足: ${n}`;
+      L.push(s);
+    });
+    if (TWEAKS_.length) L.push('調整パネル: ' + JSON.stringify(S.vals));
+    const objections = PREMISES_.filter(p => oneLine(S.pnote[p.id])).map(p => `前提 ${p.id} (${oneLine(p.text)}) への異議: ${oneLine(S.pnote[p.id])}`);
+    const body = [...objections, (S.comment || '').trim()].filter(Boolean).join('\n').replace(/^[ \t]*---[ \t]*$/gm, '- - -');
+    L.push('全体へのコメント: ' + (body || '(なし)'));
+    L.push('---', '上の回答を反映して次のラウンドへ進んでください。お任せの項目は推奨案で確定してください。');
+    return L.join('\n');
+  }
+
+  async function copy(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+    try { const o = byId('out'); o.focus(); o.select(); return document.execCommand('copy'); } catch (e) { return false; }
+  }
+
+  function setTweak(key, raw, writeBack) {
+    const tw = tweakOf(key); if (!tw) return;
+    const v = Number(raw);
+    if (raw === '' || !Number.isFinite(v)) return;
+    S.vals[key] = Math.min(tw.max, Math.max(tw.min, v));
+    document.querySelectorAll(`[data-tw="${key}"]`).forEach(x => { if (writeBack || x !== document.activeElement) x.value = S.vals[key]; });
+    refresh();
+  }
+
+  document.addEventListener('click', async e => {
+    const t = e.target.closest('[data-reset],.opt,.col.pickable,#make');
+    if (!t) return;
+    if (t.dataset.reset) { S.ans[t.dataset.reset].choice = null; refresh(); }
+    else if (t.id === 'make') {
+      const text = buildReply(); byId('out').value = text;
+      byId('status').textContent = (await copy(text)) ? 'コピーしました。ターミナルに貼って Enter してください' : 'コピーできませんでした。下の欄から手で選んでコピーしてください';
+    }
+    else if (!t.dataset.dis) choose(t.dataset.q, t.dataset.o);
+  });
+  // キーボード (矢印キー) で radio を動かしたとき
+  document.addEventListener('change', e => {
+    const t = e.target;
+    if (t.type === 'radio' && t.checked) { const l = t.closest('.opt'); if (l && !l.dataset.dis) choose(l.dataset.q, l.dataset.o); }
+    else if (t.dataset.tw) setTweak(t.dataset.tw, t.value, true);  // 範囲外を丸めた値を入力欄にも書き戻す
+  });
+  document.addEventListener('input', e => {
+    const t = e.target;
+    if (t.dataset.note) { S.ans[t.dataset.note].note = t.value; save(); }
+    else if (t.dataset.pnote) { S.pnote[t.dataset.pnote] = t.value; save(); }
+    else if (t.id === 'comment') { S.comment = t.value; save(); }
+    else if (t.dataset.tw) setTweak(t.dataset.tw, t.value, false);
+  });
+
+  try { build(); }
+  catch (e) { byId('head').innerHTML = '<h1>シートを組み立てられませんでした</h1><p class="lead">スロット (cz-doc-data) の記述を確認してください: ' + esc(e && e.message ? e.message : e) + '</p>'; throw e; }
+})();
+</script>
+<!-- CZ-DOC:SCRIPT:END -->
+</body>
+</html>

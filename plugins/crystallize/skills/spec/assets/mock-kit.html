@@ -20,15 +20,91 @@
 <style id="cz-kit-style">
   /* キットの外枠 (ページ地・ステージ・端末フレーム・切替バー・調整パネル)。
      素の要素セレクタは使わない — モック側の CSS と取り合いになるため、すべて cz- プレフィックス付きの class で書く。
-     フレームの中身 (.cz-frame-viewport の子孫) には一切触れない — 触るとモックのデザイン評価が汚れる。 */
+     フレームの中身 (.cz-frame-viewport の子孫) には一切触れない — 触るとモックのデザイン評価が汚れる。
+     配色の変数は html-report の style.css と同じ (CZ-THEME の範囲をそのまま写す。check-theme.sh が一致を検算する)。
+     切替バー (.cz-chrome) だけはテーマに関わらずダーク側の値で塗る — ステージに浮く道具がモックの配色と混ざって見えないため。
+     端末フレームの中 (.cz-frame-shell / .cz-frame-viewport) は変数を使わず白のまま — テーマでモックの画面を塗り替えてはならない。 */
+  :root {
+/* CZ-THEME:LIGHT:BEGIN — spec の mock-kit.html / doc-sheet.html がこの範囲をそのまま写す。check-theme.sh が一致を検算する */
+  /* surfaces — warm paper floor, pure white only for cards and code */
+  --canvas: #f6f5f4;
+  --canvas-soft: #faf9f8;
+  --surface-card: #ffffff;
+  --surface-strong: #e9e7e4;
+  /* text (soft true-black ink, warm charcoal body, stone muted) */
+  --ink: #141413;
+  --body: #31302e;
+  --muted: #615d59;
+  /* lines */
+  --hairline: #e6e6e6;
+  --hairline-soft: #efeeec;
+  --hairline-strong: #d3d1ce;
+  /* the single brand voltage */
+  /* one notch darker than the source blue (#0075de) so body-size links clear
+     WCAG AA on the paper floor, not just on white cards */
+  --primary: #006bca;
+  --primary-active: #005bab;
+  --primary-tint: #e9f2fb;
+  /* table header — eyebrow-style tint, not an inverted black band */
+  --th-bg: #eeecea;
+  --th-fg: var(--ink);
+  /* diff review (add/del semantics, shared by the diff-file component below) */
+  --diff-add-bg: #e6f4ea;
+  --diff-add-bg-strong: #cceed9;
+  --diff-add-fg: #197034;   /* darkened to clear AA on --diff-add-bg */
+  --diff-del-bg: #fdecea;
+  --diff-del-bg-strong: #fad2ce;
+  --diff-del-fg: #cf222e;
+  /* red text sitting ON a red wash (dark theme's translucent del fill). Light
+     needs no lift, so it is the same red; dark lightens it. Used by
+     .file-badge.del, .sev-high and the diff-review badges in components.md. */
+  --diff-del-fg-onwash: var(--diff-del-fg);
+  /* shape */
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  /* fonts */
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", Meiryo,
+    system-ui, sans-serif;
+  --mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular,
+    Menlo, Consolas, "Liberation Mono", monospace;
+/* CZ-THEME:LIGHT:END */
+  }
+  html[data-theme="dark"], .cz-chrome {
+/* CZ-THEME:DARK:BEGIN — 同上 */
+  --canvas: #191919;
+  --canvas-soft: #1f1f1f;
+  --surface-card: #232323;
+  --surface-strong: #2f2f2f;
+  --ink: #ebebea;
+  --body: #e0dfde;
+  --muted: #9b9b98;
+  --hairline: #303030;
+  --hairline-soft: #272727;
+  --hairline-strong: #3d3d3d;
+  --primary: #4d9fe8;
+  --primary-active: #7bb8ef;
+  --primary-tint: #16283c;
+  --th-bg: #2f2f2f;
+  --th-fg: #ebebea;
+  /* diff review — brightened vs light for the same AA reason as --primary */
+  --diff-add-bg: rgba(46, 160, 67, 0.15);
+  --diff-add-bg-strong: rgba(46, 160, 67, 0.3);
+  --diff-add-fg: #3fb950;
+  --diff-del-bg: rgba(248, 81, 73, 0.15);
+  --diff-del-bg-strong: rgba(248, 81, 73, 0.3);
+  --diff-del-fg: #f85149;
+  --diff-del-fg-onwash: #ff8781;
+/* CZ-THEME:DARK:END */
+  }
 
   body.cz-page {
     display: block;
     margin: 0;
     padding: 0;
-    background: #eceef1;
-    color: #23262b;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    background: var(--canvas);
+    color: var(--body);
+    font-family: var(--sans);
     -webkit-text-size-adjust: 100%;
     --cz-frame-w: 390px;
     --cz-frame-h: 844px;
@@ -107,7 +183,7 @@
     line-height: 18px;
     font-size: 11px;
     font-weight: 700;
-    color: #5c626c;
+    color: var(--muted);
     letter-spacing: 0.02em;
     text-align: left;
     white-space: nowrap;
@@ -121,7 +197,7 @@
     margin: 0;
     padding: 0;
     background: #ffffff;
-    border: 1px solid #b8bdc6;
+    border: 1px solid var(--hairline-strong);
     border-radius: 10px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     overflow: hidden;
@@ -149,10 +225,10 @@
     margin: 0;
     padding: 0;
     border: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    font-family: var(--sans);
     font-size: 12px;
     line-height: 1.4;
-    color: #e6e6ea;
+    color: var(--body);
     text-align: left;
     background: none;
     letter-spacing: normal;
@@ -172,8 +248,8 @@
     gap: 8px;
     width: max-content;
     padding: 8px 12px;
-    background: #24262b;
-    border: 1px solid #3a3d44;
+    background: var(--surface-card);
+    border: 1px solid var(--hairline);
     border-radius: 10px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   }
@@ -186,7 +262,7 @@
     display: block;
     width: 1px;
     height: 20px;
-    background: #3f434a;
+    background: var(--hairline-strong);
   }
   .cz-bar-btn {
     display: inline-flex;
@@ -195,21 +271,21 @@
     min-width: 28px;
     height: 26px;
     padding: 0 10px;
-    background: #35383f;
-    border: 1px solid #4a4e56;
+    background: var(--surface-strong);
+    border: 1px solid var(--hairline-strong);
     border-radius: 6px;
-    color: #e6e6ea;
+    color: var(--body);
     font-size: 11px;
     font-weight: 600;
     white-space: nowrap;
     cursor: pointer;
   }
-  .cz-bar-btn:hover { background: #40444c; }
-  .cz-bar-btn:active { background: #2c2f34; }
+  .cz-bar-btn:hover { background: var(--hairline-strong); }
+  .cz-bar-btn:active { background: var(--hairline); }
   .cz-bar-btn[aria-pressed="true"] {
-    background: #d7d9de;
-    border-color: #d7d9de;
-    color: #1a1c20;
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--canvas);
   }
   .cz-bar-btn[hidden],
   .cz-bar-group[hidden],
@@ -219,7 +295,7 @@
     display: inline-block;
     min-width: 128px;
     padding: 0 8px;
-    color: #f1f1f4;
+    color: var(--ink);
     font-size: 12px;
     font-weight: 700;
     text-align: center;
@@ -233,7 +309,7 @@
   .cz-bar-meta {
     display: inline-block;
     padding-left: 2px;
-    color: #9aa0a9;
+    color: var(--muted);
     font-size: 11px;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
@@ -251,10 +327,10 @@
     margin: 0;
     padding: 0;
     border: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Sans", "Noto Sans JP", sans-serif !important;
+    font-family: var(--sans) !important;
     font-size: 12px;
     line-height: 1.5;
-    color: #e6e6ea;
+    color: var(--body);
     text-align: left;
     background: none;
     letter-spacing: normal;
@@ -303,15 +379,15 @@
   }
   .cz-tweak-resizer:hover::after,
   body.cz-page.cz-tweak-resizing .cz-tweak-resizer::after {
-    background: #8a94a6;
+    background: var(--primary);
   }
   .cz-tweak-inner {
     display: flex;
     flex-direction: column;
     width: 100%;
     height: 100%;
-    background: #24262b !important;
-    border-left: 1px solid #3a3d44 !important;
+    background: var(--surface-card) !important;
+    border-left: 1px solid var(--hairline) !important;
     box-shadow: -8px 0 24px rgba(0, 0, 0, 0.35) !important;
     overflow: hidden;
   }
@@ -320,13 +396,13 @@
     align-items: center;
     justify-content: space-between;
     padding: 10px 12px;
-    background: #2b2e34 !important;
-    border-bottom: 1px solid #3a3d44 !important;
+    background: var(--th-bg) !important;
+    border-bottom: 1px solid var(--hairline) !important;
     flex: 0 0 auto;
   }
   .cz-tweak-title {
     font-weight: 700 !important;
-    color: #f1f1f4 !important;
+    color: var(--ink) !important;
   }
   .cz-tweak-collapse-btn {
     width: 22px;
@@ -334,10 +410,10 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: #35383f !important;
-    border: 1px solid #454951 !important;
+    background: var(--surface-strong) !important;
+    border: 1px solid var(--hairline-strong) !important;
     border-radius: 6px !important;
-    color: #e6e6ea !important;
+    color: var(--body) !important;
     font-size: 12px;
     line-height: 1;
     cursor: pointer;
@@ -365,11 +441,11 @@
     gap: 8px;
   }
   .cz-tweak-label {
-    color: #b7bac2 !important;
+    color: var(--muted) !important;
     font-size: 11px;
   }
   .cz-tweak-value {
-    color: #f1f1f4 !important;
+    color: var(--ink) !important;
     font-size: 11px;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
@@ -377,10 +453,10 @@
   .cz-tweak-input {
     width: 100%;
     display: block;
-    background: #1a1c20 !important;
-    border: 1px solid #454951 !important;
+    background: var(--canvas) !important;
+    border: 1px solid var(--hairline-strong) !important;
     border-radius: 6px !important;
-    color: #e6e6ea !important;
+    color: var(--body) !important;
   }
   .cz-tweak-input-range {
     height: 18px;
@@ -392,7 +468,7 @@
   }
   .cz-tweak-input-range::-webkit-slider-runnable-track {
     height: 4px;
-    background: #454951 !important;
+    background: var(--hairline-strong) !important;
     border-radius: 2px !important;
   }
   .cz-tweak-input-range::-webkit-slider-thumb {
@@ -402,21 +478,21 @@
     height: 14px;
     margin-top: -5px;
     border-radius: 50% !important;
-    background: #d7d9de !important;
-    border: 1px solid #8f939c !important;
+    background: var(--ink) !important;
+    border: 1px solid var(--surface-card) !important;
     cursor: pointer;
   }
   .cz-tweak-input-range::-moz-range-track {
     height: 4px;
-    background: #454951 !important;
+    background: var(--hairline-strong) !important;
     border-radius: 2px !important;
   }
   .cz-tweak-input-range::-moz-range-thumb {
     width: 14px;
     height: 14px;
     border-radius: 50% !important;
-    background: #d7d9de !important;
-    border: 1px solid #8f939c !important;
+    background: var(--ink) !important;
+    border: 1px solid var(--surface-card) !important;
     cursor: pointer;
   }
   .cz-tweak-input-number {
@@ -431,16 +507,16 @@
   .cz-tweak-select {
     height: 26px;
     padding: 0 6px;
-    background: #1a1c20 !important;
-    border: 1px solid #454951 !important;
+    background: var(--canvas) !important;
+    border: 1px solid var(--hairline-strong) !important;
     border-radius: 6px !important;
-    color: #e6e6ea !important;
+    color: var(--body) !important;
     cursor: pointer;
   }
   .cz-tweak-json-block {
     margin-top: 14px;
     padding-top: 10px;
-    border-top: 1px solid #3a3d44 !important;
+    border-top: 1px solid var(--hairline) !important;
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -448,17 +524,17 @@
   .cz-tweak-json-heading {
     font-size: 11px;
     font-weight: 700 !important;
-    color: #b7bac2 !important;
+    color: var(--muted) !important;
   }
   .cz-tweak-json-area {
     width: 100%;
     min-height: 96px;
     resize: vertical;
-    background: #1a1c20 !important;
-    border: 1px solid #454951 !important;
+    background: var(--canvas) !important;
+    border: 1px solid var(--hairline-strong) !important;
     border-radius: 6px !important;
-    color: #e6e6ea !important;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+    color: var(--body) !important;
+    font-family: var(--mono) !important;
     font-size: 11px;
     padding: 6px 8px;
     white-space: pre;
@@ -470,29 +546,29 @@
   .cz-tweak-action-btn {
     flex: 1 1 auto;
     height: 28px;
-    background: #35383f !important;
-    border: 1px solid #4a4e56 !important;
+    background: var(--surface-strong) !important;
+    border: 1px solid var(--hairline-strong) !important;
     border-radius: 6px !important;
-    color: #f1f1f4 !important;
+    color: var(--ink) !important;
     font-weight: 600 !important;
     font-size: 11px;
     cursor: pointer;
   }
   .cz-tweak-action-btn:hover {
-    background: #40444c !important;
+    background: var(--hairline-strong) !important;
   }
   .cz-tweak-action-btn:active {
-    background: #2c2f34 !important;
+    background: var(--hairline) !important;
   }
   .cz-tweak-feedback {
     min-height: 14px;
     font-size: 10.5px;
   }
   .cz-tweak-feedback--ok {
-    color: #8bc98f !important;
+    color: var(--diff-add-fg) !important;
   }
   .cz-tweak-feedback--error {
-    color: #ff9c92 !important;
+    color: var(--diff-del-fg) !important;
   }
 
   /* ─── 回答パネル ─── */
@@ -507,10 +583,10 @@
     margin: 0;
     padding: 0;
     border: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Hiragino Sans", "Noto Sans JP", sans-serif !important;
+    font-family: var(--sans) !important;
     font-size: 14px;
     line-height: 1.55;
-    color: #e6e6ea;
+    color: var(--body);
     text-align: left;
     background: none;
     letter-spacing: normal;
@@ -559,7 +635,7 @@
   }
   .cz-answer-resizer:hover::after,
   body.cz-page.cz-answer-resizing .cz-answer-resizer::after {
-    background: #8a94a6;
+    background: var(--primary);
   }
   .cz-answer-panel.cz-answer-inline .cz-answer-resizer {
     display: none;
@@ -599,14 +675,14 @@
     flex-direction: column;
     width: 100%;
     height: 100%;
-    background: #24262b !important;
-    border-right: 1px solid #3a3d44 !important;
+    background: var(--surface-card) !important;
+    border-right: 1px solid var(--hairline) !important;
     box-shadow: 8px 0 24px rgba(0, 0, 0, 0.35) !important;
     overflow: hidden;
   }
   .cz-answer-panel.cz-answer-inline .cz-answer-inner {
     height: auto;
-    border: 1px solid #3a3d44 !important;
+    border: 1px solid var(--hairline) !important;
     border-radius: 10px !important;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
   }
@@ -615,13 +691,13 @@
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
-    background: #2b2e34 !important;
-    border-bottom: 1px solid #3a3d44 !important;
+    background: var(--th-bg) !important;
+    border-bottom: 1px solid var(--hairline) !important;
     flex: 0 0 auto;
   }
   .cz-answer-title {
     font-weight: 700 !important;
-    color: #f1f1f4 !important;
+    color: var(--ink) !important;
   }
   .cz-answer-collapse-btn {
     width: 22px;
@@ -629,10 +705,10 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: #35383f !important;
-    border: 1px solid #454951 !important;
+    background: var(--surface-strong) !important;
+    border: 1px solid var(--hairline-strong) !important;
     border-radius: 6px !important;
-    color: #e6e6ea !important;
+    color: var(--body) !important;
     font-size: 14px;
     line-height: 1;
     cursor: pointer;
@@ -660,20 +736,20 @@
   .cz-answer-q-title {
     font-size: 15px;
     font-weight: 700 !important;
-    color: #f1f1f4 !important;
+    color: var(--ink) !important;
   }
   /* 挙動としての問い本文。title (見出し) より読ませたいのはこちら */
   .cz-answer-q-question {
-    color: #dfe1e6 !important;
+    color: var(--body) !important;
   }
   .cz-answer-q-premise {
     font-size: 12.5px;
-    color: #9aa0a9 !important;
+    color: var(--muted) !important;
   }
   /* 推奨の理由。バッジだけでは「なぜ推すのか」が伝わらない */
   .cz-answer-reason {
     font-size: 12.5px;
-    color: #a3aab5 !important;
+    color: var(--muted) !important;
   }
   .cz-answer-options {
     display: flex;
@@ -685,18 +761,18 @@
     align-items: flex-start;
     gap: 10px;
     padding: 10px 12px;
-    background: #1f2126 !important;
-    border: 1px solid #3a3d44 !important;
+    background: var(--canvas-soft) !important;
+    border: 1px solid var(--hairline) !important;
     border-radius: 6px !important;
     cursor: pointer;
   }
   .cz-answer-option:hover {
-    border-color: #4a4e56 !important;
+    border-color: var(--hairline-strong) !important;
   }
   /* 前のラウンドで落とした選択肢。選べないが「前に落とした案」として見えている */
   .cz-answer-option--rejected,
   .cz-answer-option--rejected:hover {
-    border-color: #3a3d44 !important;
+    border-color: var(--hairline) !important;
     opacity: 0.65;
     cursor: default;
   }
@@ -711,7 +787,7 @@
     width: 16px;
     height: 16px;
     margin-top: 3px;
-    accent-color: #b4b8c0;
+    accent-color: var(--primary);
     cursor: pointer;
   }
   .cz-answer-option-text {
@@ -723,15 +799,15 @@
   }
   .cz-answer-option-label {
     font-weight: 600 !important;
-    color: #f1f1f4 !important;
+    color: var(--ink) !important;
   }
   .cz-answer-badge {
     display: inline-block;
     margin-left: 6px;
     padding: 0 6px;
-    background: #3f4650 !important;
+    background: var(--surface-strong) !important;
     border-radius: 999px !important;
-    color: #cdd2da !important;
+    color: var(--muted) !important;
     font-size: 11.5px;
     font-weight: 600 !important;
   }
@@ -740,41 +816,41 @@
     font-size: 13px;
   }
   .cz-answer-gain {
-    color: #8bc98f !important;
+    color: var(--diff-add-fg) !important;
   }
   .cz-answer-loss {
-    color: #d5a49d !important;
+    color: var(--diff-del-fg) !important;
   }
   /* リンクに見せるが a ではなく button — href="#" はハッシュ (#variant=B) を壊す */
   .cz-answer-clear-btn {
     align-self: flex-start;
     background: none !important;
     border: 0 !important;
-    color: #93a9c6 !important;
+    color: var(--primary) !important;
     font-size: 12.5px;
     text-decoration: underline;
     cursor: pointer;
   }
   .cz-answer-label {
     font-size: 12.5px;
-    color: #b7bac2 !important;
+    color: var(--muted) !important;
   }
   .cz-answer-textarea {
     width: 100%;
     display: block;
     resize: vertical;
     padding: 7px 10px;
-    background: #1a1c20 !important;
-    border: 1px solid #454951 !important;
+    background: var(--canvas) !important;
+    border: 1px solid var(--hairline-strong) !important;
     border-radius: 6px !important;
-    color: #e6e6ea !important;
+    color: var(--body) !important;
     font-size: 13.5px;
   }
   .cz-answer-comment-block,
   .cz-answer-output-block {
     margin-top: 14px;
     padding-top: 10px;
-    border-top: 1px solid #3a3d44 !important;
+    border-top: 1px solid var(--hairline) !important;
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -788,40 +864,40 @@
   .cz-answer-action-btn {
     width: 100%;
     height: 36px;
-    background: #35383f !important;
-    border: 1px solid #4a4e56 !important;
+    background: var(--surface-strong) !important;
+    border: 1px solid var(--hairline-strong) !important;
     border-radius: 6px !important;
-    color: #f1f1f4 !important;
+    color: var(--ink) !important;
     font-weight: 600 !important;
     font-size: 13.5px;
     cursor: pointer;
   }
   .cz-answer-action-btn:hover {
-    background: #40444c !important;
+    background: var(--hairline-strong) !important;
   }
   .cz-answer-action-btn:active {
-    background: #2c2f34 !important;
+    background: var(--hairline) !important;
   }
   .cz-answer-feedback {
     min-height: 16px;
     font-size: 12.5px;
   }
   .cz-answer-feedback--ok {
-    color: #8bc98f !important;
+    color: var(--diff-add-fg) !important;
   }
   .cz-answer-feedback--error {
-    color: #ff9c92 !important;
+    color: var(--diff-del-fg) !important;
   }
   .cz-answer-output-area {
     width: 100%;
     min-height: 120px;
     resize: vertical;
     padding: 6px 8px;
-    background: #1a1c20 !important;
-    border: 1px solid #454951 !important;
+    background: var(--canvas) !important;
+    border: 1px solid var(--hairline-strong) !important;
     border-radius: 6px !important;
-    color: #e6e6ea !important;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+    color: var(--body) !important;
+    font-family: var(--mono) !important;
     font-size: 12.5px;
     white-space: pre;
   }
@@ -1061,7 +1137,7 @@
 <!-- スロット: 案 (variant) ここまで -->
 
 <!-- CZ-KIT:MARKUP:BEGIN 無改変層 — 一字も変えない -->
-<div class="cz-bar" id="cz-bar" role="toolbar" aria-label="モックの切替">
+<div class="cz-bar cz-chrome" id="cz-bar" role="toolbar" aria-label="モックの切替">
   <div class="cz-bar-group" id="cz-variant-group">
     <button type="button" class="cz-bar-btn" id="cz-prev-btn" aria-label="前の案">&#9664;</button>
     <span class="cz-bar-name" id="cz-variant-name">&mdash;</span>
@@ -1083,6 +1159,8 @@
   <div class="cz-bar-group" id="cz-answer-group">
     <button type="button" class="cz-bar-btn" id="cz-answer-toggle" aria-pressed="false">回答</button>
   </div>
+  <span class="cz-bar-sep"></span>
+  <button type="button" class="cz-bar-btn" id="cz-theme-toggle" aria-label="テーマ切り替え" title="テーマ切り替え">&#9680;</button>
   <span class="cz-bar-meta" id="cz-bar-meta"></span>
 </div>
 
@@ -1256,6 +1334,22 @@
 <script id="cz-kit-script">
 (function () {
   'use strict';
+
+  /* テーマ: 配色の変数は html-report の style.css と同じで、ダークは html[data-theme="dark"] でだけ効く。
+     初期値は report と同じ鍵の保存値、無ければ OS 設定。鍵を共有するので、レポートで切り替えた側がここでも効く */
+  var THEME_KEY = 'crystallize-report-theme';
+  function initTheme(btn) {
+    var root = document.documentElement, saved = null;
+    try { saved = localStorage.getItem(THEME_KEY); } catch (e) { saved = null; }
+    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = (saved === 'dark' || saved === 'light') ? saved : (prefersDark ? 'dark' : 'light');
+    if (btn) btn.addEventListener('click', function () {
+      var next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+      root.dataset.theme = next;
+      try { localStorage.setItem(THEME_KEY, next); } catch (e) { /* プライベートウィンドウ等 */ }
+    });
+  }
+  initTheme(document.getElementById('cz-theme-toggle'));
 
   /* ══ 0. スロット層の読み取り ══
      宣言が無いときだけでなく、スロット層の JS が途中で落ちて宣言が TDZ に残っているときも

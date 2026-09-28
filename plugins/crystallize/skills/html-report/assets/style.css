@@ -8,6 +8,7 @@
    contents with scroll-spy highlighting. */
 
 :root {
+/* CZ-THEME:LIGHT:BEGIN — spec の mock-kit.html / doc-sheet.html がこの範囲をそのまま写す。check-theme.sh が一致を検算する */
   /* surfaces — warm paper floor, pure white only for cards and code */
   --canvas: #f6f5f4;
   --canvas-soft: #faf9f8;
@@ -50,6 +51,7 @@
     system-ui, sans-serif;
   --mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular,
     Menlo, Consolas, "Liberation Mono", monospace;
+/* CZ-THEME:LIGHT:END */
 }
 
 /* Dark theme — applied via <html data-theme="dark">. Only colors are
@@ -59,6 +61,7 @@
    brightened vs light (#0075de) to clear WCAG AA on the dark floor, and
    --primary-active is LIGHTER than --primary so hover reads as a lift. */
 html[data-theme="dark"] {
+/* CZ-THEME:DARK:BEGIN — 同上 */
   --canvas: #191919;
   --canvas-soft: #1f1f1f;
   --surface-card: #232323;
@@ -82,6 +85,7 @@ html[data-theme="dark"] {
   --diff-del-bg-strong: rgba(248, 81, 73, 0.3);
   --diff-del-fg: #f85149;
   --diff-del-fg-onwash: #ff8781;
+/* CZ-THEME:DARK:END */
 }
 
 /* hljs paints .hljs background on the <pre> itself. This rule (0,2,2) beats the

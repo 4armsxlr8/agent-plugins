@@ -137,7 +137,7 @@ python3 "<skill-dir>/../report-index/scripts/report_server.py" register --root "
 ## Additional resources
 
 - `assets/component-samples.html` — **全コンポーネントを一覧表示したサンプル（デザインの基準定義）**。生成前に必ず Read してください。単体でブラウザ表示が可能です。
-- `assets/style.css` — 基本スタイルとコンポーネント用 CSS の基準ファイル。CSS 変数でライトモードおよびダークモードのスタイルを管理しています。
+- `assets/style.css` — 基本スタイルとコンポーネント用 CSS の基準ファイル。CSS 変数でライトモードおよびダークモードのスタイルを管理しています。変数の定義 (`CZ-THEME:LIGHT` / `CZ-THEME:DARK` の範囲) は `spec` スキルのモックキットと文書シートも同じものを写して使うので、この範囲を変えたら `spec/assets/check-theme.sh` を実行して両方を追随させてください。
 - `references/diagrams.md` — 図解リファレンス（表現内容と図の形式の対応表、5種類の SVG テンプレート、loop 用の折れ線グラフ）。
 - `references/templates.md` — HTML テンプレート（テーマ切り替え機能付き）、タブ制御用 JavaScript、diff テーブル、ファイルナビゲーション用 JavaScript。
 - `references/notion-design.md` — style.css で使用されているデザイントークンの参照元資料（Notion のデザイン分析）。
@@ -148,4 +148,5 @@ component-samples.html 内に埋め込まれている CSS は、style.css の内
 cd <プラグインリポジトリ>/plugins/crystallize/skills/html-report
 sed -n '/<style>/,/<\/style>/p' assets/component-samples.html | sed '1d;$d' > "${TMPDIR:-/tmp}/inlined.css"
 diff "${TMPDIR:-/tmp}/inlined.css" assets/style.css   # 差分なしが正
+sh ../spec/assets/check-theme.sh                       # 変数の定義がモックキット・文書シートと一致していることの検算
 ```

@@ -56,7 +56,8 @@ h1{font-size:17px;margin:0 0 4px;font-weight:700}
 .opt input[type=radio]:focus-visible{outline:2px solid var(--radio);outline-offset:2px}
 .opt .g,.opt .x{grid-column:2}
 .opt .ol{font-weight:700}
-.opt .g,.opt .x{font-size:13px;margin:2px 0 0;color:var(--sub)}
+.opt .g,.opt .x{font-size:13px;margin:4px 0 0;color:var(--sub)}
+.opt .g{margin-top:8px}
 .opt .g::before{content:"得る: ";font-weight:700;color:var(--gain)}
 .opt .x::before{content:"失う: ";font-weight:700;color:var(--loss)}
 .opt.dis{cursor:default}
@@ -108,6 +109,24 @@ details.hist>summary{cursor:pointer;font-weight:700;margin:14px 0 0;color:var(--
 #reply .box{border-top:1px solid var(--line);padding:22px 0 0;margin:0}
 #bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0 0}
 #bar button{font:inherit;font-weight:700;background:var(--sel);color:var(--card);border:0;border-radius:6px;padding:8px 16px;cursor:pointer}
+/* 案ごとの見るものがある問い: 問いを全幅にし、選択肢と見るものを 1 枚のカードにして案の数だけ横に並べる (幅が足りなければ 1 列)。
+   見出し・得失の段と見るものの段はカード間で高さを揃える (subgrid) — 得失の文の長さが違っても表の開始位置が揃い、行単位で見比べられる */
+.band.cards{grid-template-columns:1fr}
+.band.cards>.l{max-width:none}
+.band.cards h2,.band.cards .premise,.band.cards .q{max-width:720px}
+.cards{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:12px;margin:8px 0 6px}
+.card{display:grid;grid-template-rows:subgrid;grid-row:span 2;row-gap:10px;border:1px solid var(--line);background:var(--card);border-radius:6px;padding:10px;min-width:0;cursor:pointer}
+.card.on{border:2px solid var(--sel);padding:9px}
+.card.off{opacity:1}
+.card.rej{opacity:.35;cursor:default} .card.rej .ol{text-decoration:line-through}
+.card:not(.pickable){cursor:default}
+.card .opt{border:0;background:transparent;padding:0;margin:0;cursor:inherit}
+.card .ex{min-width:0;border-top:1px solid var(--line);padding-top:8px}
+.card .ex:empty{display:none}
+/* カードの中は読む量が多いので薄い字にしない (帯の右欄の「一段薄く」はカードには適用しない) */
+.card .g,.card .x,.card .ex,.card table,.card pre,.card .note{color:var(--ink)}
+.card th{color:var(--sub)}
+@media (max-width:1000px){ .cards{grid-template-columns:1fr} }
 @media (max-width:860px){
   .band{grid-template-columns:1fr}
   .band>.l{padding:0 0 16px}
@@ -398,32 +417,49 @@ const VALUE_EXHIBITS = (m, v) => [{
     return html;
   }
 
-  function optionsHTML(q, done) {
-    const a = S.ans[q.id] || { choice: null, note: '' };
+  function optionState(q, o, done) {
     const chosen = done ? q.decided : pick(q.id);
-    return asList(q.options).map(o => {
-      const rej = o.rejected || (done && o.id !== chosen);
-      const on = !rej && o.id === chosen;
-      const pills = (o.id === REC[q.id] && !done ? '<span class="pill">推奨</span>' : '') +
-        (on && !done && !a.choice ? '<span class="pill">お任せ</span>' : '') + (rej ? '<span class="pill">不採用</span>' : '') + (on && done ? '<span class="pill">採用</span>' : '');
-      const dis = done || rej;
-      return `<label class="opt${on ? ' on' : ''}${rej ? ' rej' : ''}${dis ? ' dis' : ''}" data-q="${esc(q.id)}" data-o="${esc(o.id)}"${dis ? ' data-dis="1"' : ''}>` +
-        `<input type="radio" name="opt-${esc(q.id)}" value="${esc(o.id)}"${on ? ' checked' : ''}${dis ? ' disabled' : ''}>` +
-        `<span class="ol">${esc(o.id)} — ${esc(o.label)}${pills}</span><p class="g">${esc(o.gain)}</p><p class="x">${esc(o.loss)}</p></label>`;
-    }).join('');
+    const rej = !!o.rejected || (done && o.id !== chosen);
+    return { rej, on: !rej && o.id === chosen, dis: done || rej };
+  }
+  function optionLabel(q, o, done) {
+    const a = S.ans[q.id] || { choice: null, note: '' };
+    const { rej, on, dis } = optionState(q, o, done);
+    const pills = (o.id === REC[q.id] && !done ? '<span class="pill">推奨</span>' : '') +
+      (on && !done && !a.choice ? '<span class="pill">お任せ</span>' : '') + (rej ? '<span class="pill">不採用</span>' : '') + (on && done ? '<span class="pill">採用</span>' : '');
+    return `<label class="opt${on ? ' on' : ''}${rej ? ' rej' : ''}${dis ? ' dis' : ''}" data-q="${esc(q.id)}" data-o="${esc(o.id)}"${dis ? ' data-dis="1"' : ''}>` +
+      `<input type="radio" name="opt-${esc(q.id)}" value="${esc(o.id)}"${on ? ' checked' : ''}${dis ? ' disabled' : ''}>` +
+      `<span class="ol">${esc(o.id)} — ${esc(o.label)}${pills}</span><p class="g">${esc(o.gain)}</p><p class="x">${esc(o.loss)}</p></label>`;
+  }
+  function optionsHTML(q, done) { return asList(q.options).map(o => optionLabel(q, o, done)).join(''); }
+
+  /* 案ごとの見るものがある問い: 選択肢と見るものを 1 枚のカードにして横に並べる。左右で対応を探させない */
+  const cardMode = q => asList(q.options).some(o => o.exhibit);
+  function cardsHTML(q, m, done) {
+    let html = q.exhibit ? safeBlocks(() => q.exhibit(m, S.vals, pick), qTitle(q)) : '';
+    html += `<div class="cards" style="--n:${asList(q.options).length}">` + asList(q.options).map(o => {
+      const { rej, on } = optionState(q, o, done);
+      const cls = ['card', 'col', on ? 'on' : rej ? 'rej' : 'off', (!done && !rej) ? 'pickable' : ''].join(' ');
+      return `<div class="${cls}" data-q="${esc(q.id)}" data-o="${esc(o.id)}">${optionLabel(q, o, done)}` +
+        `<div class="ex">${o.exhibit ? safeBlocks(() => o.exhibit(m, S.vals, pick), `${qTitle(q)} 案 ${o.id}`) : ''}</div></div>`;
+    }).join('') + '</div>';
+    if (q.note) html += `<p class="note">${esc(q.note)}</p>`;
+    return html;
   }
 
   function questionBand(q, n, done) {
     const tag = done ? `決定 R${esc(q.round)}` : 'Q' + n;
     const a = S.ans[q.id] || { choice: null, note: '' };
+    const cards = cardMode(q);
     const left = `<h2><span class="tag">${tag}</span>${esc(qTitle(q))}</h2>` +
-      (q.premise ? `<p class="premise"><b>前提:</b> ${esc(q.premise)}</p>` : '') + (q.question ? `<p><b>${esc(q.question)}</b></p>` : '') +
-      `<div id="opts-${esc(q.id)}">${optionsHTML(q, done)}</div>` +
+      (q.premise ? `<p class="premise"><b>前提:</b> ${esc(q.premise)}</p>` : '') + (q.question ? `<p class="q"><b>${esc(q.question)}</b></p>` : '') +
+      `<div id="opts-${esc(q.id)}">${cards ? '' : optionsHTML(q, done)}</div>` +
       (REC[q.id] || done ? `<p class="rec"><b>推奨 ${esc(q.recommended)}:</b> ${esc(q.reason)}</p>` : '') +
       (done ? '' : `<p class="mini" id="reset-${esc(q.id)}"></p><input type="text" data-note="${esc(q.id)}" placeholder="補足 (任意・1 行)" value="${esc(a.note)}">`);
+    // 案ごとの見るものがある問いはカード (選択肢 + 見るもの) を横に並べる。問い全体の見るものだけの問いは右の欄に置く。
     // 見るものが無い問い (文章だけで決める論点) は右の欄を持たず、問いを 1 列で出す
-    const hasEx = hasExhibit(q);
-    return `<section class="band q${done ? ' done' : ''}${hasEx ? '' : ' noex'}" id="band-${esc(q.id)}"><div class="l">${left}</div>` +
+    const hasEx = !cards && hasExhibit(q);
+    return `<section class="band q${done ? ' done' : ''}${cards ? ' cards' : hasEx ? '' : ' noex'}" id="band-${esc(q.id)}"><div class="l">${left}</div>` +
       (hasEx ? `<div class="r"><p class="bt"><span class="tag">${tag}</span>で見るもの</p><div id="ex-${esc(q.id)}"></div></div>` : '') + `</section>`;
   }
 
@@ -502,10 +538,10 @@ const VALUE_EXHIBITS = (m, v) => [{
     const m = model();
     // 選択肢を描き直すとフォーカス中の radio が消える (矢印キーで選んだ直後)。同じ radio に戻す
     const ae = document.activeElement, focus = ae && ae.type === 'radio' ? { name: ae.name, value: ae.value } : null;
-    DECIDED_.forEach(q => paint('ex-' + q.id, exhibitsHTML(q, m, true)));
+    DECIDED_.forEach(q => cardMode(q) ? paint('opts-' + q.id, cardsHTML(q, m, true)) : paint('ex-' + q.id, exhibitsHTML(q, m, true)));
     QUESTIONS_.forEach(q => {
-      paint('ex-' + q.id, exhibitsHTML(q, m, false));
-      byId('opts-' + q.id).innerHTML = optionsHTML(q, false);
+      if (cardMode(q)) paint('opts-' + q.id, cardsHTML(q, m, false));
+      else { paint('ex-' + q.id, exhibitsHTML(q, m, false)); byId('opts-' + q.id).innerHTML = optionsHTML(q, false); }
       if (focus && focus.name === 'opt-' + q.id) { const r = [...byId('opts-' + q.id).querySelectorAll('input[type=radio]')].find(x => x.value === focus.value); if (r) r.focus(); }
       const r = byId('reset-' + q.id);
       if (r) r.innerHTML = S.ans[q.id].choice ? `明示的に選んでいます。 <button type="button" class="linkbtn" data-reset="${esc(q.id)}">お任せに戻す</button>` : (REC[q.id] ? '未選択 (推奨のまま = お任せ)' : '未選択 (推奨なし)');

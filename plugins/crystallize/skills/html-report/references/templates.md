@@ -14,15 +14,36 @@
 <style>
 /* 同梱の assets/style.css の中身を丸ごとここに貼る (部品CSSも含まれている) */
 </style>
+<script>
+/* 同梱の assets/htmlplan.js の中身を丸ごとここに貼る (doc-* 部品・コメント・Respond・左レール目次の runtime) */
+</script>
 </head>
-<body>
+<body data-numbers="off">   <!-- 見出しの番号は style.css の counter (01, 02 …) が振る。runtime の §1 は切る -->
 <button class="theme-toggle" id="themeToggle" type="button" aria-label="テーマ切り替え">◐</button>
 <!-- <main> はどちらか一方を使う:
      散文レポート用 (html-report)      <main class="report markdown-body report-numbered">
      diff レポート用 (diff-review)     <main class="report report-numbered">
      diff 側で markdown-body を外すのは、`.markdown-body table` のような子孫セレクタ
      (詳細度 0,1,1) が diff-review 固有部品の単一 class (0,1,0) に勝ってしまうため。 -->
-<main class="report markdown-body report-numbered">…</main>
+<main class="report markdown-body report-numbered">
+<header class="report-head">
+  <h1>{title}</h1>
+  <p class="report-meta"><span class="badge plain">{type}</span><span>{YYYY-MM-DD}</span><span>素材: {素材の短い説明}</span></p>
+  <p class="lede">{レポートの概要 1 文}</p>
+</header>
+
+<div class="keypoints">…</div>
+
+<!-- 目次は書かない。runtime が h2 / h3 / doc-ask から左レールに組む (1180px 以上。狭い画面は右下の ☰) -->
+
+<!-- 節は details.sec の行。h2 は必ず summary の中 (閉じた details の中身は描画されず、採番から漏れるため)。
+     中身は <section> にする — runtime は section > p と li にコメントボタンを付ける (div だと付かない) -->
+<details class="sec" open>
+  <summary class="sec-head"><h2 id="s-1">…</h2><span class="sec-meta">…</span></summary>
+  <section class="sec-body">…</section>
+</details>
+<!-- 詳細・根拠の節は open を付けずに閉じて出す -->
+</main>
 <script>
 (function () {
   /* テーマ: style.css は html[data-theme="dark"] だけを見るので、初期値を JS で入れる */
@@ -43,10 +64,46 @@
   }
 })();
 </script>
+<script>
+(function () {
+  /* 閉じた節の中へ飛ぶとき (左レール目次・ハッシュ) は節を開いてから。印刷前は全節を開く */
+  function openFor(el) {
+    var d = el && el.closest('details');
+    while (d) { d.open = true; d = d.parentElement && d.parentElement.closest('details'); }
+  }
+  /* 飛び先が貼り付く行の中の見出しだと、ブラウザは貼り付きの終点 (節の末尾) に合わせてしまい中身が映らない。
+     見出しではなく節の器 (details) の上端へ飛ぶ */
+  function jumpTo(el) {
+    if (!el) return;
+    openFor(el);
+    var box = el.closest('summary') ? el.closest('details') : el;
+    box.scrollIntoView({ block: 'start' });
+  }
+  function byHash(h) { return h ? document.getElementById(decodeURIComponent(h.slice(1))) : null; }
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('a[href^="#"]');
+    var t = a && byHash(a.getAttribute('href'));
+    if (!t) return;
+    e.preventDefault();
+    jumpTo(t);
+    if (history.replaceState) history.replaceState(null, '', a.getAttribute('href'));
+  }, true);   /* capture: runtime のクリック処理 (シートを閉じる) はそのまま走る */
+  function openHash() { var t = byHash(location.hash); jumpTo(t); setTimeout(function () { jumpTo(t); }, 120); }   /* runtime が 60ms 後に見出しへ再スクロールするので、その後でもう一度 */
+  window.addEventListener('hashchange', openHash);
+  openHash();
+  window.addEventListener('beforeprint', function () {
+    Array.prototype.forEach.call(document.querySelectorAll('details.sec'), function (d) { d.open = true; });
+  });
+})();
+</script>
 </body>
 </html>
 ```
 
+- 題の直下は `header.report-head`: `h1` → `p.report-meta` (種別 `badge plain` と日付。素材の説明は任意) → `p.lede`(概要 1 文)。report-index は `p.lede` を一覧の説明文に拾うので、class 名を変えない
+- **本文の節は `details.sec` の行にする** (下の「節の行」)。目次は書かない — `<head>` に貼った runtime が h2 / h3 / doc-ask から左レール (1180px 以上) と ☰ のシート (狭い画面) を組む。本文の番号 (01, 02 …) は style.css の counter が h2 とレールの両方に振るので、`<body data-numbers="off">` を外さない (外すと runtime が §1 を重ねて振る)
+- **`assets/htmlplan.js` は `<head>` の `<script>` に無改変で貼る**。コード (`doc-code`)・呼び出し木 (`doc-calls`)・図 (`doc-flow` ほか)・コメントと Respond・左レール目次はすべてこれが描く。文法は `blocks.md`
+- 上の 2 つ目の `<script>`(閉じた節を開いてから飛ぶ・印刷前の展開)は **無改変で入れる**。無いと、閉じた節への目次リンクが何も表示しないまま終わり、印刷で閉じた節が紙から消える
 - `<main>` の class は **散文レポート (html-report) なら 3つセット**: `report`(幅とパディング) + `markdown-body`(本文タイポグラフィ) + `report-numbered`(h2 の自動採番)
 - **diff レポート (diff-review) は `markdown-body` を付けず `report report-numbered` の2つにする** — `markdown-body` の子孫セレクタが `references/components.md` の固有部品 (単一 class) に詳細度で勝ち、無改変層で貼ったはずの見た目が崩れる
 - **テーマ切替ボタンと上の初期化 JS は無改変で入れる** — style.css のダーク配色は `html[data-theme="dark"]` でしか適用されない。この JS が無いと、OS がダークでもライトのまま出る
@@ -82,7 +139,33 @@ document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () =>
 ```
 
 - **見出しを書かない**。「要点」のラベルは `.keypoints::before` が付ける — 文言と位置をレポート側に任せると「結論」「サマリ」と揺れる
-- 目次を出すなら直後に `<nav class="report-toc">`。番号は CSS counter が振るので手で書かない
+- 目次は書かない。runtime が h2 / h3 / doc-ask から左レールに組み、番号は CSS counter が振る(`.report-toc` の CSS は古いレポートのために残してあるだけで、新しいレポートでは使わない)
+
+## 節の行(h2 の節はすべてこの形)
+
+```html
+<details class="sec" open>
+  <summary class="sec-head">
+    <h2 id="s-candidates">取り込み候補</h2>
+    <span class="sec-meta">11 件</span>
+  </summary>
+  <section class="sec-body">
+    <p>…</p>
+    <!-- 小節 (h3) も同じ形で入れ子にできる。入れ子は線が薄く、行が低くなる -->
+    <details class="sec" open>
+      <summary class="sec-head"><h3>やり取りを減らす</h3><span class="sec-meta">5 件</span></summary>
+      <section class="sec-body">…</section>
+    </details>
+  </section>
+</details>
+```
+
+- 1 行 = 番号 + 見出し + 右端の `sec-meta`(中身の量を 2〜4 文字で: `3 案` `図 2` `11 件` `全文`)。`sec-meta` が書けないときは省く(空の span を置かない)
+- `sec-body` は `<section>` にする(`<div>` にしない)— runtime は `section > p` と `li` にコメントボタンを付けるので、div だと段落にコメントできない
+- **h2 は `summary.sec-head` の中に置く。`sec-body` の中に h2 を書かない** — 閉じた details の中身は描画されないため、そこにある h2 は採番されず、本文と目次の番号がずれる
+- 用語と本論の節は `open`。**詳細・根拠の節は `open` を付けず閉じて出す** — 畳んで短く見せる、の実体がこの行。閉じた節への目次リンクは骨格の JS が開いてから飛ぶ
+- 開いている節の行は画面上部に貼り付く(長い節の途中でも今どの節かが分かる)。入れ子の行は貼り付かない
+- タブ(`.tabs`/`.pane`)は `sec-body` の中に置く。h2 を `.pane` の中に入れない規則はそのまま
 
 ## 比較グリッド + トレードオフ表(compare)
 

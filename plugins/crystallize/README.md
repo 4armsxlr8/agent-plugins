@@ -100,8 +100,15 @@ claude --plugin-dir ./plugins/crystallize
 
 フローの骨格 — plan を `plans/` に作る → 実装 → レビュー用画面で確認 → plan の内容をそのままコミットメッセージにしてコミットし、plan ファイルを消す — は、[catnose さん（@catnose99）のこのポスト](https://x.com/catnose99/status/2080568062563201436)で紹介されていた開発の進め方が元です。これを参考に自作していた仕組みを、プラグインとして改造しました。
 
-v0.3 の認識合わせ（ラウンド一括の質問・推奨回答・事実と決定の分離）は [mattpocock/skills](https://github.com/mattpocock/skills) の grilling と domain-modeling、spec の形式は同 to-spec、モックの切替と案数の考え方は同 prototype を参考にしました。v0.6 のラウンドシート（絵と同じ画面の回答パネル・固定形テキストの貼り戻し・推奨の既定選択・文脈ゼロの subagent による試問・捨てた案の取り消し線・現状の忠実な再現）は akapen（赤ペン先生）スキル 0.2.0 を参考にしました。akapen が回答欄に添えるサムネイルは、選んだ瞬間にステージがその案に切り替わる形に置き換え、紙向けの「全体図に ①②③ を打つ」は見送りました。レポートの固定構成・色と表の規則・インライン SVG 図解は [mathbullet/skills](https://github.com/mathbullet/skills) の html、「見せたいもの → 図の型」の対応と「図は支える文の隣に置く」規則は [humanlayer/skills](https://github.com/humanlayer/skills) の show-me を参考にしました。
+v0.3 の認識合わせ（ラウンド一括の質問・推奨回答・事実と決定の分離）は [mattpocock/skills](https://github.com/mattpocock/skills) の grilling と domain-modeling、spec の形式は同 to-spec、モックの切替と案数の考え方は同 prototype を参考にしました。v0.6 のラウンドシート（絵と同じ画面の回答パネル・固定形テキストの貼り戻し・推奨の既定選択・文脈ゼロの subagent による試問・捨てた案の取り消し線・現状の忠実な再現）は akapen（赤ペン先生）スキル 0.2.0 を参考にしました。akapen が回答欄に添えるサムネイルは、選んだ瞬間にステージがその案に切り替わる形に置き換え、紙向けの「全体図に ①②③ を打つ」は見送りました。レポートの固定構成・色と表の規則・インライン SVG 図解は [mathbullet/skills](https://github.com/mathbullet/skills) の html、「見せたいもの → 図の型」の対応と「図は支える文の隣に置く」規則は [humanlayer/skills](https://github.com/humanlayer/skills) の show-me を参考にしました。v0.11 のレポートの読みの幅・左レール目次・番号つきの節の行、コード (`doc-code`)・呼び出し木・図の部品、見えるものすべてへのコメントと「返信」での貼り戻しは [anthropics/claude-plugins-community](https://github.com/anthropics/claude-plugins-community/tree/main/html-plan) の html-plan を参考にし、その runtime を同梱しました（配色と書体は crystallize のまま）。
 
-## tdd スキルの出所
+## 取り込んだコードの出所
 
-`skills/tdd/` は [mattpocock/skills](https://github.com/mattpocock/skills)（MIT License）の [tdd スキル](https://github.com/mattpocock/skills/tree/main/skills/engineering/tdd)をフォークし、日本語化・改造したものです。
+- `skills/tdd/` は [mattpocock/skills](https://github.com/mattpocock/skills)（MIT License）の [tdd スキル](https://github.com/mattpocock/skills/tree/main/skills/engineering/tdd)をフォークし、日本語化・改造したものです。
+- `skills/html-report/assets/htmlplan.js` は [anthropics/claude-plugins-community](https://github.com/anthropics/claude-plugins-community/tree/main/html-plan) の html-plan（作者 Thariq Shihipar。plugin.json は MIT、リポジトリの LICENSE は Apache-2.0）の runtime を同梱したものです。ロジックは無改変で、画面の文言だけ `assets/ja.py` で日本語化しています。部品の CSS も同じ出所から写し、配色の変数だけ crystallize のものに読み替えています。
+
+## 版の付け方
+
+- 配布したい変更を入れたら、その切りで `.claude-plugin/plugin.json` と、リポジトリ直下の `.claude-plugin/marketplace.json` の `version` を上げる。**上げない限り、GitHub 経由で入れている環境には届かない**（Claude Code は `version` の文字列が同じなら更新なしと判定する。ローカルのパスで追加したマーケットプレイスだけは版に関係なく毎回ソースを読む）。
+- 番号は 0.x のまま。スキルの追加・骨格や使い方が変わる変更は minor（0.X.0）、文言や見た目の直しは patch（0.X.Y）。迷ったら minor。
+- 版上げは単独のコミットにし、件名は `chore(crystallize): vX.Y.Z — <何を反映したか>`。crystallize-codex が追随するときは `vX.Y.Z に同期`。

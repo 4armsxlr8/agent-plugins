@@ -5,6 +5,7 @@ user-invocable: false
 argument-hint: "<context-json path>"
 context: fork
 agent: general-purpose
+model: opus
 metadata:
   purpose: judge
   trigger: internal

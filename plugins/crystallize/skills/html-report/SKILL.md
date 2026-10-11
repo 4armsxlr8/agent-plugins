@@ -7,6 +7,7 @@ user-invocable: true
 argument-hint: "<素材ファイルの絶対パス | インライン素材> [type: research|compare|diff|loop] [title: <表示タイトル>]"
 context: fork
 agent: general-purpose
+model: sonnet
 allowed-tools: "*"
 metadata:
   purpose: produce

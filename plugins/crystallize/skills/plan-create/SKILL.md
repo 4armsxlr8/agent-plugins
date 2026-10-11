@@ -103,7 +103,7 @@ E2E 評価の対象面: ブラウザ (URL と起動方法) | モバイル端末 
 書き出した plan は、ユーザーに提示する前に `plan-evaluator` (Skill ツール、fork 実行) に監査させる。args = context JSON のパス (次の箇条書き)。誤った前提や計画から漏れた受け入れ基準は、実装後の手戻りの原因となるため、この段階で検出して防ぐ。
 
 - 引数として渡すのは context JSON (plan のパスを含む) のみとし、impact.md は渡さない。plan と spec のみを用いて監査を行うことで、plan 単体で情報が完結しているかを検証できるためである
-- 起動時は context JSON を `docs/crystallize/plans/<plan の basename>/eval-context.json` に記述して渡す (`project_dir` / `plan` / `output_contract.eval_file` = `docs/crystallize/plans/<plan の basename>/eval-plan-<稿数>.json`)。パスのみを渡すとデフォルトのフォールバック処理が実行され、eval JSON がプロジェクト直下の `output/` に生成されて `plan-commit` の `git add -A` によってコミット履歴に含まれてしまう。plan と同名のディレクトリに配置すれば、plan-commit の実行時に plan と一緒に削除される
+- 起動時は context JSON を `docs/crystallize/plans/<plan の basename>/eval-context.json` に記述して渡す (`project_dir` / `plan` / `output_contract.eval_file` = `docs/crystallize/plans/<plan の basename>/eval-plan-<稿数>.json`)。パスのみを渡すとデフォルトのフォールバック処理が実行され、eval JSON が `docs/crystallize/output/` に日時付きの名前で生成される。そこは使い捨ての置き場で、次に evaluator がフォールバックで動いた時点で消されるため、指定した `eval_file` には何も残らない。plan と同名のディレクトリに配置すれば、plan-commit の実行時まで残り、plan と一緒に削除される
 - **分割した場合はすべての plan を作成し終えてから、1 ファイルずつ順に監査にかける** — 和集合の検証は分割されたすべての plan が揃っていないと成立しない。監査の指摘で**どれか 1 つの `covers:` を変更した場合は、他の plan もすべて再監査する** (和集合が変化し、他の plan の合格結果が無効になるため)
 - eval ファイル名の `<稿数>` は 1 稿目・2 稿目を示す番号であり、分割 plan の `<n>` とは関係しない。plan ごとに専用のディレクトリに配置するためファイル名は衝突しない
 - `passed: false` の場合は指摘箇所の事実確認からやり直して plan を修正し、再監査にかける。`rewrite` (見出し単位の置換案) が返されている場合はそれを参考にする

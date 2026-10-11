@@ -31,7 +31,7 @@ metadata:
 `$ARGUMENTS` が context JSON として解釈できない場合 (JSON でない / ファイル不在 / `output_contract` が空):
 
 - ファイルパスなら plan ファイルとして Read、それ以外は plan の生テキストとして扱う
-- eval JSON の書き出し先は `{project_dir=カレントディレクトリ}/output/eval-<YYYYMMDD-HHMMSS>-plan-evaluator.json` (ディレクトリが無ければ作成)
+- eval JSON の書き出し先は `{project_dir=カレントディレクトリ}/docs/crystallize/output/eval-<YYYYMMDD-HHMMSS>-plan-evaluator.json` (ディレクトリが無ければ作成)。書く前に、同ディレクトリの既存の `eval-*.json` を削除する (後から読む処理のない使い捨ての出力なので、最新の 1 回分だけを残す)
 - Markdown フィードバックは stdout に出し、末尾に同 schema の eval JSON を添付
 
 ## 手順

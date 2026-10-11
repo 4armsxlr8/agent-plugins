@@ -51,7 +51,7 @@ Q<n> <題>
 
 - ファイルパスなら質問ファイルとして Read、それ以外は質問の生テキストとして扱う
 - タスク一行要約が無ければその旨を feedback に明記し、質問文単体で評価する (前提の事実確認の精度は低下する)
-- eval JSON の書き出し先は `{project_dir=カレントディレクトリ}/output/eval-<YYYYMMDD-HHMMSS>-question-evaluator.json` (ディレクトリが無ければ作成)
+- eval JSON の書き出し先は `{project_dir=カレントディレクトリ}/docs/crystallize/output/eval-<YYYYMMDD-HHMMSS>-question-evaluator.json` (ディレクトリが無ければ作成)。書く前に、同ディレクトリの既存の `eval-*.json` を削除する (後から読む処理のない使い捨ての出力なので、最新の 1 回分だけを残す)
 - Markdown フィードバックは stdout に出し、末尾に同 schema の eval JSON を添付
 
 ## 手順

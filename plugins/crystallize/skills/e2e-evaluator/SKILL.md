@@ -32,7 +32,7 @@ metadata:
   - `iteration` / `output_contract` (`eval_file` / `schema` / `instructions`): plan-evaluator と同じ。`threshold` は受け取っても合否には使わない (合否は fail の有無で決まる)
 - **Output**: `output_contract.eval_file` に下記 eval JSON schema で Write する
 
-`$ARGUMENTS` が context JSON として解釈できない場合 (JSON でない / ファイル不在 / `output_contract` が空) は、`{project_dir=カレントディレクトリ}/output/eval-<YYYYMMDD-HHMMSS>-e2e-evaluator.json` に `undecidable: true` の eval JSON を書き、理由を stdout に出して終了する。対象を推測して操作しない (誤った対象を操作すると、無関係な環境に副作用を残すため)。
+`$ARGUMENTS` が context JSON として解釈できない場合 (JSON でない / ファイル不在 / `output_contract` が空) は、`{project_dir=カレントディレクトリ}/docs/crystallize/output/eval-<YYYYMMDD-HHMMSS>-e2e-evaluator.json` に `undecidable: true` の eval JSON を書き、理由を stdout に出して終了する。書く前に、同ディレクトリの既存の `eval-*.json` を削除する (後から読む処理のない使い捨ての出力なので、最新の 1 回分だけを残す)。対象を推測して操作しない (誤った対象を操作すると、無関係な環境に副作用を残すため)。
 
 ## 手順
 

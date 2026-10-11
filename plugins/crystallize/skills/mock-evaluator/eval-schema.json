@@ -1,0 +1,27 @@
+{
+  "version": "1",
+  "skill": "mock-evaluator",
+  "score_field": "quality.overall",
+  "breakdown_keys": [
+    {"key": "flow_completion", "label": "辿った案 × 目的のうち、最初の画面から最後まで辿れた割合", "threshold": 15, "weight": 35},
+    {"key": "friction", "label": "辿れた経路の引っかかりの少なさ (手数・結果の見えなさ・見かけと挙動の食い違い・状態で切れる箇所)", "threshold": 15, "weight": 25},
+    {"key": "pattern_breadth", "label": "案がユーザーの口にした形の配置違いに留まっていないか。structure_shown が true のとき、stated_form が無いときは N/A (満点扱い)", "threshold": 15, "weight": 25},
+    {"key": "evidence_grounding", "label": "各指摘に辿った手順と観測の記録が付いているか", "threshold": 15, "weight": 15}
+  ],
+  "extras": {
+    "plan_implementation": "supplemental",
+    "mode": "required",
+    "goals": "required",
+    "form_diffs": "required",
+    "walks": "required",
+    "findings": "required",
+    "feedback": "required",
+    "undecidable": "required",
+    "passed": "required",
+    "evaluator_skill": "required"
+  },
+  "passing_rule": "no_high AND NOT undecidable (score と threshold は合否に使わない。passed=false はシートの提示を止めない)",
+  "ref": "spec/SKILL.md#Step 3: モック (見て反応できる成果物)",
+  "rubric": null,
+  "notes": "mock.html のスロット層と、context JSON で渡された文 (task / user / stated_form) だけを見て採点する。ledger・spec・plan・対象アプリのコード・作成役の報告は読まない。モックは静的なので、1 手は「押した結果に当たる枠や状態が同じ案に描かれているか」で判定する。操作できる手段が無い環境では markup を読んで辿り (mode=traced)、判定不能にはしない。指摘は variant_issue / missing_pattern / premise_doubt に分け、呼び出し元がそれぞれ別の経路で処理する。"
+}

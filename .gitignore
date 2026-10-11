@@ -26,3 +26,6 @@ output/
 
 # crystallize が生成する HTML レポート (このリポジトリで作業したときの出力)
 docs/crystallize/reports/
+
+# Claude Code のローカル指示 (個人用)
+CLAUDE.local.md

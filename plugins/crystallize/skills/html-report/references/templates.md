@@ -183,6 +183,111 @@ document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () =>
 - トレードオフ表は「行=評価軸、列=案」。セルは ◎○△ + 一言(記号だけにしない — 理由が読めないと判断材料にならない)
 - 推奨は1案にバッジを付け、根拠を表の直下に1〜2文で書く
 
+## ラウンド (round) — spec のラウンドレポート
+
+`spec` スキルの画面のあるタスクで、1 ラウンドの問いを置くレポート。絵 (案) はデザインキャンバス (Design 型 Artifact) にアートボードとして描かれていて、レポートに載せるのはそのスクリーンショットとリンクだけ。**案をレポートの HTML で描き直さない** (絵の正本が 2 つになる)。出力先は `out:` (`docs/crystallize/specs/<slug>/round-<n>.html` の絶対パス。呼び出し元がリポジトリルートで解決する)、`open` と report-index 登録はしない。絵の無いラウンド (第 1 ラウンドなど) も同じ種別で作る。
+
+### 素材の形 (呼び出し元の spec が書く)
+
+```yaml
+slug: share-card-link
+round: 3
+canvas: https://claude.ai/artifact/…        # デザインキャンバスの URL。artboards のある問いが 1 つでもあれば必須、無ければ省く
+reader: 対象読者と、説明なしで使ってよい語の 1 行
+questions:
+  - id: q1
+    title: 一覧の形
+    question: 作品の一覧をどう見せるか
+    premise: 投稿者が、公開直後に自分の作品を見つけて共有リンクを取る場面。R2 で検索欄は不採用
+    recommended: a
+    reason: 件数が 20 件を超えても 1 画面で見渡せる
+    options:
+      - id: a
+        label: カードグリッド
+        gain: 画像で作品を見分けられる
+        loss: 題名の全文は一覧では読めない
+        artboards:
+          - name: R3-Q1-A
+            png: /abs/path/docs/crystallize/specs/share-card-link/design/round-3/project/R3-Q1-A.png   # 絶対パス
+      - id: b
+        label: 縦リスト (提案)
+        gain: 題名と日付で探せる
+        loss: 画像では見分けられない
+        artboards:
+          - name: R3-Q1-B
+            png: null                         # ローカルで描けない案。リンクだけ
+            note: デザインシステムの部品を使うため、キャンバスで確認
+  - id: q2
+    title: カードの間隔
+    kind: range                               # 値の問い。min / max / step / value (推奨値) / unit
+    question: カードの間隔をいくつにするか
+    premise: …
+    min: 8
+    max: 24
+    step: 4
+    value: 12
+    unit: px
+```
+
+`artboards` の無い問いは文だけの問い (第 1 ラウンドなど)。`kind: range` の無い問いは radio。`png` と `out:` は絶対パス (fork の cwd は保証されない)。
+
+### マークアップ
+
+```html
+<details class="sec" open>
+  <summary class="sec-head"><h2 id="s-questions">問い</h2><span class="sec-meta">3 問</span></summary>
+  <section class="sec-body">
+
+    <details class="sec" open>
+      <summary class="sec-head"><h3 id="q1">Q1 一覧の形</h3><span class="sec-meta">2 案</span></summary>
+      <section class="sec-body">
+        <p><strong>前提:</strong> 投稿者が、公開直後に自分の作品を見つけて共有リンクを取る場面。R2 で検索欄は不採用</p>
+        <doc-ask id="q1">
+          <p>作品の一覧をどう見せるか</p>
+          <label><input type="radio" name="q1" value="a" checked> A カードグリッド <small>推奨。件数が 20 件を超えても 1 画面で見渡せる</small></label>
+          <label><input type="radio" name="q1" value="b"> B 縦リスト (提案)</label>
+        </doc-ask>
+        <div class="cards">
+          <section class="card">
+            <h4>A カードグリッド <span class="badge">推奨</span></h4>
+            <figure class="figure">
+              <img src="data:image/png;base64,…" alt="R3-Q1-A">
+              <figcaption>R3-Q1-A — <a href="https://claude.ai/artifact/…">キャンバスで開く</a></figcaption>
+            </figure>
+            <dl><dt>できるようになる</dt><dd>画像で作品を見分けられる</dd><dt>できなくなる</dt><dd>題名の全文は一覧では読めない</dd></dl>
+          </section>
+          <section class="card">
+            <h4>B 縦リスト (提案) <span class="badge plain">提案</span></h4>
+            <p class="note">R3-Q1-B — <a href="https://claude.ai/artifact/…">キャンバスで開く</a>。デザインシステムの部品を使うためローカルでは描けず、スクリーンショットは無い</p>
+            <dl><dt>できるようになる</dt><dd>題名と日付で探せる</dd><dt>できなくなる</dt><dd>画像では見分けられない</dd></dl>
+          </section>
+        </div>
+      </section>
+    </details>
+
+    <details class="sec" open>
+      <summary class="sec-head"><h3 id="q2">Q2 カードの間隔</h3></summary>
+      <section class="sec-body">
+        <p><strong>前提:</strong> …</p>
+        <doc-ask id="q2">
+          <p>カードの間隔をいくつにするか</p>
+          <label><input type="range" name="q2" min="8" max="24" step="4" value="12"> px (推奨 12)</label>
+        </doc-ask>
+      </section>
+    </details>
+
+  </section>
+</details>
+```
+
+- 固定構成 (要点 → 用語 → 本論 → 詳細 → 根拠・出典) はそのまま。本論の h2 は「問い」の 1 つ、問いは h3 の `details.sec` で入れ子にする (runtime が h3 と `doc-ask` を左レールに拾う)
+- `doc-ask` の `id` と `name` は問いの `id` (`q1` …)。radio の `value` は選択肢の `id`。推奨の選択肢に `checked` と `<small>推奨。<reason></small>`。選択肢に「その他」を置かない (別案はコメントで受ける)
+- 選択肢のカードは `.cards` に 3 枚まで。4 枚目 (提案の案が足された問い) は 2 つ目の `.cards` に置く。カードの見出しは h4 (h3 にすると目次に出る)。`artboards` の無い選択肢も同じカードにし、`figure` を置かず得失だけを書く
+- スクリーンショットは `figure.figure > img` に data URI で埋める (`.markdown-body img` が幅を収める)。`alt` と `figcaption` はアートボードの名前。`png: null` の案は `img` を置かず `p.note` にリンクと理由
+- 1 案が複数のアートボード (複数画面) なら、カードの中に `figure` を続けて並べる
+- 値の問いは `doc-ask` の `range` (目盛り) か radio (離散値)。推奨値を `value` / `checked` にする
+- 答えは返信 (Respond) の `## Decisions` に、問いの行と `→` 行 (太字の選択肢の label と、続く選択肢の id) の形で、`kept as proposed` / `not opened; default kept` の区別つきで戻る (blocks.md 末尾)。読み方は `spec` Step 2 の規則
+
 ## diff 表示(diff)
 
 CSS は同梱の `assets/style.css` に含まれている(`.file` `.file-head` `.hunk-head` `.diff-table` `.report-layout` `.file-nav` 等)。**この構造をそのまま使い、独自の diff スタイル(行番号なし・縞模様・1行ごとの隙間など)を発明しない** — 構造を即興にするとセッションごとに見た目が揺れ、行番号なしで読みにくい版・縞模様つきの版が混ざって出た実績がある。severity バッジ (`.sev-high` / `.sev-med` / `.sev-low`) は style.css に定義済み。追記は不要。

@@ -4,7 +4,7 @@
 set -u
 D=$(cd "$(dirname "$0")" && pwd)
 CSS="$D/../../html-report/assets/style.css"; ok=0
-for f in "$D/doc-sheet.html" "$D/mock-kit.html"; do
+for f in "$D/doc-sheet.html"; do
   for b in LIGHT DARK; do
     a=$(sed -n "/CZ-THEME:$b:BEGIN/,/CZ-THEME:$b:END/p" "$CSS" | sed '1d;$d' | shasum | cut -d' ' -f1)
     m=$(sed -n "/CZ-THEME:$b:BEGIN/,/CZ-THEME:$b:END/p" "$f"   | sed '1d;$d' | shasum | cut -d' ' -f1)

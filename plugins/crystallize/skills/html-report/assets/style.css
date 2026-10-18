@@ -8,7 +8,7 @@
    contents with scroll-spy highlighting. */
 
 :root {
-/* CZ-THEME:LIGHT:BEGIN — spec の mock-kit.html / doc-sheet.html がこの範囲をそのまま写す。check-theme.sh が一致を検算する */
+/* CZ-THEME:LIGHT:BEGIN — spec の doc-sheet.html がこの範囲をそのまま写す。check-theme.sh が一致を検算する */
   /* surfaces — warm paper floor, pure white only for cards and code */
   --canvas: #f6f5f4;
   --canvas-soft: #faf9f8;

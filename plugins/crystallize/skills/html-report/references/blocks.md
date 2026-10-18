@@ -150,7 +150,7 @@ sending   -fail-> failed  : error
 
 - `frame="none|browser|phone|desktop|terminal"`、`w` は設計幅(≤ 480 推奨)。template の中に inline style か `<style>` で本物のマークアップを書く。複数のモックで共有する CSS はページの `<style data-mock-shared>` に
 - `data-ref="name"` を付けた要素がコメント対象になり、`<doc-pin ref="name">` で番号のピンが付く
-- spec スキルのモックキット (`spec/assets/mock-kit.html`) があるタスクでは、そちらの枠を使う。doc-mock は「レポートの中で小さく見せたい 1 部品」向け
+- spec スキルの案 (モック) はデザインキャンバスに描き、ラウンドレポートにはスクリーンショットを載せる (`templates.md` の「ラウンド (round)」)。doc-mock でそれを描き直さない。doc-mock は「レポートの中で小さく見せたい 1 部品」向け
 
 ## `doc-ask` — 読者に決めてもらう (compare で使う)
 

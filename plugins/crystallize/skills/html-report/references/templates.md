@@ -207,14 +207,14 @@ questions:
         gain: 画像で作品を見分けられる
         loss: 題名の全文は一覧では読めない
         artboards:
-          - name: R3-Q1-A
-            png: /abs/path/docs/crystallize/specs/share-card-link/design/round-3/project/R3-Q1-A.png   # 絶対パス
+          - name: share-card-link-R3-Q1-A
+            png: /abs/path/docs/crystallize/specs/share-card-link/design/round-3/project/share-card-link-R3-Q1-A.png   # 絶対パス
       - id: b
         label: 縦リスト (提案)
         gain: 題名と日付で探せる
         loss: 画像では見分けられない
         artboards:
-          - name: R3-Q1-B
+          - name: share-card-link-R3-Q1-B
             png: null                         # ローカルで描けない案。リンクだけ
             note: デザインシステムの部品を使うため、キャンバスで確認
   - id: q2
@@ -251,14 +251,14 @@ questions:
           <section class="card">
             <h4>A カードグリッド <span class="badge">推奨</span></h4>
             <figure class="figure">
-              <img src="data:image/png;base64,…" alt="R3-Q1-A">
-              <figcaption>R3-Q1-A — <a href="https://claude.ai/artifact/…">キャンバスで開く</a></figcaption>
+              <img src="data:image/png;base64,…" alt="share-card-link-R3-Q1-A">
+              <figcaption>share-card-link-R3-Q1-A — <a href="https://claude.ai/artifact/…">キャンバスで開く</a></figcaption>
             </figure>
             <dl><dt>できるようになる</dt><dd>画像で作品を見分けられる</dd><dt>できなくなる</dt><dd>題名の全文は一覧では読めない</dd></dl>
           </section>
           <section class="card">
             <h4>B 縦リスト (提案) <span class="badge plain">提案</span></h4>
-            <p class="note">R3-Q1-B — <a href="https://claude.ai/artifact/…">キャンバスで開く</a>。デザインシステムの部品を使うためローカルでは描けず、スクリーンショットは無い</p>
+            <p class="note">share-card-link-R3-Q1-B — <a href="https://claude.ai/artifact/…">キャンバスで開く</a>。デザインシステムの部品を使うためローカルでは描けず、スクリーンショットは無い</p>
             <dl><dt>できるようになる</dt><dd>題名と日付で探せる</dd><dt>できなくなる</dt><dd>画像では見分けられない</dd></dl>
           </section>
         </div>

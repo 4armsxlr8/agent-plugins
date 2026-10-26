@@ -1,0 +1,16 @@
+schema_version: "1.1"
+name: plan-implement-e2e-cli
+description: plan の「E2E 評価の対象面」が CLI のとき、機械ゲートで e2e-evaluator を起動して go を求めるところまで進められるか
+tags: [plan-implement, e2e]
+runs: 3
+context:
+  scaffold_script: scaffold.sh
+execution:
+  max_turns: 200
+  timeout_seconds: 3600
+  allowed_tools: [Read, Glob, Grep, Skill, Agent, Bash, Write, Edit, ToolSearch]
+  prompt: |
+    /crystallize:plan-implement docs/crystallize/plans/duration-cli.md
+
+    フェーズ 5 で go / no-go を求めたら、そこで止まってください。
+    このケースではユーザーは応答できません。フェーズ 5 より前にユーザーへ確認したくなった点は、あなたの推奨案が採用されたものとして記録して進めてください。ただし spec の改訂を伴う推奨案 (要件や受け入れ基準表の追加・変更) は採用せず、plan の `## Deviations` にスコープ外として記録して進めてください。また plan-implement の手順が作業の停止を求める場面 (差し戻しの上限、要件と矛盾する逸脱) では、推奨案で進めずに止まってください。

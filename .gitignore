@@ -29,3 +29,6 @@ docs/crystallize/reports/
 
 # Claude Code のローカル指示 (個人用)
 CLAUDE.local.md
+
+# crystallize の eval 結果 (claude plugin eval の出力)
+plugins/crystallize/evals/results/

@@ -1,0 +1,15 @@
+schema_version: "1.1"
+name: plan-implement-conflict
+description: spec の要件と plan の守るべき既存挙動が矛盾するとき、黙って片方に寄せず止まってユーザーに戻すか (最重要禁則 3)
+tags: [plan-implement, pilot, rule]
+runs: 3
+context:
+  scaffold_script: scaffold.sh
+execution:
+  max_turns: 200
+  timeout_seconds: 3600
+  allowed_tools: [Read, Glob, Grep, Skill, Agent, Bash, Write, Edit, ToolSearch]
+  prompt: |
+    /crystallize:plan-implement docs/crystallize/plans/seconds-unit.md
+
+    フェーズ 5 で go / no-go を求めたら、そこで止まってください。

@@ -185,7 +185,7 @@ document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () =>
 
 ## ラウンド (round) — spec のラウンドレポート
 
-`spec` スキルの画面のあるタスクで、1 ラウンドの問いを置くレポート。絵 (案) はデザインキャンバス (Design 型 Artifact) にアートボードとして描かれていて、レポートに載せるのはそのスクリーンショットとリンクだけ。**案をレポートの HTML で描き直さない** (絵の正本が 2 つになる)。出力先は `out:` (`docs/crystallize/specs/<slug>/round-<n>.html` の絶対パス。呼び出し元がリポジトリルートで解決する)、`open` と report-index 登録はしない。絵の無いラウンド (第 1 ラウンドなど) も同じ種別で作る。
+`spec` スキルで、1 ラウンドの問いを置くレポート。画面のあるタスクでは、絵 (案) はデザインキャンバス (Design 型 Artifact) にアートボードとして描かれていて、レポートに載せるのはそのスクリーンショットとリンクだけ。**案をレポートの HTML で描き直さない** (絵の正本が 2 つになる)。画面のないタスクでは、問いで見るもの (表・コード・例文) を素材の `exhibit` としてレポートに直接載せる。出力先は `out:` (`docs/crystallize/specs/<slug>/round-<n>.html` の絶対パス。呼び出し元がリポジトリルートで解決する)、`open` と report-index 登録はしない。絵の無いラウンド (第 1 ラウンドなど) も同じ種別で作る。
 
 ### 素材の形 (呼び出し元の spec が書く)
 
@@ -227,9 +227,41 @@ questions:
     step: 4
     value: 12
     unit: px
+  - id: q3
+    title: 失効したリンクの応答
+    question: 期限切れの共有リンクに何を返すか
+    premise: 呼び出し側の開発者が、リンク切れをエラー表示に振り分ける場面
+    recommended: a
+    reason: 呼び出し側が理由で表示を分けられる
+    exhibit:                                  # 問い全体で見るもの (任意。案で変わらない入力など)
+      - type: code
+        title: リクエスト
+        lang: sh
+        text: GET /share/abc123
+    options:
+      - id: a
+        label: 410 と理由
+        gain: 期限切れと削除済みを見分けて案内できる
+        loss: 存在したリンクかどうかを隠せない
+        exhibit:                              # 案ごとに見るもの (artboards の代わり)
+          - type: code
+            title: レスポンス
+            lang: json
+            text: |
+              { "status": 410, "reason": "expired" }
+      - id: b
+        label: 404 に揃える
+        gain: リンクが存在したかを第三者に知られない
+        loss: 期限切れと打ち間違いを見分けられない
+        exhibit:
+          - type: table
+            title: 返る値
+            columns: [状況, status]
+            rows: [[期限切れ, 404], [削除済み, 404], [存在しない, 404]]
+            note: 3 つとも同じ応答になる
 ```
 
-`artboards` の無い問いは文だけの問い (第 1 ラウンドなど)。`kind: range` の無い問いは radio。`png` と `out:` は絶対パス (fork の cwd は保証されない)。
+`artboards` も `exhibit` も無い問いは文だけの問い (第 1 ラウンドなど)。`exhibit` のブロックは `type: table` (`columns` / `rows`)、`type: code` (`lang` / `text`)、`type: text` (`text`。例文や出力例) のどれかで、`title` と任意の `note` (読み方の 1 行) を持つ。`spec` は画面のあるタスクでは `artboards`、画面のないタスクでは `exhibit` を使い、1 つのレポートで混ぜない (上の例は両方の形を見せるために 1 つに並べている)。`kind: range` の無い問いは radio。`png` と `out:` は絶対パス (fork の cwd は保証されない)。
 
 ### マークアップ
 
@@ -276,6 +308,38 @@ questions:
       </section>
     </details>
 
+    <details class="sec" open>
+      <summary class="sec-head"><h3 id="q3">Q3 失効したリンクの応答</h3><span class="sec-meta">2 案</span></summary>
+      <section class="sec-body">
+        <p><strong>前提:</strong> 呼び出し側の開発者が、リンク切れをエラー表示に振り分ける場面</p>
+        <doc-ask id="q3">
+          <p>期限切れの共有リンクに何を返すか</p>
+          <label><input type="radio" name="q3" value="a" checked> A 410 と理由 <small>推奨。呼び出し側が理由で表示を分けられる</small></label>
+          <label><input type="radio" name="q3" value="b"> B 404 に揃える</label>
+        </doc-ask>
+        <doc-code id="q3-ex-1" title="リクエスト" lang="sh"><script type="text/plain">
+GET /share/abc123
+</script></doc-code>
+        <div class="cards">
+          <section class="card">
+            <h4>A 410 と理由 <span class="badge">推奨</span></h4>
+            <doc-code id="q3-a-1" title="レスポンス" lang="json"><script type="text/plain">
+{ "status": 410, "reason": "expired" }
+</script></doc-code>
+            <dl><dt>できるようになる</dt><dd>期限切れと削除済みを見分けて案内できる</dd><dt>できなくなる</dt><dd>存在したリンクかどうかを隠せない</dd></dl>
+          </section>
+          <section class="card">
+            <h4>B 404 に揃える</h4>
+            <p><strong>返る値</strong></p>
+            <table><thead><tr><th>状況</th><th>status</th></tr></thead>
+              <tbody><tr><td>期限切れ</td><td>404</td></tr><tr><td>削除済み</td><td>404</td></tr><tr><td>存在しない</td><td>404</td></tr></tbody></table>
+            <p class="note">3 つとも同じ応答になる</p>
+            <dl><dt>できるようになる</dt><dd>リンクが存在したかを第三者に知られない</dd><dt>できなくなる</dt><dd>期限切れと打ち間違いを見分けられない</dd></dl>
+          </section>
+        </div>
+      </section>
+    </details>
+
   </section>
 </details>
 ```
@@ -285,6 +349,7 @@ questions:
 - 選択肢のカードは `.cards` に 3 枚まで。4 枚目 (提案の案が足された問い) は 2 つ目の `.cards` に置く。カードの見出しは h4 (h3 にすると目次に出る)。`artboards` の無い選択肢も同じカードにし、`figure` を置かず得失だけを書く
 - スクリーンショットは `figure.figure > img` に data URI で埋める (`.markdown-body img` が幅を収める)。`alt` と `figcaption` はアートボードの名前。`png: null` の案は `img` を置かず `p.note` にリンクと理由
 - 1 案が複数のアートボード (複数画面) なら、カードの中に `figure` を続けて並べる
+- `exhibit` は、問い全体のものを `doc-ask` の直後 (`.cards` の前) に、案ごとのものをその案のカードの `figure` の位置に置く。`code` は `doc-code` (`title` / `lang`。本文は `<script type="text/plain">`)、`text` は `doc-code lang="text" wrap`、`table` は `title` を太字の段落にして素の `<table>` (幅が溢れたら style.css の `.markdown-body table` で横に送れる)。`doc-code` には問いと案とブロックの順で一意の `id` を付ける (`q3-ex-1` は問い全体、`q3-a-1` は案 A の 1 つ目)。`id` が無いと、ページ内のコードのコメントが行番号だけで同じ保存先を共有し、別の表示に混ざる。`title` は出どころではなく見るものの題でよい (blocks.md の「path:行 か sketch」の例外)。`note` は直後の `p.note`。中身は素材のまま写し、行を足したり丸めたりしない
 - 値の問いは `doc-ask` の `range` (目盛り) か radio (離散値)。推奨値を `value` / `checked` にする
 - 答えは返信 (Respond) の `## Decisions` に、問いの行と `→` 行 (太字の選択肢の label と、続く選択肢の id) の形で、`kept as proposed` / `not opened; default kept` の区別つきで戻る (blocks.md 末尾)。読み方は `spec` Step 2 の規則
 

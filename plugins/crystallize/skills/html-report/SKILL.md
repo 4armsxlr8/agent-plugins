@@ -42,7 +42,7 @@ metadata:
 | 素材の特徴 | type |
 |---|---|
 | 反復採点の eval JSON 群 (score / passed の履歴) | loop |
-| `spec` のラウンド素材 (問いの定義 + アートボードのスクリーンショットのパス + キャンバスの URL)。呼び出し元が必ず `type: round` と `out:` を付ける | round |
+| `spec` のラウンド素材 (問いの定義 + アートボードのスクリーンショットのパスとキャンバスの URL、または問いで見るもの `exhibit`)。呼び出し元が必ず `type: round` と `out:` を付ける | round |
 | diff / patch / コミット・PRの変更説明 | diff |
 | 複数案の比較・技術選定・トレードオフ | compare |
 | それ以外(調査・研究・実装計画・障害報告) | research |
@@ -90,7 +90,7 @@ type で変わるのは**この節の部品だけ**。他の節は共通。
 | compare | 比較グリッド(`.cards` > `.card` + `.badge`)→ トレードオフ表 → 案ごとの詳細タブ。**推奨案を読者に確定してもらう問いを `doc-ask` で 1 つ置く**(`checked` が推奨。答えは Respond に載る) |
 | diff | 変更サマリ表 → `details.file` + `.diff-table`(構造は templates.md のまま)。「何が呼ばれるようになるか」は `doc-calls` |
 | loop | スコア推移の折れ線(diagrams.md 付録)→ criteria 別の推移 → iteration ごとの feedback を `details.fold` に |
-| round | 問いごとに `details.sec`(h3)を 1 つ: 前提 → 質問 → `doc-ask`(radio。推奨に `checked` と理由)→ 選択肢ごとのカード(得失 + アートボードのスクリーンショットの `figure` + キャンバスへのリンク)。値の問いは `doc-ask` の range か radio。マークアップと素材の形は templates.md の「ラウンド (round)」。**案を HTML で描き直さない** — 絵はスクリーンショットだけ(絵の正本はキャンバス) |
+| round | 問いごとに `details.sec`(h3)を 1 つ: 前提 → 質問 → `doc-ask`(radio。推奨に `checked` と理由)→ 選択肢ごとのカード(得失 + アートボードのスクリーンショットの `figure` + キャンバスへのリンク。画面のないタスクでは `figure` の代わりに素材の `exhibit` の表・コード・例文。問い全体の `exhibit` は `doc-ask` の直後)。値の問いは `doc-ask` の range か radio。マークアップと素材の形は templates.md の「ラウンド (round)」。**案を HTML で描き直さない** — 絵はスクリーンショットだけ(絵の正本はキャンバス) |
 
 - **コードは `doc-code` に `<script type="text/plain">` で貼る。`src=` / `lines=` でファイルから埋める書き方は使えない**(html-report は html-plan の pack.mjs を使わないため、空の枠になる)。出どころは `title="path:行"` に書く。
 - **読者が見えるものはすべてコメントできる** — 段落・箇条書き・見出し・コードの行・呼び出し木の行・図のノード。書き手が何かを足す必要はない。
@@ -170,7 +170,7 @@ python3 "<skill-dir>/../report-index/scripts/report_server.py" register --root "
 ## Additional resources
 
 - `assets/component-samples.html` — **全コンポーネントを一覧表示したサンプル（デザインの基準定義）**。生成前に必ず Read してください。単体でブラウザ表示が可能です。
-- `assets/style.css` — 基本スタイルとコンポーネント用 CSS の基準ファイル。CSS 変数でライトモードおよびダークモードのスタイルを管理しています。変数の定義 (`CZ-THEME:LIGHT` / `CZ-THEME:DARK` の範囲) は `spec` スキルの文書シートも同じものを写して使うので、この範囲を変えたら `spec/assets/check-theme.sh` を実行して追随させてください。
+- `assets/style.css` — 基本スタイルとコンポーネント用 CSS の基準ファイル。CSS 変数でライトモードおよびダークモードのスタイルを管理しています。変数の定義は `CZ-THEME:LIGHT` / `CZ-THEME:DARK` の範囲にあります。
 - `references/diagrams.md` — 図解リファレンス（表現内容と図の形式の対応表、5種類の SVG テンプレート、loop 用の折れ線グラフ）。
 - `assets/htmlplan.js` — doc-* 部品（コード・呼び出し木・図・データの形・問い）、コメントと返信、左レール目次を描く runtime。html-plan からの同梱（`assets/ja.py` で画面の文言だけ日本語化）。`<head>` の `<script>` に丸ごとインライン化する。
 - `references/blocks.md` — doc-* 部品の文法と、読者のコメントが返信で戻る形。
@@ -188,7 +188,6 @@ m = re.search(r'<style>\n(.*?)</style>\n<script>\n(.*?)\n</script>', h, re.S)
 print('css', 'OK' if m.group(1) == (d/'style.css').read_text() else 'NG')     # 両方 OK が正
 print('js ', 'OK' if m.group(2) == (d/'htmlplan.js').read_text() else 'NG')
 EOF
-sh ../spec/assets/check-theme.sh                       # 変数の定義が文書シートと一致していることの検算
 ```
 
 htmlplan.js は上流 (anthropics/claude-plugins-community の html-plan) の同梱で、変更は `assets/ja.py` による画面の文言の日本語化だけです（ロジックは無改変）。上流を取り込み直すときは `runtime/htmlplan.js` を `assets/htmlplan.js` に上書きしてから `python3 assets/ja.py` を 1 回実行してください（出自の注記も付きます。上流で文言が変わっていれば置換元が見つからず止まるので、その行を直します）。見た目の調整は style.css の「html-plan runtime の部品」の節で行い、JS には手を入れません。

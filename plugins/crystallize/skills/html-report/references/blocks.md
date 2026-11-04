@@ -164,7 +164,7 @@ sending   -fail-> failed  : error
 ```
 
 - フォームそのもの。radio で 1 つ、同じ `name` の checkbox で複数、`<textarea name>` で自由記述、`<input type=range name min max value>` で目盛り。`<div class="opts-row">` で短い選択肢を横に並べる
-- 最初の `<p>` が問い(15 語まで)。**`checked` が推奨** — 「何も変えなかった」がそのまま答えになる。radio を推奨なしで置かない
+- 最初の `<p>` が問い(15 語まで)。**`checked` が推奨** — 「何も変えなかった」がそのまま答えになる。radio を推奨なしで置かない(例外は spec のラウンドレポートの認識ラウンドの問い。`templates.md` の「ラウンド (round)」)
 - `name` はページ内で一意。`data-if="name=value"`(`!=` / `~` 含む / `&&`)で、その答えのときだけ見せる要素を作れる
 - 答えは返信 (Respond) に「変更あり / 開いたが既定のまま / 開いていない」の区別つきで載る
 

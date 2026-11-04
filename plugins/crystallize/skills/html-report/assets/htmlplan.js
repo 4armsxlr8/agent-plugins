@@ -544,7 +544,7 @@ function applyIfs(ans) {
 const askQ = (ask, i) => ask.querySelector(':scope > p, :scope > h3, :scope > h4')?.textContent.trim() || ask.id || `Question ${i + 1}`;
 const askNames = (ask) => [...new Set($$('input[name], textarea[name], select[name], ol.rank[data-name]', ask).map((c) => c.name || c.dataset.name))];
 const askChanged = (ask, ans) => askNames(ask).some((nm) => !same(ans[nm], S.defaults[nm]));
-const askTodo = (ask, ans) => !S.seen[ask.id] && !askChanged(ask, ans);       // not opened and not answered
+const askTodo = (ask, ans) => (!S.seen[ask.id] && !askChanged(ask, ans)) || askNames(ask).some((nm) => S.defaults[nm] === null && ans[nm] == null);   // not opened and not answered, or a radio with no default still unpicked
 function askPick(ask, ans) {                                                   // the current answer, in a few words
   for (const nm of askNames(ask)) { const c = ask.querySelector(`[name="${CSS.escape(nm)}"]`); const v = ans[nm]; if (!c) continue;
     if (c.type === 'radio' && v != null) return optionLabel(nm, v);
@@ -625,7 +625,7 @@ function openResponse() {
   const pre = h('pre', null, r.md);
   const ans = readAnswers(); const asks = $$('doc-ask'); const nTodo = asks.filter((a) => askTodo(a, ans)).length;
   const list = asks.length ? h('div', { class: 'nw-asks' }, h('div', { class: 'ttl' }, '決定', h('b', { class: nTodo ? 'todo' : '' }, nTodo ? `未回答 ${nTodo}` : 'すべて回答済み')),
-    asks.map((a, i) => { const st = askChanged(a, ans) ? 'changed' : S.seen[a.id] ? 'kept' : 'todo'; const no = a.closest('doc-claim')?.dataset.no;
+    asks.map((a, i) => { const st = askChanged(a, ans) ? 'changed' : askTodo(a, ans) ? 'todo' : 'kept'; const no = a.closest('doc-claim')?.dataset.no;
       return h('button', { class: 'nw-askrow ' + st, onclick: () => goToAsk(a) }, h('span', { class: 'k' }, String(i + 1)), h('span', { class: 'q' }, askQ(a, i), h('small', null, [no ? `claim ${no}` : '', words(askPick(a, ans), 9)].filter(Boolean).join(' · '))), h('span', { class: 's' }, st === 'todo' ? '未回答' : st === 'kept' ? '提案どおり' : '変更あり')); })) : null;
   const state = h('span', { class: 'nw-send-state' });
   const liveOn = false, send = null;

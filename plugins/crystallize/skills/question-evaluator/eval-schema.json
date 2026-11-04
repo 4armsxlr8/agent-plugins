@@ -3,7 +3,7 @@
   "skill": "question-evaluator",
   "score_field": "quality.overall",
   "breakdown_keys": [
-    {"key": "premise_grounding", "label": "前提の事実性 (コードベース/Web裏取り)", "threshold": 15, "weight": 25},
+    {"key": "premise_grounding", "label": "前提の事実性 (コードベース/Web裏取り。好みの前提は依頼原文に根拠があるか)", "threshold": 15, "weight": 25},
     {"key": "dilemma_validity", "label": "二択の正当性 (両立不能の証明。引き算案でも消えないこと)", "threshold": 15, "weight": 20},
     {"key": "neutrality", "label": "誘導のなさ・前提の開示", "threshold": 15, "weight": 15},
     {"key": "option_coverage", "label": "選択肢の網羅 (両立案の欠落等)。選択肢なしは N/A (満点扱い)", "threshold": 15, "weight": 15},
@@ -17,8 +17,8 @@
     "evaluator_skill": "required",
     "rewrite": "required_when_failed"
   },
-  "passing_rule": "no_false_premise AND score >= threshold",
+  "passing_rule": "no_false_premise AND no_ungrounded_premise AND score >= threshold",
   "ref": "spec/SKILL.md#Step 2: grilling ラウンド",
   "rubric": null,
-  "notes": "基準の正本は spec §Step 2: grilling ラウンド の質問フォーマットと 4 規則 (legibility は同 §試問 の検査 3・4)。SKILL.md §採点観点の定義 はその対応表。検証可能な前提の誤りが確認された質問は score に関わらず passed=false"
+  "notes": "基準の正本は spec §Step 2: grilling ラウンド の質問フォーマットと 4 規則 (legibility は同 §試問 の検査 3・4)。SKILL.md §採点観点の定義 はその対応表。検証可能な前提の誤りが確認された質問、および依頼原文に根拠の無い前提を (仮説) の印なしで置いた質問は score に関わらず passed=false"
 }

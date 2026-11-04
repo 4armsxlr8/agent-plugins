@@ -194,6 +194,12 @@ slug: share-card-link
 round: 3
 canvas: https://claude.ai/artifact/…        # デザインキャンバスの URL。artboards のある問いが 1 つでもあれば必須、無ければ省く
 reader: 対象読者と、説明なしで使ってよい語の 1 行
+frame:                                        # 問いがそろって前提にしているもの。毎ラウンド必須
+  request: |                                  # 依頼文の逐語 (言い換えない)
+    共有リンクで作品を見せたい
+  job: 投稿者が公開直後に…したい。そうすれば…   # ジョブストーリー。未確定なら「(仮説)」で始める
+  decided:                                    # それまでの確定事項の要点。第 1 ラウンドは空
+    - R1 依頼の読み方: 作品 1 点の共有リンク (一覧の公開は範囲外)
 questions:
   - id: q1
     title: 一覧の形
@@ -261,11 +267,21 @@ questions:
             note: 3 つとも同じ応答になる
 ```
 
-`artboards` も `exhibit` も無い問いは文だけの問い (第 1 ラウンドなど)。`exhibit` のブロックは `type: table` (`columns` / `rows`)、`type: code` (`lang` / `text`)、`type: text` (`text`。例文や出力例) のどれかで、`title` と任意の `note` (読み方の 1 行) を持つ。`spec` は画面のあるタスクでは `artboards`、画面のないタスクでは `exhibit` を使い、1 つのレポートで混ぜない (上の例は両方の形を見せるために 1 つに並べている)。`kind: range` の無い問いは radio。`png` と `out:` は絶対パス (fork の cwd は保証されない)。
+`recommended` / `reason` の無い問いは認識ラウンドの問いで、どの radio にも `checked` を付けない (`doc-ask` は推奨なしで置かない、の例外。読み方を選ばずに返信されたら確定させないため)。「前提が違う」は素材に書かれていなくても全問に足す (マークアップ参照)。`artboards` も `exhibit` も無い問いは文だけの問い (第 1 ラウンドなど)。`exhibit` のブロックは `type: table` (`columns` / `rows`)、`type: code` (`lang` / `text`)、`type: text` (`text`。例文や出力例) のどれかで、`title` と任意の `note` (読み方の 1 行) を持つ。`spec` は画面のあるタスクでは `artboards`、画面のないタスクでは `exhibit` を使い、1 つのレポートで混ぜない (上の例は両方の形を見せるために 1 つに並べている)。`kind: range` の無い問いは radio。`png` と `out:` は絶対パス (fork の cwd は保証されない)。
 
 ### マークアップ
 
 ```html
+<details class="sec" open>
+  <summary class="sec-head"><h2 id="s-frame">このラウンドの前提</h2></summary>
+  <section class="sec-body">
+    <doc-quote via="prompt">共有リンクで作品を見せたい</doc-quote>
+    <p><strong>ジョブストーリー:</strong> 投稿者が公開直後に…したい。そうすれば…</p>
+    <ul><li>R1 依頼の読み方: 作品 1 点の共有リンク (一覧の公開は範囲外)</li></ul>
+    <p class="note">ここが違うときは、違う行にコメントを付けてください。</p>
+  </section>
+</details>
+
 <details class="sec" open>
   <summary class="sec-head"><h2 id="s-questions">問い</h2><span class="sec-meta">3 問</span></summary>
   <section class="sec-body">
@@ -278,6 +294,7 @@ questions:
           <p>作品の一覧をどう見せるか</p>
           <label><input type="radio" name="q1" value="a" checked> A カードグリッド <small>推奨。件数が 20 件を超えても 1 画面で見渡せる</small></label>
           <label><input type="radio" name="q1" value="b"> B 縦リスト (提案)</label>
+          <label><input type="radio" name="q1" value="premise"> 前提が違う <small>コメントに何が違うかを書く</small></label>
         </doc-ask>
         <div class="cards">
           <section class="card">
@@ -304,6 +321,7 @@ questions:
         <doc-ask id="q2">
           <p>カードの間隔をいくつにするか</p>
           <label><input type="range" name="q2" min="8" max="24" step="4" value="12"> px (推奨 12)</label>
+          <label><input type="checkbox" name="q2-premise"> 前提が違う <small>コメントに何が違うかを書く</small></label>
         </doc-ask>
       </section>
     </details>
@@ -316,6 +334,7 @@ questions:
           <p>期限切れの共有リンクに何を返すか</p>
           <label><input type="radio" name="q3" value="a" checked> A 410 と理由 <small>推奨。呼び出し側が理由で表示を分けられる</small></label>
           <label><input type="radio" name="q3" value="b"> B 404 に揃える</label>
+          <label><input type="radio" name="q3" value="premise"> 前提が違う <small>コメントに何が違うかを書く</small></label>
         </doc-ask>
         <doc-code id="q3-ex-1" title="リクエスト" lang="sh"><script type="text/plain">
 GET /share/abc123
@@ -344,8 +363,8 @@ GET /share/abc123
 </details>
 ```
 
-- 固定構成 (要点 → 用語 → 本論 → 詳細 → 根拠・出典) はそのまま。本論の h2 は「問い」の 1 つ、問いは h3 の `details.sec` で入れ子にする (runtime が h3 と `doc-ask` を左レールに拾う)
-- `doc-ask` の `id` と `name` は問いの `id` (`q1` …)。radio の `value` は選択肢の `id`。推奨の選択肢に `checked` と `<small>推奨。<reason></small>`。選択肢に「その他」を置かない (別案はコメントで受ける)
+- 固定構成 (要点 → 用語 → 本論 → 詳細 → 根拠・出典) はそのまま。本論の h2 は「このラウンドの前提」(素材の `frame`) と「問い」の 2 つで、この順に置く。問いは h3 の `details.sec` で入れ子にする (runtime が h3 と `doc-ask` を左レールに拾う)
+- `doc-ask` の `id` と `name` は問いの `id` (`q1` …)。radio の `value` は選択肢の `id`。推奨の選択肢に `checked` と `<small>推奨。<reason></small>` (`recommended` の無い認識ラウンドの問いはどれにも `checked` を付けない)。選択肢に「その他」を置かない (別案はコメントで受ける)。全問の末尾に「前提が違う」を足す (radio は `value="premise"`、range と textarea は同じ `doc-ask` にチェックボックス `name="<id>-premise"`)
 - 選択肢のカードは `.cards` に 3 枚まで。4 枚目 (提案の案が足された問い) は 2 つ目の `.cards` に置く。カードの見出しは h4 (h3 にすると目次に出る)。`artboards` の無い選択肢も同じカードにし、`figure` を置かず得失だけを書く
 - スクリーンショットは `figure.figure > img` に data URI で埋める (`.markdown-body img` が幅を収める)。`alt` と `figcaption` はアートボードの名前。`png: null` の案は `img` を置かず `p.note` にリンクと理由
 - 1 案が複数のアートボード (複数画面) なら、カードの中に `figure` を続けて並べる

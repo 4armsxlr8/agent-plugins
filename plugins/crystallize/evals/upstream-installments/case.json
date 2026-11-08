@@ -1,0 +1,15 @@
+{
+  "slug": "installments",
+  "request": "`billing` パッケージに請求書の分割払いを足してください。顧客が一括で払えないとき、発行済みの請求書の未入金の額を数回の支払いに分けて、回ごとの期日と金額を管理し、督促と明細書がその分割に沿うようにしたいです。\n\n他のコードとつなぐので、次の名前は揃えてください。\n- `billing.installments.create_plan(book, invoice_id, count, first_due_on, actor, on)`: 分割を作り、回の一覧を番号順に返す。`count` は回数、`first_due_on` は 1 回目の期日、`on` は操作した日。2 回目以降の期日は毎月同じ日\n- `billing.installments.cancel_plan(book, invoice_id, actor, on)`: 分割をやめて、一括の請求書に戻す\n- `billing.installments.schedule(book, invoice_id)`: 回の一覧を番号順に返す。分割がなければ空の一覧\n- 回 (`Installment`) の属性: `number` (1 から), `due_on`, `amount`, `paid` (その回に充てられた入金の額), `remaining` (その回の残り)\n- 監査イベント: `installment.plan_created`, `installment.plan_cancelled`。`data` は `count`, `amount` (分割した額。他のイベントの金額と同じ文字列の形)\n- `receivables.customer_statement` の各行に足す項目: `next_due_on`, `next_due_amount` (次に支払う期日とその額。支払いが済んでいれば `None`)",
+  "intent": "- 回数は 2 以上 12 以下。範囲外は `ValidationError`。規約上、1 つの請求書の分割は支払い済みの回を含めて 12 回までで、あとで組み直すときもこの上限を超えない\n- 割り切れないときの端数は最後の回に寄せる (JPY 100 を 3 回なら 33, 33, 34)\n- 督促: 分割のある請求書は、回の期日から 7 日の猶予を過ぎて残りのある回があるときだけ督促の対象にする。期日の 7 日後までは対象にしない。`overdue_amount` は猶予を過ぎた回の残りの合計。分割のない請求書は今のまま\n- 一部入金済みの請求書も分割できる。未入金の額を分ける\n- `first_due_on` は `on` の翌日から 60 日以内。当日以前と 61 日以降は `ValidationError`\n- 入金は古い回から順に充てる。期日前の入金も同じ\n- 分割しても `invoice.due_on` は変えない。元の期日のまま残す",
+  "decisions": ["CountLimit", "RemainderLast", "Grace", "PartialAllowed", "FirstDueWindow", "PaymentOldest", "DueOnKept", "MonthEnd", "VoidBlocked", "PaidCancelBlocked", "TinyRejected", "WeekendShift"],
+  "controls": ["PartialAllowed", "PaymentOldest"],
+  "latent": [
+    {"name": "MonthEnd", "topic": "1 回目の期日が月末のときの、2 回目以降の期日の決め方", "intent": "月末日を 1 回目の期日にしたら、以降も常に月末にする (6/30 の次は 7/31、8/31、9/30)"},
+    {"name": "VoidBlocked", "topic": "分割のある請求書を取り消す (void_invoice) ときの扱い", "intent": "分割のある請求書は取り消せない。`InvalidTransition`。先に `cancel_plan` が要る"},
+    {"name": "PaidCancelBlocked", "topic": "分割を作ったあとに入金があった場合に cancel_plan するときの扱い", "intent": "分割を作ったあとの入金が 1 件でもあれば `cancel_plan` はできない。`InvalidTransition`。分割を作る前の入金は妨げにならない"},
+    {"name": "TinyRejected", "topic": "回数に対して額が小さく、0 円の回ができる場合の扱い", "intent": "0 円の回ができる分割は `ValidationError` にする"},
+    {"name": "WeekendShift", "topic": "期日が土日や休日に当たるときの扱い", "intent": "土日に当たる期日は翌月曜にずらす。祝日は考えない。次の回の期日はずらす前の日を基準に決める"}
+  ],
+  "followup": "`billing.installments.reschedule(book, invoice_id, count, first_due_on, actor, on)` を足してください。支払いの途中で顧客から相談があったときに、残りの支払いを組み直すものです。入金の済んだ回はそのまま残し、残りのある回を、未入金の額を `count` 回に分け直した回に置き換えます。番号は続きから振ります。組み直した回の一覧を番号順に返します。監査イベントは `installment.plan_rescheduled` で、`data` は `count`, `amount` です。一部だけ入金のある回は、入金の済んだ額を金額とする回として残します。\n\n私は質問に答えられません。判断が必要な点は自分で決めて実装してください。実装が終わったらコミットせず、そこで止まってください。"
+}

@@ -7,8 +7,8 @@
 - hidden/ の隠しテストを実行する
 - fixture/tests/ の元のテストを、結果の作業ディレクトリに対して実行する
   (既存のテストファイルへの追記は許し、元のアサーションを弱めた改変は落とす)
-- trace から Skill / Agent の起動回数 (メインループから出たものだけ) とモデル別のコストを読む
-総合判定 (verdict) は、ハーネスの grader がすべて合格し、隠しテストも通ったときだけ PASS にする。
+- trace から Skill / Agent / Workflow の起動回数 (メインループから出たものだけ) とモデル別のコストを読む
+総合判定 (verdict) は、ハーネスの grader がすべて合格し、隠しテストと元のテストも通ったときだけ PASS にする。
 版どうしの比較はこの列とコスト・時間で行う。turn 数はメインループしか数えないので比較に使わない。
 結果は <結果ファイル>.post.json に書き、表を標準出力に出す。
 残された作業ディレクトリの中では git を動かさない (ハーネスの警告どおり)。
@@ -36,11 +36,22 @@ def run_tests(src, workspace, name):
     return proc.returncode == 0, proc.stderr
 
 
+def score_workspace(case_dir, cwd):
+    """cwd を一時ディレクトリへ写し、hidden/ と fixture/tests/ を実行する"""
+    with tempfile.TemporaryDirectory() as tmp:
+        workspace = Path(tmp) / "cwd"
+        shutil.copytree(cwd, workspace, symlinks=True, ignore=shutil.ignore_patterns(".git"))
+        hidden_ok, hidden_log = run_tests(case_dir / "hidden", workspace, "_hidden")
+        fixture_tests = case_dir / "fixture" / "tests"
+        orig_ok, orig_log = run_tests(fixture_tests, workspace, "_orig_tests") if fixture_tests.is_dir() else (True, "")
+    return hidden_ok, hidden_log, orig_ok, orig_log
+
+
 def read_trace(trace_path):
-    """メインループから出た Skill (スキル名ごと) と Agent の起動回数、モデル別のコストを返す"""
+    """メインループから出た Skill (スキル名ごと)・Agent・Workflow の起動回数、モデル別のコストを返す"""
     launches = Counter()
     model_cost = {}
-    for line in Path(trace_path).read_text().splitlines():
+    for line in Path(trace_path).read_text(errors="replace").split("\n"):
         try:
             event = json.loads(line)
         except ValueError:
@@ -57,6 +68,8 @@ def read_trace(trace_path):
                 launches["Skill:" + block["input"].get("skill", "?")] += 1
             elif block["name"] in ("Agent", "Task"):
                 launches["Agent"] += 1
+            elif block["name"] == "Workflow":
+                launches["Workflow"] += 1
     return dict(launches), model_cost
 
 
@@ -68,12 +81,7 @@ def post_run(case_dir, run):
         kept = trace.parents[1]
         for d in (kept, kept / "sealed"):
             d.chmod(0o700)
-        with tempfile.TemporaryDirectory() as tmp:
-            workspace = Path(tmp) / "cwd"
-            shutil.copytree(kept / "sealed" / "home" / "cwd", workspace, ignore=shutil.ignore_patterns(".git"))
-            hidden_ok, hidden_log = run_tests(case_dir / "hidden", workspace, "_hidden")
-            fixture_tests = case_dir / "fixture" / "tests"
-            orig_ok, orig_log = run_tests(fixture_tests, workspace, "_orig_tests") if fixture_tests.is_dir() else (True, "")
+        hidden_ok, hidden_log, orig_ok, orig_log = score_workspace(case_dir, kept / "sealed" / "home" / "cwd")
         launches, model_cost = read_trace(trace)
     except (OSError, subprocess.SubprocessError) as exc:
         return {"verdict": "ERROR", "error": f"{type(exc).__name__}: {exc}"}

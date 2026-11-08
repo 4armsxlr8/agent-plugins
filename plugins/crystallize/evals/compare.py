@@ -183,7 +183,8 @@ def project_slug(path):
 def saw_scoring_material(trace, session_id, cwd):
     """隠しテストや参照解に触れた形跡を探す。workflow の subagent の呼び出しは trace に出ないので、セッションの記録も見る"""
     # 開発中のセッションの記録にも隠しテストの本文が残るので、このリポジトリの記録を読んだ形跡も数える
-    pattern = re.compile(rf"test_hidden\.py|test_intent\.py|/evals/|projects/{project_slug(PLUGIN.parents[1])}")
+    # 権限の拒否の文は deny の規則 (`Read(//…/evals/**)`) を引用するので、その形だけは数えない
+    pattern = re.compile(rf"test_hidden\.py|test_intent\.py|/evals/(?!\*\*\))|projects/{project_slug(PLUGIN.parents[1])}")
     session = CONFIG_DIR / "projects" / project_slug(cwd) / str(session_id)
     paths = [trace, session.with_name(session.name + ".jsonl"), *session.rglob("*.jsonl")]
     return any(pattern.search(p.read_text(errors="replace")) for p in paths if p.is_file())

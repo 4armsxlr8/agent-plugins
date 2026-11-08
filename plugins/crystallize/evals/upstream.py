@@ -133,14 +133,17 @@ def oracle(message, cwd, seen, model, case, unlocked, rule):
     fresh_reports = [p for p in reports if (p, p.stat().st_mtime) not in seen]
     fresh_drafts = [p for p in specs.glob("*.md") if (p, p.stat().st_mtime) not in seen]
     seen.update((p, p.stat().st_mtime) for p in fresh_reports + fresh_drafts)
-    report = ""
+    report, read_chars = "", len(message)
     if fresh_reports:
         # doc-code の本文は <script type="text/plain"> に入っているので残す
         html = re.sub(r"<style\b.*?</style>|<script(?![^>]*text/plain)\b.*?</script>", "", fresh_reports[-1].read_text(errors="replace"), flags=re.S)
         report = f"\n# 添えられたラウンドレポート\n{html}"
+        read_chars += len(re.sub(r"<[^>]+>", "", html))
     attached = fresh_reports[-1:] + (fresh_drafts if review_all else [])
     for draft in attached[len(fresh_reports[-1:]):]:
-        report += f"\n# 添えられた spec の草案\n{draft.read_text(errors='replace')}"
+        draft_text = draft.read_text(errors='replace')
+        report += f"\n# 添えられた spec の草案\n{draft_text}"
+        read_chars += len(draft_text)
     # STATED はあとで問われたら ASKED に変わる。question-only では STATED のままなら依頼者は知らない
     locked = [item for item in case.latent if unlocked.get(item["name"]) != "ASKED"]
     text = f"{message}\n{report}"
@@ -150,7 +153,7 @@ def oracle(message, cwd, seen, model, case, unlocked, rule):
     intent = "\n".join([case.intent, *known])
     reply = ask_model(ORACLE.format(review_rules=REVIEW_RULES[rule], intent=intent, message=message, report=report), model)
     return {"reply": reply, "attached": [p.name for p in attached], "raised": newly,
-            "classifier": classifier, "read_chars": len(re.sub(r"<[^>]+>", "", text))}
+            "classifier": classifier, "read_chars": read_chars}
 
 
 def raised_topics(text, locked, model):

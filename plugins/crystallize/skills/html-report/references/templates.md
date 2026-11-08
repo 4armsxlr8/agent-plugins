@@ -185,7 +185,9 @@ document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () =>
 
 ## ラウンド (round) — spec のラウンドレポート
 
-`spec` スキルで、1 ラウンドの問いを置くレポート。画面のあるタスクでは、絵 (案) はデザインキャンバス (Design 型 Artifact) にアートボードとして描かれていて、レポートに載せるのはそのスクリーンショットとリンクだけ。**案をレポートの HTML で描き直さない** (絵の正本が 2 つになる)。画面のないタスクでは、問いで見るもの (表・コード・例文) を素材の `exhibit` としてレポートに直接載せる。出力先は `out:` (`docs/crystallize/specs/<slug>/round-<n>.html` の絶対パス。呼び出し元がリポジトリルートで解決する)、`open` と report-index 登録はしない。絵の無いラウンド (第 1 ラウンドなど) も同じ種別で作る。
+`spec` スキルで、1 ラウンドの問いを置くレポート。**問いだけの短い形にする** — 読者に見せるのは問いの文と選択肢の label だけで、前提の節・前提行・得失のカード・表やコードの例は置かない。以前の形は見せる文字数が問いそのものの何倍にもなり、問いだけにした版を eval で比べても、拾えた判断が落ちたとは示せなかったため (`evals/upstream-installments/protocol.md` の第 5 段階。各 3 回で、依頼者役は AI。消した説明の中にしか出なかった判断もあり、人が読む場合は測っていない)。前提や得失は問いの文と label の中に収める。
+
+画面のあるタスクでは、絵 (案) はデザインキャンバス (Design 型 Artifact) にアートボードとして描かれていて、レポートに載せるのは選択肢ごとのスクリーンショット 1 枚とリンクだけ。**案をレポートの HTML で描き直さない** (絵の正本が 2 つになる)。画面のないタスクでは見るものを載せない。出力先は `out:` (`docs/crystallize/specs/<slug>/round-<n>.html` の絶対パス。呼び出し元がリポジトリルートで解決する)、`open` と report-index 登録はしない。絵の無いラウンド (第 1 ラウンドなど) も同じ種別で作る。
 
 ### 素材の形 (呼び出し元の spec が書く)
 
@@ -194,31 +196,21 @@ slug: share-card-link
 round: 3
 canvas: https://claude.ai/artifact/…        # デザインキャンバスの URL。artboards のある問いが 1 つでもあれば必須、無ければ省く
 reader: 対象読者と、説明なしで使ってよい語の 1 行
-frame:                                        # 問いがそろって前提にしているもの。毎ラウンド必須
-  request: |                                  # 依頼文の逐語 (言い換えない)
-    共有リンクで作品を見せたい
-  job: 投稿者が公開直後に…したい。そうすれば…   # ジョブストーリー。未確定なら「(仮説)」で始める
-  decided:                                    # それまでの確定事項の要点。第 1 ラウンドは空
-    - R1 依頼の読み方: 作品 1 点の共有リンク (一覧の公開は範囲外)
+lede: このラウンドで決めること: 3 問                  # 1 行。問いの題は並べない (h3 と重なる)
 questions:
   - id: q1
     title: 一覧の形
-    question: 作品の一覧をどう見せるか
-    premise: 投稿者が、公開直後に自分の作品を見つけて共有リンクを取る場面。R2 で検索欄は不採用
+    question: 公開直後の作品一覧をどう見せますか        # 1 文、60 字まで。要る前提は「(仮説) …」の 1 句で文に入れる
     recommended: a
-    reason: 件数が 20 件を超えても 1 画面で見渡せる
+    reason: 20 件を超えても 1 画面で見渡せる             # 1 行
     options:
       - id: a
-        label: カードグリッド
-        gain: 画像で作品を見分けられる
-        loss: 題名の全文は一覧では読めない
+        label: カードグリッド (画像で見分けられるが、題名の全文は読めない)   # 1 行、50 字まで
         artboards:
           - name: share-card-link-R3-Q1-A
             png: /abs/path/docs/crystallize/specs/share-card-link/design/round-3/project/share-card-link-R3-Q1-A.png   # 絶対パス
       - id: b
-        label: 縦リスト (提案)
-        gain: 題名と日付で探せる
-        loss: 画像では見分けられない
+        label: (提案) 縦リスト (題名と日付で探せるが、画像では見分けられない)
         artboards:
           - name: share-card-link-R3-Q1-B
             png: null                         # ローカルで描けない案。リンクだけ
@@ -226,8 +218,7 @@ questions:
   - id: q2
     title: カードの間隔
     kind: range                               # 値の問い。min / max / step / value (推奨値) / unit
-    question: カードの間隔をいくつにするか
-    premise: …
+    question: カードの間隔をいくつにしますか
     min: 8
     max: 24
     step: 4
@@ -235,52 +226,34 @@ questions:
     unit: px
   - id: q3
     title: 失効したリンクの応答
-    question: 期限切れの共有リンクに何を返すか
-    premise: 呼び出し側の開発者が、リンク切れをエラー表示に振り分ける場面
+    question: 期限切れの共有リンクを開いた呼び出し側に、何を返しますか
     recommended: a
     reason: 呼び出し側が理由で表示を分けられる
-    exhibit:                                  # 問い全体で見るもの (任意。案で変わらない入力など)
-      - type: code
-        title: リクエスト
-        lang: sh
-        text: GET /share/abc123
     options:
       - id: a
-        label: 410 と理由
-        gain: 期限切れと削除済みを見分けて案内できる
-        loss: 存在したリンクかどうかを隠せない
-        exhibit:                              # 案ごとに見るもの (artboards の代わり)
-          - type: code
-            title: レスポンス
-            lang: json
-            text: |
-              { "status": 410, "reason": "expired" }
+        label: 410 と理由 (期限切れと削除済みを見分けられるが、存在したことは隠せない)
       - id: b
-        label: 404 に揃える
-        gain: リンクが存在したかを第三者に知られない
-        loss: 期限切れと打ち間違いを見分けられない
-        exhibit:
-          - type: table
-            title: 返る値
-            columns: [状況, status]
-            rows: [[期限切れ, 404], [削除済み, 404], [存在しない, 404]]
-            note: 3 つとも同じ応答になる
+        label: 404 に揃える (存在したことを隠せるが、期限切れと打ち間違いを見分けられない)
+assumed:                                      # 問わずに決めたこと。1 行ずつ、8 件まで。無ければ省く
+  - 共有リンクの有効期限は 30 日 (既存の招待リンクと同じ)
+  - リンクの URL は既存の招待リンクと同じ形 (/share/<id>)
 ```
 
-`recommended` / `reason` の無い問いは認識ラウンドの問いで、どの radio にも `checked` を付けない (`doc-ask` は推奨なしで置かない、の例外。読み方を選ばずに返信されたら確定させないため)。「前提が違う」は素材に書かれていなくても全問に足す (マークアップ参照)。`artboards` も `exhibit` も無い問いは文だけの問い (第 1 ラウンドなど)。`exhibit` のブロックは `type: table` (`columns` / `rows`)、`type: code` (`lang` / `text`)、`type: text` (`text`。例文や出力例) のどれかで、`title` と任意の `note` (読み方の 1 行) を持つ。`spec` は画面のあるタスクでは `artboards`、画面のないタスクでは `exhibit` を使い、1 つのレポートで混ぜない (上の例は両方の形を見せるために 1 つに並べている)。`kind: range` の無い問いは radio。`png` と `out:` は絶対パス (fork の cwd は保証されない)。
+- `question` は 1 文で 60 字まで、`label` は 1 行で 50 字まで、`reason` は 1 行。label には、その案を選ぶと読者ができること・できなくなることを括弧で 1 句ずつ入れる。推奨でない案にも、選ぶ理由が label から読めるようにする
+- 違いが具体の値で分かる問いは、同じ入力に対する結果を label に 1 つだけ入れる (例: `1,001 円を 3 回 → 334・334・333 円`)。表やコードの例は置かない
+- `recommended` / `reason` の無い問いは認識ラウンドの問いで、どの radio にも `checked` を付けない (`doc-ask` は推奨なしで置かない、の例外。読み方を選ばずに返信されたら確定させないため)。「前提が違う」は素材に書かれていなくても全問に足す (マークアップ参照)
+- `artboards` は画面のあるタスクで案を選ばせる問いだけに付く。`kind: range` の無い問いは radio。`png` と `out:` は絶対パス (fork の cwd は保証されない)
+- `assumed` は、このラウンドで問いにせず決めたこと (コードの慣習や既存の画面・API から決まる細部だけ。読み方・範囲・使う人・優先は問いになる)。読む人が違いに気づいたら行にコメントするための一覧で、閉じた節として置く
+- 素材に `frame` / `premise` / `gain` / `loss` / `exhibit` が書かれていても出さない (以前の長い形の項目)
 
 ### マークアップ
 
 ```html
-<details class="sec" open>
-  <summary class="sec-head"><h2 id="s-frame">このラウンドの前提</h2></summary>
-  <section class="sec-body">
-    <doc-quote via="prompt">共有リンクで作品を見せたい</doc-quote>
-    <p><strong>ジョブストーリー:</strong> 投稿者が公開直後に…したい。そうすれば…</p>
-    <ul><li>R1 依頼の読み方: 作品 1 点の共有リンク (一覧の公開は範囲外)</li></ul>
-    <p class="note">ここが違うときは、違う行にコメントを付けてください。</p>
-  </section>
-</details>
+<header class="report-head">
+  <h1>共有リンク — 第 3 ラウンド</h1>
+  <p class="report-meta"><span class="badge plain">round</span><span>2026-11-08</span></p>
+  <p class="lede">このラウンドで決めること: 3 問。推奨のままでよければ、そのまま返信を貼ってください。</p>
+</header>
 
 <details class="sec" open>
   <summary class="sec-head"><h2 id="s-questions">問い</h2><span class="sec-meta">3 問</span></summary>
@@ -289,26 +262,22 @@ questions:
     <details class="sec" open>
       <summary class="sec-head"><h3 id="q1">Q1 一覧の形</h3><span class="sec-meta">2 案</span></summary>
       <section class="sec-body">
-        <p><strong>前提:</strong> 投稿者が、公開直後に自分の作品を見つけて共有リンクを取る場面。R2 で検索欄は不採用</p>
         <doc-ask id="q1">
-          <p>作品の一覧をどう見せるか</p>
-          <label><input type="radio" name="q1" value="a" checked> A カードグリッド <small>推奨。件数が 20 件を超えても 1 画面で見渡せる</small></label>
-          <label><input type="radio" name="q1" value="b"> B 縦リスト (提案)</label>
-          <label><input type="radio" name="q1" value="premise"> 前提が違う <small>コメントに何が違うかを書く</small></label>
+          <p>公開直後の作品一覧をどう見せますか</p>
+          <label><input type="radio" name="q1" value="a" checked> A カードグリッド (画像で見分けられるが、題名の全文は読めない) <small>推奨。20 件を超えても 1 画面で見渡せる</small></label>
+          <label><input type="radio" name="q1" value="b"> B (提案) 縦リスト (題名と日付で探せるが、画像では見分けられない)</label>
+          <label><input type="radio" name="q1" value="premise"> 前提が違う</label>
+          <input type="text" name="q1.premise" data-if="q1=premise" placeholder="何が違うかを書いてください">
         </doc-ask>
         <div class="cards">
           <section class="card">
-            <h4>A カードグリッド <span class="badge">推奨</span></h4>
             <figure class="figure">
               <img src="data:image/png;base64,…" alt="share-card-link-R3-Q1-A">
-              <figcaption>share-card-link-R3-Q1-A — <a href="https://claude.ai/artifact/…">キャンバスで開く</a></figcaption>
+              <figcaption>A — <a href="https://claude.ai/artifact/…">キャンバスで開く</a></figcaption>
             </figure>
-            <dl><dt>できるようになる</dt><dd>画像で作品を見分けられる</dd><dt>できなくなる</dt><dd>題名の全文は一覧では読めない</dd></dl>
           </section>
           <section class="card">
-            <h4>B 縦リスト (提案) <span class="badge plain">提案</span></h4>
-            <p class="note">share-card-link-R3-Q1-B — <a href="https://claude.ai/artifact/…">キャンバスで開く</a>。デザインシステムの部品を使うためローカルでは描けず、スクリーンショットは無い</p>
-            <dl><dt>できるようになる</dt><dd>題名と日付で探せる</dd><dt>できなくなる</dt><dd>画像では見分けられない</dd></dl>
+            <p class="note">B — <a href="https://claude.ai/artifact/…">キャンバスで開く</a>。デザインシステムの部品を使うため、スクリーンショットは無い</p>
           </section>
         </div>
       </section>
@@ -317,11 +286,11 @@ questions:
     <details class="sec" open>
       <summary class="sec-head"><h3 id="q2">Q2 カードの間隔</h3></summary>
       <section class="sec-body">
-        <p><strong>前提:</strong> …</p>
         <doc-ask id="q2">
-          <p>カードの間隔をいくつにするか</p>
+          <p>カードの間隔をいくつにしますか</p>
           <label><input type="range" name="q2" min="8" max="24" step="4" value="12"> px (推奨 12)</label>
-          <label><input type="checkbox" name="q2-premise"> 前提が違う <small>コメントに何が違うかを書く</small></label>
+          <label><input type="checkbox" name="q2-premise"> 前提が違う</label>
+          <input type="text" name="q2.premise" data-if="q2-premise" placeholder="何が違うかを書いてください">
         </doc-ask>
       </section>
     </details>
@@ -329,48 +298,39 @@ questions:
     <details class="sec" open>
       <summary class="sec-head"><h3 id="q3">Q3 失効したリンクの応答</h3><span class="sec-meta">2 案</span></summary>
       <section class="sec-body">
-        <p><strong>前提:</strong> 呼び出し側の開発者が、リンク切れをエラー表示に振り分ける場面</p>
         <doc-ask id="q3">
-          <p>期限切れの共有リンクに何を返すか</p>
-          <label><input type="radio" name="q3" value="a" checked> A 410 と理由 <small>推奨。呼び出し側が理由で表示を分けられる</small></label>
-          <label><input type="radio" name="q3" value="b"> B 404 に揃える</label>
-          <label><input type="radio" name="q3" value="premise"> 前提が違う <small>コメントに何が違うかを書く</small></label>
+          <p>期限切れの共有リンクを開いた呼び出し側に、何を返しますか</p>
+          <label><input type="radio" name="q3" value="a" checked> A 410 と理由 (期限切れと削除済みを見分けられるが、存在したことは隠せない) <small>推奨。呼び出し側が理由で表示を分けられる</small></label>
+          <label><input type="radio" name="q3" value="b"> B 404 に揃える (存在したことを隠せるが、期限切れと打ち間違いを見分けられない)</label>
+          <label><input type="radio" name="q3" value="premise"> 前提が違う</label>
+          <input type="text" name="q3.premise" data-if="q3=premise" placeholder="何が違うかを書いてください">
         </doc-ask>
-        <doc-code id="q3-ex-1" title="リクエスト" lang="sh"><script type="text/plain">
-GET /share/abc123
-</script></doc-code>
-        <div class="cards">
-          <section class="card">
-            <h4>A 410 と理由 <span class="badge">推奨</span></h4>
-            <doc-code id="q3-a-1" title="レスポンス" lang="json"><script type="text/plain">
-{ "status": 410, "reason": "expired" }
-</script></doc-code>
-            <dl><dt>できるようになる</dt><dd>期限切れと削除済みを見分けて案内できる</dd><dt>できなくなる</dt><dd>存在したリンクかどうかを隠せない</dd></dl>
-          </section>
-          <section class="card">
-            <h4>B 404 に揃える</h4>
-            <p><strong>返る値</strong></p>
-            <table><thead><tr><th>状況</th><th>status</th></tr></thead>
-              <tbody><tr><td>期限切れ</td><td>404</td></tr><tr><td>削除済み</td><td>404</td></tr><tr><td>存在しない</td><td>404</td></tr></tbody></table>
-            <p class="note">3 つとも同じ応答になる</p>
-            <dl><dt>できるようになる</dt><dd>リンクが存在したかを第三者に知られない</dd><dt>できなくなる</dt><dd>期限切れと打ち間違いを見分けられない</dd></dl>
-          </section>
-        </div>
       </section>
     </details>
 
   </section>
 </details>
+
+<details class="sec">
+  <summary class="sec-head"><h2 id="s-assumed">問わずに決めたこと</h2><span class="sec-meta">2 件</span></summary>
+  <section class="sec-body">
+    <p class="note">違えば行にコメントしてください</p>
+    <ul>
+      <li>共有リンクの有効期限は 30 日 (既存の招待リンクと同じ)</li>
+      <li>リンクの URL は既存の招待リンクと同じ形 (/share/&lt;id&gt;)</li>
+    </ul>
+  </section>
+</details>
 ```
 
-- 固定構成 (要点 → 用語 → 本論 → 詳細 → 根拠・出典) はそのまま。本論の h2 は「このラウンドの前提」(素材の `frame`) と「問い」の 2 つで、この順に置く。問いは h3 の `details.sec` で入れ子にする (runtime が h3 と `doc-ask` を左レールに拾う)
-- `doc-ask` の `id` と `name` は問いの `id` (`q1` …)。radio の `value` は選択肢の `id`。推奨の選択肢に `checked` と `<small>推奨。<reason></small>` (`recommended` の無い認識ラウンドの問いはどれにも `checked` を付けない)。選択肢に「その他」を置かない (別案はコメントで受ける)。全問の末尾に「前提が違う」を足す (radio は `value="premise"`、range と textarea は同じ `doc-ask` にチェックボックス `name="<id>-premise"`)
-- 選択肢のカードは `.cards` に 3 枚まで。4 枚目 (提案の案が足された問い) は 2 つ目の `.cards` に置く。カードの見出しは h4 (h3 にすると目次に出る)。`artboards` の無い選択肢も同じカードにし、`figure` を置かず得失だけを書く
-- スクリーンショットは `figure.figure > img` に data URI で埋める (`.markdown-body img` が幅を収める)。`alt` と `figcaption` はアートボードの名前。`png: null` の案は `img` を置かず `p.note` にリンクと理由
-- 1 案が複数のアートボード (複数画面) なら、カードの中に `figure` を続けて並べる
-- `exhibit` は、問い全体のものを `doc-ask` の直後 (`.cards` の前) に、案ごとのものをその案のカードの `figure` の位置に置く。`code` は `doc-code` (`title` / `lang`。本文は `<script type="text/plain">`)、`text` は `doc-code lang="text" wrap`、`table` は `title` を太字の段落にして素の `<table>` (幅が溢れたら style.css の `.markdown-body table` で横に送れる)。`doc-code` には問いと案とブロックの順で一意の `id` を付ける (`q3-ex-1` は問い全体、`q3-a-1` は案 A の 1 つ目)。`id` が無いと、ページ内のコードのコメントが行番号だけで同じ保存先を共有し、別の表示に混ざる。`title` は出どころではなく見るものの題でよい (blocks.md の「path:行 か sketch」の例外)。`note` は直後の `p.note`。中身は素材のまま写し、行を足したり丸めたりしない
+- 固定構成 (要点 → 用語 → 本論 → 詳細 → 根拠・出典) は使わない。置くのは、ヘッダの `p.lede` (素材の `lede` に「推奨のままでよければ、そのまま返信を貼ってください」を足した 1〜2 文。推奨の無い認識ラウンドの問いがあれば「選んでから返信してください」)、h2「問い」、閉じた h2「問わずに決めたこと」の 3 つだけ。要点・用語・詳細・根拠・出典の節は置かない
+- 問いは h3 の `details.sec` で入れ子にする (runtime が h3 と `doc-ask` を左レールに拾う)。h3 の中は `doc-ask` と、画面のあるタスクではスクリーンショットだけ。前提行・説明の段落・得失・表・コードを置かない
+- `doc-ask` の `id` と `name` は問いの `id` (`q1` …)。radio の `value` は選択肢の `id`。推奨の選択肢に `checked` と `<small>推奨。<reason></small>` (`recommended` の無い認識ラウンドの問いはどれにも `checked` を付けない)。選択肢に「その他」を置かない (別案はコメントで受ける)。全問の末尾に「前提が違う」を足す (radio は `value="premise"`、range と textarea は同じ `doc-ask` にチェックボックス `name="<id>-premise"`)。その直後に、選ばれたときだけ出る 1 行の入力欄 `<input type="text" name="<id>.premise" data-if="…">` を置く (radio は `data-if="<id>=premise"`、チェックボックスは `data-if="<id>-premise"`)。AskUserQuestion の「その他」と同じく、選んだその場で何が違うかを書けるようにするため。入力は返信に `→ premise:` と引用行で載る
+- スクリーンショットは `doc-ask` の直後の `.cards` に、選択肢ごとに `section.card > figure.figure > img` を 1 枚ずつ data URI で埋める (`.markdown-body img` が幅を収める)。`figcaption` は選択肢の記号とキャンバスへのリンクだけで、label を繰り返さない。`png: null` の案は `figure` を置かず、`section.card > p.note` に記号とリンクと理由。1 案が複数のアートボードでも、レポートに載せるのは先頭の 1 枚で、残りはキャンバスで見てもらう。`.cards` のカードは 3 枚まで — 4 案以上なら 4 枚目からは 2 つ目の `.cards` に置く
+- radio の label の前には、選択肢の `id` を大文字にした記号 (`A` `B` …) を付ける。figcaption はこの記号で選択肢を指す
+- `assumed` は `open` を付けない `details.sec` の h2「問わずに決めたこと」に置き、`sec-meta` を「n 件」、`sec-body` の先頭を `p.note`「違えば行にコメントしてください」にする。h2 の節にするのは、行へのコメントが返信で「問わずに決めたこと」の見出しつきで戻り、問いの節へのコメントと見分けられるようにするため。空なら置かない
 - 値の問いは `doc-ask` の `range` (目盛り) か radio (離散値)。推奨値を `value` / `checked` にする
-- 答えは返信 (Respond) の `## Decisions` に、問いの行と `→` 行 (太字の選択肢の label と、続く選択肢の id) の形で、`kept as proposed` / `not opened; default kept` の区別つきで戻る (blocks.md 末尾)。読み方は `spec` Step 2 の規則
+- 答えは返信 (Respond) の `## Decisions` に、問いの行と `→` 行 (太字の選択肢の label と、続く選択肢の id) の形で、`kept as proposed` / `not opened; default kept` の区別つきで戻る (blocks.md 末尾)。`assumed` の行へのコメントは `## Comments` に戻る。読み方は `spec` Step 2 の規則
 
 ## diff 表示(diff)
 

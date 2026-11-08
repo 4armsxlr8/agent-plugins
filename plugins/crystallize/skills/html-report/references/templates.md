@@ -260,7 +260,7 @@ assumed:                                      # 問わずに決めたこと。1 
   <section class="sec-body">
 
     <details class="sec" open>
-      <summary class="sec-head"><h3 id="q1">Q1 一覧の形</h3><span class="sec-meta">2 案</span></summary>
+      <summary class="sec-head"><h3 id="h-q1">Q1 一覧の形</h3><span class="sec-meta">2 案</span></summary>
       <section class="sec-body">
         <doc-ask id="q1">
           <p>公開直後の作品一覧をどう見せますか</p>
@@ -284,7 +284,7 @@ assumed:                                      # 問わずに決めたこと。1 
     </details>
 
     <details class="sec" open>
-      <summary class="sec-head"><h3 id="q2">Q2 カードの間隔</h3></summary>
+      <summary class="sec-head"><h3 id="h-q2">Q2 カードの間隔</h3></summary>
       <section class="sec-body">
         <doc-ask id="q2">
           <p>カードの間隔をいくつにしますか</p>
@@ -296,7 +296,7 @@ assumed:                                      # 問わずに決めたこと。1 
     </details>
 
     <details class="sec" open>
-      <summary class="sec-head"><h3 id="q3">Q3 失効したリンクの応答</h3><span class="sec-meta">2 案</span></summary>
+      <summary class="sec-head"><h3 id="h-q3">Q3 失効したリンクの応答</h3><span class="sec-meta">2 案</span></summary>
       <section class="sec-body">
         <doc-ask id="q3">
           <p>期限切れの共有リンクを開いた呼び出し側に、何を返しますか</p>
@@ -325,7 +325,7 @@ assumed:                                      # 問わずに決めたこと。1 
 
 - 固定構成 (要点 → 用語 → 本論 → 詳細 → 根拠・出典) は使わない。置くのは、ヘッダの `p.lede` (素材の `lede` に「推奨のままでよければ、そのまま返信を貼ってください」を足した 1〜2 文。推奨の無い認識ラウンドの問いがあれば「選んでから返信してください」)、h2「問い」、閉じた h2「問わずに決めたこと」の 3 つだけ。要点・用語・詳細・根拠・出典の節は置かない
 - 問いは h3 の `details.sec` で入れ子にする (runtime が h3 と `doc-ask` を左レールに拾う)。h3 の中は `doc-ask` と、画面のあるタスクではスクリーンショットだけ。前提行・説明の段落・得失・表・コードを置かない
-- `doc-ask` の `id` と `name` は問いの `id` (`q1` …)。radio の `value` は選択肢の `id`。推奨の選択肢に `checked` と `<small>推奨。<reason></small>` (`recommended` の無い認識ラウンドの問いはどれにも `checked` を付けない)。選択肢に「その他」を置かない (別案はコメントで受ける)。全問の末尾に「前提が違う」を足す (radio は `value="premise"`、range と textarea は同じ `doc-ask` にチェックボックス `name="<id>-premise"`)。その直後に、選ばれたときだけ出る 1 行の入力欄 `<input type="text" name="<id>.premise" data-if="…">` を置く (radio は `data-if="<id>=premise"`、チェックボックスは `data-if="<id>-premise"`)。AskUserQuestion の「その他」と同じく、選んだその場で何が違うかを書けるようにするため。入力は返信に `→ premise:` と引用行で載る
+- `doc-ask` の `id` と `name` は問いの `id` (`q1` …)。h3 の `id` は `h-<id>` にして `doc-ask` と重ねない (重なると目次のリンクと表示中の項目の印が h3 と `doc-ask` を取り違える)。radio の `value` は選択肢の `id`。推奨の選択肢に `checked` と `<small>推奨。<reason></small>` (`recommended` の無い認識ラウンドの問いはどれにも `checked` を付けない)。選択肢に「その他」を置かない (別案はコメントで受ける)。全問の末尾に「前提が違う」を足す (radio は `value="premise"`、range と textarea は同じ `doc-ask` にチェックボックス `name="<id>-premise"`)。その直後に、選ばれたときだけ出る 1 行の入力欄 `<input type="text" name="<id>.premise" data-if="…">` を置く (radio は `data-if="<id>=premise"`、チェックボックスは `data-if="<id>-premise"`)。AskUserQuestion の「その他」と同じく、選んだその場で何が違うかを書けるようにするため。入力は返信に `→ premise:` と引用行で載る
 - スクリーンショットは `doc-ask` の直後の `.cards` に、選択肢ごとに `section.card > figure.figure > img` を 1 枚ずつ data URI で埋める (`.markdown-body img` が幅を収める)。`figcaption` は選択肢の記号とキャンバスへのリンクだけで、label を繰り返さない。`png: null` の案は `figure` を置かず、`section.card > p.note` に記号とリンクと理由。1 案が複数のアートボードでも、レポートに載せるのは先頭の 1 枚で、残りはキャンバスで見てもらう。`.cards` のカードは 3 枚まで — 4 案以上なら 4 枚目からは 2 つ目の `.cards` に置く
 - radio の label の前には、選択肢の `id` を大文字にした記号 (`A` `B` …) を付ける。figcaption はこの記号で選択肢を指す
 - `assumed` は `open` を付けない `details.sec` の h2「問わずに決めたこと」に置き、`sec-meta` を「n 件」、`sec-body` の先頭を `p.note`「違えば行にコメントしてください」にする。h2 の節にするのは、行へのコメントが返信で「問わずに決めたこと」の見出しつきで戻り、問いの節へのコメントと見分けられるようにするため。空なら置かない

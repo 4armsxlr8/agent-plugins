@@ -34,6 +34,7 @@ plan-implement-midsize と同じ機能 (部分返金) を、依頼文だけか�
 import argparse
 import concurrent.futures
 import contextlib
+import html as html_mod
 import json
 import os
 import re
@@ -454,7 +455,7 @@ def score(condition, index, args, run_dir, case, source=None):
     }
 
 
-REPORT_MARKERS = {"questions": r"<doc-ask\b", "frame": r'id="s-frame"', "card": r'class="card"', "premise": r"<strong>前提:",
+REPORT_MARKERS = {"questions": r"<doc-ask\b", "frame": r'id="s-frame"', "assumed": r'id="s-assumed"', "card": r'class="card"', "premise": r"<strong>前提:",
                   "gain": r"できるようになる", "table": r"<table\b", "code": r"<doc-code\b"}
 
 
@@ -464,8 +465,24 @@ def report_shape(cwd):
     for path in sorted((cwd / "docs/crystallize/specs").glob("**/round-*.html")):
         html = path.read_text(errors="replace")
         body = re.sub(r"<style\b.*?</style>|<script(?![^>]*text/plain)\b.*?</script>", "", html, flags=re.S)
+        text = lambda s: html_mod.unescape(re.sub(r"<[^>]+>", "", s)).strip()
+        assumed = re.search(r'id="s-assumed".*?</details>', body, flags=re.S)
+        asks = re.findall(r"<doc-ask\b.*?</doc-ask>", body, flags=re.S)
+        # 字数の上限 (問い 60 字、label 50 字。label は先頭の記号と <small> を除く) と記号の有無を v0.17.0 の round の規則で数える
+        labels = [re.sub(r"<small>.*?</small>", "", m, flags=re.S) for a in asks
+                  for m in re.findall(r'<label><input type="radio"[^>]*value="(?!premise")[^"]*"[^>]*>(.*?)</label>', a, flags=re.S)]
+        questions = [text(m) for a in asks for m in re.findall(r"<doc-ask\b[^>]*>\s*<p>(.*?)</p>", a, flags=re.S)]
         shapes.append({"name": path.name, "chars": len(re.sub(r"<[^>]+>", "", body)),
-                       **{k: len(re.findall(p, html)) for k, p in REPORT_MARKERS.items()}})
+                       **{k: len(re.findall(p, html)) for k, p in REPORT_MARKERS.items()},
+                       # 照合できた問いと label の数。doc-ask の数と premise 以外の radio の数に揃わなければ、下の数は形の違いで 0 になっている
+                       "matched_questions": len(questions), "matched_labels": len(labels),
+                       "radios": len(re.findall(r'type="radio"(?![^>]*value="premise")', body)),
+                       "assumed_items": len(re.findall(r"<li\b", assumed.group())) if assumed else 0,
+                       "assumed_chars": sum(len(text(li)) for li in re.findall(r"<li\b.*?</li>", assumed.group(), flags=re.S)) if assumed else 0,
+                       "premise_inputs": len(re.findall(r'<input type="text" name="[^"]+\.premise"', body)),
+                       "long_questions": sum(len(q) > 60 for q in questions),
+                       "long_labels": sum(len(re.sub(r"^[A-Z]\s+", "", text(l))) > 50 for l in labels),
+                       "unlettered_labels": sum(not re.match(r"[A-Z]\s", text(l)) for l in labels)})
     return shapes
 
 

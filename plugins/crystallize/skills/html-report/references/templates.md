@@ -187,14 +187,13 @@ document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () =>
 
 `spec` スキルで、1 ラウンドの問いを置くレポート。**問いだけの短い形にする** — 読者に見せるのは問いの文と選択肢の label だけで、前提の節・前提行・得失のカード・表やコードの例は置かない。以前の形は見せる文字数が問いそのものの何倍にもなり、問いだけにした版を eval で比べても、拾えた判断が落ちたとは示せなかったため (`evals/upstream-installments/protocol.md` の第 5 段階。各 3 回で、依頼者役は AI。消した説明の中にしか出なかった判断もあり、人が読む場合は測っていない)。前提や得失は問いの文と label の中に収める。
 
-画面のあるタスクでは、絵 (案) はデザインキャンバス (Design 型 Artifact) にアートボードとして描かれていて、レポートに載せるのは選択肢ごとのスクリーンショット 1 枚とリンクだけ。**案をレポートの HTML で描き直さない** (絵の正本が 2 つになる)。画面のないタスクでは見るものを載せない。出力先は `out:` (`docs/crystallize/specs/<slug>/round-<n>.html` の絶対パス。呼び出し元がリポジトリルートで解決する)、`open` と report-index 登録はしない。絵の無いラウンド (第 1 ラウンドなど) も同じ種別で作る。
+画面のあるタスクでは、絵の要る問いは、案と同じ案出しキャンバスの問いのアートボードに置かれる (`spec` の `references/design-canvas.md`)。このレポートを作るのは、画面のないタスク、画面のあるタスクで絵の要る問いが無いラウンド (第 1 ラウンドなど)、キャンバスが使えないときで、どれも見るものを載せない。**案をレポートの HTML で描かない** (絵の正本はキャンバス)。キャンバスが使えないときに絵の要る問いを置く場合は、呼び出し元が label の末尾に案のアートボードの名札 (`— R3-Q1-A`) を足して渡すので、そのまま載せる。出力先は `out:` (`docs/crystallize/specs/<slug>/round-<n>.html` の絶対パス。呼び出し元がリポジトリルートで解決する)、`open` と report-index 登録はしない。
 
 ### 素材の形 (呼び出し元の spec が書く)
 
 ```yaml
 slug: share-card-link
 round: 3
-canvas: https://claude.ai/artifact/…        # デザインキャンバスの URL。artboards のある問いが 1 つでもあれば必須、無ければ省く
 reader: 対象読者と、説明なしで使ってよい語の 1 行
 lede: このラウンドで決めること: 3 問                  # 1 行。問いの題は並べない (h3 と重なる)
 questions:
@@ -206,15 +205,8 @@ questions:
     options:
       - id: a
         label: カードグリッド (画像で見分けられるが、題名の全文は読めない)   # 1 行、50 字まで
-        artboards:
-          - name: share-card-link-R3-Q1-A
-            png: /abs/path/docs/crystallize/specs/share-card-link/design/round-3/project/share-card-link-R3-Q1-A.png   # 絶対パス
       - id: b
-        label: (提案) 縦リスト (題名と日付で探せるが、画像では見分けられない)
-        artboards:
-          - name: share-card-link-R3-Q1-B
-            png: null                         # ローカルで描けない案。リンクだけ
-            note: デザインシステムの部品を使うため、キャンバスで確認
+        label: 縦リスト (題名と日付で探せるが、画像では見分けられない)
   - id: q2
     title: カードの間隔
     kind: range                               # 値の問い。min / max / step / value (推奨値) / unit
@@ -241,8 +233,8 @@ assumed:                                      # 問わずに決めたこと。1 
 
 - `question` は 1 文で 60 字まで、`label` は 1 行で 50 字まで、`reason` は 1 行。label には、その案を選ぶと読者ができること・できなくなることを括弧で 1 句ずつ入れる。推奨でない案にも、選ぶ理由が label から読めるようにする
 - 違いが具体の値で分かる問いは、同じ入力に対する結果を label に 1 つだけ入れる (例: `1,001 円を 3 回 → 334・334・333 円`)。表やコードの例は置かない
-- `recommended` / `reason` の無い問いは認識ラウンドの問いで、どの radio にも `checked` を付けない (`doc-ask` は推奨なしで置かない、の例外。読み方を選ばずに返信されたら確定させないため)。「前提が違う」は素材に書かれていなくても全問に足す (マークアップ参照)
-- `artboards` は画面のあるタスクで案を選ばせる問いだけに付く。`kind: range` の無い問いは radio。`png` と `out:` は絶対パス (fork の cwd は保証されない)
+- `recommended` / `reason` の無い問いは認識ラウンドの問いで、どの radio にも `checked` を付けない (`doc-ask` は推奨なしで置かない、の例外。読み方を選ばずに返信されたら確定させないため)。「どれでもない・一部変えたい」(radio) と「この問いでは決められない」(range と textarea) は素材に書かれていなくても全問に足す (マークアップ参照)
+- `kind: range` の無い問いは radio。`out:` は絶対パス (fork の cwd は保証されない)。素材に `canvas` や選択肢の `artboards` があっても出さない (以前の、スクリーンショットを載せた形の項目)
 - `assumed` は、このラウンドで問いにせず決めたこと (コードの慣習や既存の画面・API から決まる細部だけ。読み方・範囲・使う人・優先は問いになる)。読む人が違いに気づいたら行にコメントするための一覧で、閉じた節として置く
 - 素材に `frame` / `premise` / `gain` / `loss` / `exhibit` が書かれていても出さない (以前の長い形の項目)
 
@@ -265,21 +257,10 @@ assumed:                                      # 問わずに決めたこと。1 
         <doc-ask id="q1">
           <p>公開直後の作品一覧をどう見せますか</p>
           <label><input type="radio" name="q1" value="a" checked> A カードグリッド (画像で見分けられるが、題名の全文は読めない) <small>推奨。20 件を超えても 1 画面で見渡せる</small></label>
-          <label><input type="radio" name="q1" value="b"> B (提案) 縦リスト (題名と日付で探せるが、画像では見分けられない)</label>
-          <label><input type="radio" name="q1" value="premise"> 前提が違う</label>
-          <input type="text" name="q1.premise" data-if="q1=premise" placeholder="何が違うかを書いてください">
+          <label><input type="radio" name="q1" value="b"> B 縦リスト (題名と日付で探せるが、画像では見分けられない)</label>
+          <label><input type="radio" name="q1" value="premise"> どれでもない・一部変えたい</label>
+          <textarea name="q1.premise" data-if="q1=premise" rows="3" placeholder="どこをどう変えたいか、どれでもないなら何が欲しいか"></textarea>
         </doc-ask>
-        <div class="cards">
-          <section class="card">
-            <figure class="figure">
-              <img src="data:image/png;base64,…" alt="share-card-link-R3-Q1-A">
-              <figcaption>A — <a href="https://claude.ai/artifact/…">キャンバスで開く</a></figcaption>
-            </figure>
-          </section>
-          <section class="card">
-            <p class="note">B — <a href="https://claude.ai/artifact/…">キャンバスで開く</a>。デザインシステムの部品を使うため、スクリーンショットは無い</p>
-          </section>
-        </div>
       </section>
     </details>
 
@@ -289,8 +270,8 @@ assumed:                                      # 問わずに決めたこと。1 
         <doc-ask id="q2">
           <p>カードの間隔をいくつにしますか</p>
           <label><input type="range" name="q2" min="8" max="24" step="4" value="12"> px (推奨 12)</label>
-          <label><input type="checkbox" name="q2-premise"> 前提が違う</label>
-          <input type="text" name="q2.premise" data-if="q2-premise" placeholder="何が違うかを書いてください">
+          <label><input type="checkbox" name="q2-premise"> この問いでは決められない</label>
+          <textarea name="q2.premise" data-if="q2-premise" rows="3" placeholder="何が足りないか、どう決めたいか"></textarea>
         </doc-ask>
       </section>
     </details>
@@ -302,8 +283,8 @@ assumed:                                      # 問わずに決めたこと。1 
           <p>期限切れの共有リンクを開いた呼び出し側に、何を返しますか</p>
           <label><input type="radio" name="q3" value="a" checked> A 410 と理由 (期限切れと削除済みを見分けられるが、存在したことは隠せない) <small>推奨。呼び出し側が理由で表示を分けられる</small></label>
           <label><input type="radio" name="q3" value="b"> B 404 に揃える (存在したことを隠せるが、期限切れと打ち間違いを見分けられない)</label>
-          <label><input type="radio" name="q3" value="premise"> 前提が違う</label>
-          <input type="text" name="q3.premise" data-if="q3=premise" placeholder="何が違うかを書いてください">
+          <label><input type="radio" name="q3" value="premise"> どれでもない・一部変えたい</label>
+          <textarea name="q3.premise" data-if="q3=premise" rows="3" placeholder="どこをどう変えたいか、どれでもないなら何が欲しいか"></textarea>
         </doc-ask>
       </section>
     </details>
@@ -324,10 +305,9 @@ assumed:                                      # 問わずに決めたこと。1 
 ```
 
 - 固定構成 (要点 → 用語 → 本論 → 詳細 → 根拠・出典) は使わない。置くのは、ヘッダの `p.lede` (素材の `lede` に「推奨のままでよければ、そのまま返信を貼ってください」を足した 1〜2 文。推奨の無い認識ラウンドの問いがあれば「選んでから返信してください」)、h2「問い」、閉じた h2「問わずに決めたこと」の 3 つだけ。要点・用語・詳細・根拠・出典の節は置かない
-- 問いは h3 の `details.sec` で入れ子にする (runtime が h3 と `doc-ask` を左レールに拾う)。h3 の中は `doc-ask` と、画面のあるタスクではスクリーンショットだけ。前提行・説明の段落・得失・表・コードを置かない
-- `doc-ask` の `id` と `name` は問いの `id` (`q1` …)。h3 の `id` は `h-<id>` にして `doc-ask` と重ねない (重なると目次のリンクと表示中の項目の印が h3 と `doc-ask` を取り違える)。radio の `value` は選択肢の `id`。推奨の選択肢に `checked` と `<small>推奨。<reason></small>` (`recommended` の無い認識ラウンドの問いはどれにも `checked` を付けない)。選択肢に「その他」を置かない (別案はコメントで受ける)。全問の末尾に「前提が違う」を足す (radio は `value="premise"`、range と textarea は同じ `doc-ask` にチェックボックス `name="<id>-premise"`)。その直後に、選ばれたときだけ出る 1 行の入力欄 `<input type="text" name="<id>.premise" data-if="…">` を置く (radio は `data-if="<id>=premise"`、チェックボックスは `data-if="<id>-premise"`)。AskUserQuestion の「その他」と同じく、選んだその場で何が違うかを書けるようにするため。入力は返信に `→ premise:` と引用行で載る
-- スクリーンショットは `doc-ask` の直後の `.cards` に、選択肢ごとに `section.card > figure.figure > img` を 1 枚ずつ data URI で埋める (`.markdown-body img` が幅を収める)。`figcaption` は選択肢の記号とキャンバスへのリンクだけで、label を繰り返さない。`png: null` の案は `figure` を置かず、`section.card > p.note` に記号とリンクと理由。1 案が複数のアートボードでも、レポートに載せるのは先頭の 1 枚で、残りはキャンバスで見てもらう。`.cards` のカードは 3 枚まで — 4 案以上なら 4 枚目からは 2 つ目の `.cards` に置く
-- radio の label の前には、選択肢の `id` を大文字にした記号 (`A` `B` …) を付ける。figcaption はこの記号で選択肢を指す
+- 問いは h3 の `details.sec` で入れ子にする (runtime が h3 と `doc-ask` を左レールに拾う)。h3 の中は `doc-ask` だけ。前提行・説明の段落・得失・表・コードを置かない
+- `doc-ask` の `id` と `name` は問いの `id` (`q1` …)。h3 の `id` は `h-<id>` にして `doc-ask` と重ねない (重なると目次のリンクと表示中の項目の印が h3 と `doc-ask` を取り違える)。radio の `value` は選択肢の `id`。推奨の選択肢に `checked` と `<small>推奨。<reason></small>` (`recommended` の無い認識ラウンドの問いはどれにも `checked` を付けない)。選択肢に「その他」を置かない (別案はコメントで受ける)。全問の末尾に、radio は「どれでもない・一部変えたい」(`value="premise"`) を、range と textarea は同じ `doc-ask` にチェックボックス「この問いでは決められない」(`name="<id>-premise"`) を足す。その直後に、選ばれたときだけ出る複数行の入力欄 `<textarea name="<id>.premise" data-if="…" rows="3">` を置く (radio は `data-if="<id>=premise"`、チェックボックスは `data-if="<id>-premise"`)。並べた案のどれでもないときと、案の一部を変えたいときに、選んだその場でどう違うかを書けるようにするため。入力は返信に `→ premise:` と引用行で載る
+- radio の label の前には、選択肢の `id` を大文字にした記号 (`A` `B` …) を付ける
 - `assumed` は `open` を付けない `details.sec` の h2「問わずに決めたこと」に置き、`sec-meta` を「n 件」、`sec-body` の先頭を `p.note`「違えば行にコメントしてください」にする。h2 の節にするのは、行へのコメントが返信で「問わずに決めたこと」の見出しつきで戻り、問いの節へのコメントと見分けられるようにするため。空なら置かない
 - 値の問いは `doc-ask` の `range` (目盛り) か radio (離散値)。推奨値を `value` / `checked` にする
 - 答えは返信 (Respond) の `## Decisions` に、問いの行と `→` 行 (太字の選択肢の label と、続く選択肢の id) の形で、`kept as proposed` / `not opened; default kept` の区別つきで戻る (blocks.md 末尾)。`assumed` の行へのコメントは `## Comments` に戻る。読み方は `spec` Step 2 の規則

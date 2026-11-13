@@ -42,7 +42,7 @@ metadata:
 | 素材の特徴 | type |
 |---|---|
 | 反復採点の eval JSON 群 (score / passed の履歴) | loop |
-| `spec` のラウンド素材 (問いの定義、画面のあるタスクではアートボードのスクリーンショットのパスとキャンバスの URL)。呼び出し元が必ず `type: round` と `out:` を付ける | round |
+| `spec` のラウンド素材 (問いの定義)。呼び出し元が必ず `type: round` と `out:` を付ける | round |
 | diff / patch / コミット・PRの変更説明 | diff |
 | 複数案の比較・技術選定・トレードオフ | compare |
 | それ以外(調査・研究・実装計画・障害報告) | research |
@@ -90,14 +90,13 @@ type で変わるのは**この節の部品だけ**。他の節は共通 (`round
 | compare | 比較グリッド(`.cards` > `.card` + `.badge`)→ トレードオフ表 → 案ごとの詳細タブ。**推奨案を読者に確定してもらう問いを `doc-ask` で 1 つ置く**(`checked` が推奨。答えは Respond に載る) |
 | diff | 変更サマリ表 → `details.file` + `.diff-table`(構造は templates.md のまま)。「何が呼ばれるようになるか」は `doc-calls` |
 | loop | スコア推移の折れ線(diagrams.md 付録)→ criteria 別の推移 → iteration ごとの feedback を `details.fold` に |
-| round | **問いだけ**。問いごとに `details.sec`(h3)を 1 つ: `doc-ask`(質問 1 文と、選択肢ごとに label の 1 行。推奨に `checked` と 1 行の理由。`recommended` の無い問いは `checked` を付けない。末尾に既定で選ばれていない「前提が違う」(`premise`) を必ず足す。range と textarea には同じ `doc-ask` にチェックボックス `<id>-premise` を足す。どちらも選ばれたときだけ出る 1 行の入力欄 `<id>.premise` を直後に置く)→ 画面のあるタスクだけ、選択肢ごとのスクリーンショット 1 枚とキャンバスへのリンク。前提の節・前提行・得失のカード・表やコードの例は置かない。素材の `assumed` は末尾の、`open` を付けない h2「問わずに決めたこと」の `details.sec` に置く。値の問いは `doc-ask` の range か radio。マークアップと素材の形は templates.md の「ラウンド (round)」。**案を HTML で描き直さない** — 絵はスクリーンショットだけ(絵の正本はキャンバス) |
+| round | **問いだけ**。問いごとに `details.sec`(h3)を 1 つ: `doc-ask`(質問 1 文と、選択肢ごとに label の 1 行。推奨に `checked` と 1 行の理由。`recommended` の無い問いは `checked` を付けない。末尾に既定で選ばれていない「どれでもない・一部変えたい」(`premise`) を必ず足す。range と textarea には同じ `doc-ask` にチェックボックス「この問いでは決められない」(`<id>-premise`) を足す。どちらも選ばれたときだけ出る複数行の入力欄 `<id>.premise` を直後に置く)。画面のないタスク、画面のあるタスクで絵の要る問いが無いラウンド、キャンバスが使えないときに使う種別で、見るものは載せない。前提の節・前提行・得失のカード・表やコードの例は置かない。素材の `assumed` は末尾の、`open` を付けない h2「問わずに決めたこと」の `details.sec` に置く。値の問いは `doc-ask` の range か radio。マークアップと素材の形は templates.md の「ラウンド (round)」。**案を HTML で描かない**(絵の正本はキャンバス) |
 
 - **コードは `doc-code` に `<script type="text/plain">` で貼る。`src=` / `lines=` でファイルから埋める書き方は使えない**(html-report は html-plan の pack.mjs を使わないため、空の枠になる)。出どころは `title="path:行"` に書く。
 - **読者が見えるものはすべてコメントできる** — 段落・箇条書き・見出し・コードの行・呼び出し木の行・図のノード。書き手が何かを足す必要はない。
 
 <important if="type が round (spec のラウンドレポート)">
-- 素材の PNG は **Bash の `base64` で読んで `<img src="data:image/png;base64,…">` に埋める**。Read で画像を開かない(画像が fork のコンテキストに入るだけで、埋め込みには役立たない)。素材が「スクリーンショット無し(ローカルで描けない)」と言う案は `img` を置かず、キャンバスへのリンクとその旨の 1 文だけにする
-- 素材に無い選択肢・説明・推奨を足さない(例外は全問に足す「前提が違う」と、lede の返信の案内だけ)。問いの文面と label は素材のまま(試問と質問監査はこの文面で行われる)。素材に `frame` / `premise` / `gain` / `loss` / `exhibit` があっても出さない
+- 素材に無い選択肢・説明・推奨を足さない(例外は全問に足す「どれでもない・一部変えたい」「この問いでは決められない」と、lede の返信の案内だけ)。問いの文面と label は素材のまま(試問と質問監査はこの文面で行われる)。素材に `frame` / `premise` / `gain` / `loss` / `exhibit` / `canvas` / `artboards` があっても出さない
 - 要点・用語・詳細・根拠・出典の節は置かない。「このラウンドで決めること」はヘッダの lede の 1〜2 文にする
 - 出力先は `out:`。`open` しない、report-index に登録しない(Step 5)
 </important>
